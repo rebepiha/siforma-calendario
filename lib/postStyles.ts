@@ -26,6 +26,27 @@ export const CORES_TIPO: Record<
   },
 };
 
+export const CORES_CANAL: Record<
+  Canal,
+  { bg: string; border: string; text: string }
+> = {
+  instagram: {
+    bg: "bg-instagram-bg",
+    border: "border-instagram-border",
+    text: "text-instagram-text",
+  },
+  linkedin: {
+    bg: "bg-linkedin-bg",
+    border: "border-linkedin-border",
+    text: "text-linkedin-text",
+  },
+  youtube: {
+    bg: "bg-youtube-bg",
+    border: "border-youtube-border",
+    text: "text-youtube-text",
+  },
+};
+
 export const LABEL_TIPO: Record<TipoPost, string> = {
   produto: "Produto",
   lancamento: "Lançamento",

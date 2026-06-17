@@ -178,7 +178,7 @@ export default function GoalModal({
             <button
               onClick={salvar}
               disabled={salvando || !valores.titulo.trim() || valores.valor_meta <= 0}
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+              className="rounded-md bg-oliva px-4 py-2 text-sm font-medium text-white hover:bg-oliva-forte disabled:opacity-50"
             >
               {salvando ? "Salvando..." : "Salvar"}
             </button>

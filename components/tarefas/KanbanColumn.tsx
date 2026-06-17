@@ -23,7 +23,7 @@ export default function KanbanColumn({
     <div
       ref={setNodeRef}
       className={`flex w-full min-w-[260px] flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3 sm:w-72 ${
-        isOver ? "ring-2 ring-zinc-300" : ""
+        isOver ? "ring-2 ring-oliva" : ""
       }`}
     >
       <div className="flex items-center justify-between">

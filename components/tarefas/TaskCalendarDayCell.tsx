@@ -1,34 +1,30 @@
 "use client";
 
-import { useDroppable } from "@dnd-kit/core";
-import { Post } from "@/lib/types";
-import PostCard from "./PostCard";
+import { Tarefa } from "@/lib/types";
+import TaskChip from "./TaskChip";
 
-export default function DayCell({
+export default function TaskCalendarDayCell({
   dataStr,
   numeroDia,
   noMesAtual,
   ehHoje,
-  posts,
-  onClickPost,
-  onNovoPost,
+  tarefas,
+  onClickTarefa,
+  onNovaTarefa,
 }: {
   dataStr: string;
   numeroDia: number;
   noMesAtual: boolean;
   ehHoje: boolean;
-  posts: Post[];
-  onClickPost: (post: Post) => void;
-  onNovoPost: (data: string) => void;
+  tarefas: Tarefa[];
+  onClickTarefa: (tarefa: Tarefa) => void;
+  onNovaTarefa: (data: string) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: dataStr });
-
   return (
     <div
-      ref={setNodeRef}
       className={`group flex min-h-[110px] flex-col gap-1 border border-zinc-100 p-1.5 sm:min-h-[130px] ${
         noMesAtual ? "bg-white" : "bg-zinc-50"
-      } ${isOver ? "bg-oliva-claro/40 ring-2 ring-oliva" : ""}`}
+      }`}
     >
       <div className="flex items-center justify-between">
         <span
@@ -43,17 +39,17 @@ export default function DayCell({
           {numeroDia}
         </span>
         <button
-          onClick={() => onNovoPost(dataStr)}
+          onClick={() => onNovaTarefa(dataStr)}
           className="invisible rounded px-1 text-xs font-medium text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 group-hover:visible"
-          title="Novo post"
+          title="Nova tarefa"
         >
-          + Novo post
+          + Nova tarefa
         </button>
       </div>
 
       <div className="flex flex-1 flex-col gap-1">
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} onClick={() => onClickPost(post)} />
+        {tarefas.map((tarefa) => (
+          <TaskChip key={tarefa.id} tarefa={tarefa} onClick={() => onClickTarefa(tarefa)} />
         ))}
       </div>
     </div>

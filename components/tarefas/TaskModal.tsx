@@ -3,12 +3,16 @@
 import { useEffect, useState } from "react";
 import { ColunaTarefa, COLUNAS_TAREFA, NovaTarefa, Prioridade, Tarefa } from "@/lib/types";
 
-function valoresIniciais(colunaPadrao: ColunaTarefa): NovaTarefa {
+function valoresIniciais(
+  colunaPadrao: ColunaTarefa,
+  prazoPadrao?: string,
+  responsavelPadrao?: string
+): NovaTarefa {
   return {
     titulo: "",
     descricao: "",
-    responsavel: "",
-    prazo: "",
+    responsavel: responsavelPadrao ?? "",
+    prazo: prazoPadrao ?? "",
     prioridade: "media",
     coluna: colunaPadrao,
   };
@@ -17,12 +21,16 @@ function valoresIniciais(colunaPadrao: ColunaTarefa): NovaTarefa {
 export default function TaskModal({
   tarefa,
   colunaPadrao,
+  prazoPadrao,
+  responsavelPadrao,
   onFechar,
   onSalvar,
   onExcluir,
 }: {
   tarefa: Tarefa | null;
   colunaPadrao: ColunaTarefa;
+  prazoPadrao?: string;
+  responsavelPadrao?: string;
   onFechar: () => void;
   onSalvar: (id: string | null, valores: NovaTarefa) => Promise<void>;
   onExcluir: (id: string) => Promise<void>;
@@ -37,7 +45,7 @@ export default function TaskModal({
           prioridade: tarefa.prioridade,
           coluna: tarefa.coluna,
         }
-      : valoresIniciais(colunaPadrao)
+      : valoresIniciais(colunaPadrao, prazoPadrao, responsavelPadrao)
   );
   const [salvando, setSalvando] = useState(false);
 
@@ -187,7 +195,7 @@ export default function TaskModal({
             <button
               onClick={salvar}
               disabled={salvando || !valores.titulo.trim()}
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+              className="rounded-md bg-oliva px-4 py-2 text-sm font-medium text-white hover:bg-oliva-forte disabled:opacity-50"
             >
               {salvando ? "Salvando..." : "Salvar"}
             </button>

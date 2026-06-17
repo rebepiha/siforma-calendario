@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -15,12 +16,17 @@ export default function TopNav() {
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-produto-text text-sm font-bold text-white">
-            S
-          </span>
-          <span className="text-base font-semibold text-zinc-900">
-            Siforma <span className="text-zinc-400">—</span> Calendário de Marketing
+        <div className="flex items-center gap-2.5">
+          <Image
+            src="/siforma-logo.png"
+            alt="Siforma"
+            width={120}
+            height={33}
+            className="h-7 w-auto"
+            priority
+          />
+          <span className="hidden text-sm text-zinc-400 sm:inline">
+            Calendário de Marketing
           </span>
         </div>
 
@@ -33,8 +39,8 @@ export default function TopNav() {
                 href={aba.href}
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   ativo
-                    ? "bg-zinc-900 text-white"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                    ? "bg-oliva text-white"
+                    : "text-zinc-600 hover:bg-oliva-claro hover:text-oliva-forte"
                 }`}
               >
                 {aba.label}

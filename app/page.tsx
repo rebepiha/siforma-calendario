@@ -158,7 +158,7 @@ export default function PaginaCalendario() {
           <Filtros filtros={filtros} onChange={setFiltros} />
           <button
             onClick={() => abrirNovoPost(format(new Date(), "yyyy-MM-dd"))}
-            className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+            className="rounded-md bg-oliva px-3 py-2 text-sm font-medium text-white hover:bg-oliva-forte"
           >
             + Adicionar post
           </button>

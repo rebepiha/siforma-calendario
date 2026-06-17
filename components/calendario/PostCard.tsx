@@ -3,7 +3,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Post } from "@/lib/types";
-import { CORES_TIPO, LABEL_CANAL, LABEL_FORMATO } from "@/lib/postStyles";
+import { CORES_CANAL, LABEL_CANAL, LABEL_FORMATO } from "@/lib/postStyles";
 
 function IconeStory() {
   return (
@@ -33,7 +33,8 @@ export default function PostCard({
   post: Post;
   onClick: () => void;
 }) {
-  const cores = CORES_TIPO[post.tipo];
+  const cores = CORES_CANAL[post.canal];
+  const ehStory = post.formato === "stories";
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: post.id });
 
@@ -58,10 +59,15 @@ export default function PostCard({
         </span>
       )}
 
-      <div className="flex items-center gap-1 text-[11px] font-medium opacity-80">
-        {post.formato === "stories" && <IconeStory />}
-        <span>
-          {LABEL_CANAL[post.canal]} · {LABEL_FORMATO[post.formato]}
+      <div className="flex items-center justify-between gap-1.5 text-[11px] font-medium opacity-90">
+        <span>{LABEL_CANAL[post.canal]}</span>
+        <span
+          className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+            ehStory ? "bg-oliva text-white" : "bg-white/80 text-grafite-escuro"
+          }`}
+        >
+          {ehStory && <IconeStory />}
+          {LABEL_FORMATO[post.formato]}
         </span>
       </div>
 

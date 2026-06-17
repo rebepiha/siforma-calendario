@@ -77,7 +77,7 @@ export default function PaginaMetas() {
         <h1 className="text-lg font-semibold text-zinc-900">Metas e Progresso</h1>
         <button
           onClick={abrirNovaMeta}
-          className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+          className="rounded-md bg-oliva px-3 py-2 text-sm font-medium text-white hover:bg-oliva-forte"
         >
           + Nova meta
         </button>
