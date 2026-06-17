@@ -1,26 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafafa;
+  --foreground: #1f2430;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-inter);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Produto */
+  --color-produto-bg: #e6f1fb;
+  --color-produto-border: #85b7eb;
+  --color-produto-text: #042c53;
+
+  /* Lançamento */
+  --color-lancamento-bg: #eeedfe;
+  --color-lancamento-border: #afa9ec;
+  --color-lancamento-text: #26215c;
+
+  /* Evento / Formobile */
+  --color-evento-bg: #fbeaf0;
+  --color-evento-border: #ed93b1;
+  --color-evento-text: #72243e;
+
+  /* Não-produto / Carrossel de respiro */
+  --color-naoproduto-bg: #eaf3de;
+  --color-naoproduto-border: #97c459;
+  --color-naoproduto-text: #173404;
+
+  /* Badges */
+  --color-badge-novo: #d4537e;
+  --color-badge-video: #1a6b3c;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
