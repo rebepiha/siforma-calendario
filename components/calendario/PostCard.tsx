@@ -32,7 +32,7 @@ export default function PostCard({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`relative cursor-pointer rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+      className={`relative cursor-pointer rounded-lg border border-white/10 bg-white/10 px-2 py-1.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md ${
         isDragging ? "opacity-50" : ""
       }`}
     >
