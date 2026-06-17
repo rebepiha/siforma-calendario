@@ -1,12 +1,12 @@
-export type Canal = "feed" | "story";
+export type Canal = "instagram" | "linkedin" | "youtube";
 
 export type TipoPost = "produto" | "lancamento" | "nao_produto" | "evento";
 
 export type Formato =
-  | "post"
+  | "feed"
+  | "stories"
   | "reels"
   | "carrossel"
-  | "story_estatico"
   | "enquete"
   | "quiz"
   | "caixa_perguntas";

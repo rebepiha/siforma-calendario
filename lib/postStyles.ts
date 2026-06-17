@@ -1,4 +1,4 @@
-import { Formato, StatusPost, TipoPost } from "./types";
+import { Canal, Formato, StatusPost, TipoPost } from "./types";
 
 export const CORES_TIPO: Record<
   TipoPost,
@@ -34,13 +34,19 @@ export const LABEL_TIPO: Record<TipoPost, string> = {
 };
 
 export const LABEL_FORMATO: Record<Formato, string> = {
-  post: "Post",
+  feed: "Feed",
+  stories: "Stories",
   reels: "Reels",
   carrossel: "Carrossel",
-  story_estatico: "Story estático",
   enquete: "Enquete",
   quiz: "Quiz",
   caixa_perguntas: "Caixa de perguntas",
+};
+
+export const LABEL_CANAL: Record<Canal, string> = {
+  instagram: "Instagram",
+  linkedin: "LinkedIn",
+  youtube: "YouTube",
 };
 
 export const LABEL_STATUS: Record<StatusPost, string> = {

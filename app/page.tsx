@@ -24,6 +24,7 @@ export default function PaginaCalendario() {
   const [filtros, setFiltros] = useState<FiltrosState>({
     canal: "todos",
     tipo: "todos",
+    formato: "todos",
   });
   const [modalAberto, setModalAberto] = useState(false);
   const [postSelecionado, setPostSelecionado] = useState<Post | null>(null);
@@ -58,6 +59,7 @@ export default function PaginaCalendario() {
     return posts.filter((post) => {
       if (filtros.canal !== "todos" && post.canal !== filtros.canal) return false;
       if (filtros.tipo !== "todos" && post.tipo !== filtros.tipo) return false;
+      if (filtros.formato !== "todos" && post.formato !== filtros.formato) return false;
       return true;
     });
   }, [posts, filtros]);

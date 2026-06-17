@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { Canal, Formato, NovoPost, Post, StatusPost, TipoPost } from "@/lib/types";
-import { LABEL_FORMATO, LABEL_STATUS, LABEL_TIPO } from "@/lib/postStyles";
+import { LABEL_CANAL, LABEL_FORMATO, LABEL_STATUS, LABEL_TIPO } from "@/lib/postStyles";
 
 function valoresIniciais(dataPadrao: string): NovoPost {
   return {
     titulo: "",
     data: dataPadrao,
-    canal: "feed",
+    canal: "instagram",
     tipo: "produto",
     categoria: "",
-    formato: "post",
+    formato: "feed",
     video_pronto: false,
     novo_produto: false,
     status: "pendente",
@@ -129,8 +129,11 @@ export default function PostModal({
                 onChange={(e) => campo("canal", e.target.value as Canal)}
                 className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
               >
-                <option value="feed">Feed</option>
-                <option value="story">Story</option>
+                {(Object.keys(LABEL_CANAL) as Canal[]).map((canal) => (
+                  <option key={canal} value={canal}>
+                    {LABEL_CANAL[canal]}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

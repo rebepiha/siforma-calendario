@@ -3,7 +3,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Post } from "@/lib/types";
-import { CORES_TIPO, LABEL_FORMATO } from "@/lib/postStyles";
+import { CORES_TIPO, LABEL_CANAL, LABEL_FORMATO } from "@/lib/postStyles";
 
 function IconeStory() {
   return (
@@ -59,8 +59,10 @@ export default function PostCard({
       )}
 
       <div className="flex items-center gap-1 text-[11px] font-medium opacity-80">
-        {post.canal === "story" && <IconeStory />}
-        <span>{LABEL_FORMATO[post.formato]}</span>
+        {post.formato === "stories" && <IconeStory />}
+        <span>
+          {LABEL_CANAL[post.canal]} · {LABEL_FORMATO[post.formato]}
+        </span>
       </div>
 
       <p className="text-sm font-semibold leading-snug">{post.titulo}</p>
