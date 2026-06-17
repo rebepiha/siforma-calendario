@@ -74,7 +74,7 @@ export default function PaginaMetas() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-zinc-900">Metas e Progresso</h1>
+        <h1 className="text-lg font-semibold text-zinc-100">Metas e Progresso</h1>
         <button
           onClick={abrirNovaMeta}
           className="rounded-md bg-oliva px-3 py-2 text-sm font-medium text-white hover:bg-oliva-forte"
@@ -84,15 +84,15 @@ export default function PaginaMetas() {
       </div>
 
       {erro && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
           Erro ao carregar metas: {erro}
         </p>
       )}
 
       {carregando ? (
-        <p className="py-12 text-center text-sm text-zinc-400">Carregando...</p>
+        <p className="py-12 text-center text-sm text-zinc-600">Carregando...</p>
       ) : metas.length === 0 ? (
-        <p className="py-12 text-center text-sm text-zinc-400">
+        <p className="py-12 text-center text-sm text-zinc-600">
           Nenhuma meta cadastrada ainda. Clique em &ldquo;+ Nova meta&rdquo; para começar.
         </p>
       ) : (

@@ -8,7 +8,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { addMonths, format, subMonths } from "date-fns";
+import { addWeeks, endOfWeek, format, startOfWeek, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
 import { ColunaTarefa, COLUNAS_TAREFA, NovaTarefa, Tarefa } from "@/lib/types";
@@ -32,7 +32,7 @@ export default function PaginaTarefas() {
   );
 
   const [visualizacao, setVisualizacao] = useState<Visualizacao>("kanban");
-  const [mesAtual, setMesAtual] = useState(() => new Date());
+  const [semanaAtual, setSemanaAtual] = useState(() => new Date());
   const [filtroResponsavel, setFiltroResponsavel] = useState("Victoria");
 
   const sensors = useSensors(
@@ -144,6 +144,14 @@ export default function PaginaTarefas() {
     }
   }
 
+  const inicioSemana = startOfWeek(semanaAtual, { weekStartsOn: 1 });
+  const fimSemana = endOfWeek(semanaAtual, { weekStartsOn: 1 });
+  const rotuloSemana = `${format(inicioSemana, "d MMM", { locale: ptBR })} – ${format(
+    fimSemana,
+    "d MMM yyyy",
+    { locale: ptBR }
+  )}`;
+
   function aoFinalizarArraste(evento: DragEndEvent) {
     const { active, over } = evento;
     if (!over) return;
@@ -159,14 +167,14 @@ export default function PaginaTarefas() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-lg font-semibold text-zinc-900">Tarefas de Marketing</h1>
-          <div className="flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 p-1">
+          <h1 className="text-lg font-semibold text-zinc-100">Tarefas de Marketing</h1>
+          <div className="flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-900 p-1">
             <button
               onClick={() => setVisualizacao("kanban")}
               className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
                 visualizacao === "kanban"
                   ? "bg-oliva text-white"
-                  : "text-zinc-600 hover:bg-white hover:text-zinc-900"
+                  : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
               }`}
             >
               Kanban
@@ -176,7 +184,7 @@ export default function PaginaTarefas() {
               className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
                 visualizacao === "calendario"
                   ? "bg-oliva text-white"
-                  : "text-zinc-600 hover:bg-white hover:text-zinc-900"
+                  : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
               }`}
             >
               Calendário
@@ -188,19 +196,19 @@ export default function PaginaTarefas() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setMesAtual((m) => subMonths(m, 1))}
-                className="rounded-md border border-zinc-300 px-2.5 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100"
-                aria-label="Mês anterior"
+                onClick={() => setSemanaAtual((s) => subWeeks(s, 1))}
+                className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
+                aria-label="Semana anterior"
               >
                 ←
               </button>
-              <span className="min-w-[140px] text-center text-sm font-semibold capitalize text-zinc-900">
-                {format(mesAtual, "MMMM yyyy", { locale: ptBR })}
+              <span className="min-w-[170px] text-center text-sm font-semibold text-zinc-100">
+                {rotuloSemana}
               </span>
               <button
-                onClick={() => setMesAtual((m) => addMonths(m, 1))}
-                className="rounded-md border border-zinc-300 px-2.5 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100"
-                aria-label="Próximo mês"
+                onClick={() => setSemanaAtual((s) => addWeeks(s, 1))}
+                className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
+                aria-label="Próxima semana"
               >
                 →
               </button>
@@ -208,7 +216,7 @@ export default function PaginaTarefas() {
             <select
               value={filtroResponsavel}
               onChange={(e) => setFiltroResponsavel(e.target.value)}
-              className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700"
+              className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300"
             >
               <option value="todos">Todos os responsáveis</option>
               {responsaveisConhecidos.map((nome) => (
@@ -222,13 +230,13 @@ export default function PaginaTarefas() {
       </div>
 
       {erro && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
           Erro ao carregar tarefas: {erro}
         </p>
       )}
 
       {carregando ? (
-        <p className="py-12 text-center text-sm text-zinc-400">Carregando...</p>
+        <p className="py-12 text-center text-sm text-zinc-600">Carregando...</p>
       ) : visualizacao === "kanban" ? (
         <DndContext sensors={sensors} onDragEnd={aoFinalizarArraste}>
           <div className="flex flex-col gap-3 overflow-x-auto pb-2 sm:flex-row">
@@ -247,20 +255,25 @@ export default function PaginaTarefas() {
       ) : (
         <div className="flex flex-col gap-3">
           {tarefasSemPrazo.length > 0 && (
-            <div className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+            <div className="flex flex-col gap-2 rounded-xl border border-zinc-700 bg-zinc-900 p-3">
               <h2 className="text-xs font-semibold text-zinc-500">Sem prazo definido</h2>
               <div className="flex flex-wrap gap-2">
                 {tarefasSemPrazo.map((tarefa) => (
                   <div key={tarefa.id} className="w-56">
-                    <TaskChip tarefa={tarefa} onClick={() => abrirEdicaoTarefa(tarefa)} />
+                    <TaskChip
+                      tarefa={tarefa}
+                      mostrarResponsavel={filtroResponsavel === "todos"}
+                      onClick={() => abrirEdicaoTarefa(tarefa)}
+                    />
                   </div>
                 ))}
               </div>
             </div>
           )}
           <TaskCalendarGrid
-            mesAtual={mesAtual}
+            semanaAtual={semanaAtual}
             tarefas={tarefasComPrazo}
+            mostrarResponsavel={filtroResponsavel === "todos"}
             onClickTarefa={abrirEdicaoTarefa}
             onNovaTarefa={abrirNovaTarefaNoDia}
           />

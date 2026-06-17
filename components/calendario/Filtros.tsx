@@ -23,7 +23,7 @@ export default function Filtros({
         onChange={(e) =>
           onChange({ ...filtros, canal: e.target.value as FiltrosState["canal"] })
         }
-        className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700"
+        className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300"
       >
         <option value="todos">Todos os canais</option>
         {(Object.keys(LABEL_CANAL) as Canal[]).map((canal) => (
@@ -38,7 +38,7 @@ export default function Filtros({
         onChange={(e) =>
           onChange({ ...filtros, tipo: e.target.value as FiltrosState["tipo"] })
         }
-        className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700"
+        className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300"
       >
         <option value="todos">Todos os tipos</option>
         {(Object.keys(LABEL_TIPO) as TipoPost[]).map((tipo) => (
@@ -53,7 +53,7 @@ export default function Filtros({
         onChange={(e) =>
           onChange({ ...filtros, formato: e.target.value as FiltrosState["formato"] })
         }
-        className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700"
+        className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300"
       >
         <option value="todos">Todos os formatos</option>
         {(Object.keys(LABEL_FORMATO) as Formato[]).map((formato) => (

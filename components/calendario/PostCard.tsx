@@ -3,14 +3,14 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Post } from "@/lib/types";
-import { CORES_CANAL, LABEL_CANAL, LABEL_FORMATO } from "@/lib/postStyles";
+import { CORES_CANAL, CORES_FORMATO, LABEL_CANAL, LABEL_FORMATO } from "@/lib/postStyles";
 
 function IconeStory() {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
-      className="h-3.5 w-3.5 shrink-0"
+      className="h-3 w-3 shrink-0"
       aria-label="Story"
     >
       <circle
@@ -33,7 +33,8 @@ export default function PostCard({
   post: Post;
   onClick: () => void;
 }) {
-  const cores = CORES_CANAL[post.canal];
+  const corCanal = CORES_CANAL[post.canal];
+  const corFormato = CORES_FORMATO[post.formato];
   const ehStory = post.formato === "stories";
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: post.id });
@@ -49,7 +50,7 @@ export default function PostCard({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`relative cursor-pointer rounded-lg border px-2 py-1.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${cores.bg} ${cores.border} ${cores.text} ${
+      className={`relative cursor-pointer rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
         isDragging ? "opacity-50" : ""
       }`}
     >
@@ -59,22 +60,20 @@ export default function PostCard({
         </span>
       )}
 
-      <div className="flex items-center justify-between gap-1.5 text-[11px] font-medium opacity-90">
-        <span>{LABEL_CANAL[post.canal]}</span>
-        <span
-          className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-            ehStory ? "bg-oliva text-white" : "bg-white/80 text-grafite-escuro"
-          }`}
-        >
+      <span className={`mb-1.5 block h-1 w-7 rounded-full ${corFormato.barra}`} />
+
+      <div className="flex items-center justify-between gap-1.5 text-[11px] font-medium">
+        <span className={corCanal.text}>{LABEL_CANAL[post.canal]}</span>
+        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${corFormato.texto}`}>
           {ehStory && <IconeStory />}
           {LABEL_FORMATO[post.formato]}
         </span>
       </div>
 
-      <p className="text-sm font-semibold leading-snug">{post.titulo}</p>
+      <p className="text-sm font-semibold leading-snug text-zinc-100">{post.titulo}</p>
 
       {post.categoria && (
-        <p className="truncate text-[11px] opacity-70">{post.categoria}</p>
+        <p className="truncate text-[11px] text-zinc-500">{post.categoria}</p>
       )}
 
       {post.video_pronto && (

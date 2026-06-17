@@ -14,18 +14,18 @@ export default function TopNav() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white">
+    <header className="sticky top-0 z-30 border-b border-zinc-700 bg-zinc-800">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-2.5">
           <Image
-            src="/siforma-logo.png"
+            src="/siforma-logo-dark.png"
             alt="Siforma"
             width={120}
             height={33}
             className="h-7 w-auto"
             priority
           />
-          <span className="hidden text-sm text-zinc-400 sm:inline">
+          <span className="hidden text-sm text-zinc-600 sm:inline">
             Calendário de Marketing
           </span>
         </div>
@@ -40,7 +40,7 @@ export default function TopNav() {
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   ativo
                     ? "bg-oliva text-white"
-                    : "text-zinc-600 hover:bg-oliva-claro hover:text-oliva-forte"
+                    : "text-zinc-400 hover:bg-zinc-900 hover:text-oliva-claro"
                 }`}
               >
                 {aba.label}

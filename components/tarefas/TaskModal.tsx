@@ -76,16 +76,16 @@ export default function TaskModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="absolute inset-0" onClick={onFechar} />
-      <div className="relative flex max-h-[90vh] w-full max-w-md flex-col overflow-y-auto rounded-xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
-          <h2 className="text-base font-semibold text-zinc-900">
+      <div className="relative flex max-h-[90vh] w-full max-w-md flex-col overflow-y-auto rounded-xl bg-zinc-800 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-zinc-700 px-5 py-4">
+          <h2 className="text-base font-semibold text-zinc-100">
             {tarefa ? "Editar tarefa" : "Nova tarefa"}
           </h2>
           <button
             onClick={onFechar}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+            className="rounded p-1 text-zinc-600 hover:bg-zinc-900 hover:text-zinc-300"
           >
             ✕
           </button>
@@ -93,62 +93,62 @@ export default function TaskModal({
 
         <div className="flex flex-col gap-4 px-5 py-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">
+            <label className="mb-1 block text-xs font-medium text-zinc-400">
               Título
             </label>
             <input
               value={valores.titulo}
               onChange={(e) => campo("titulo", e.target.value)}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">
+            <label className="mb-1 block text-xs font-medium text-zinc-400">
               Descrição
             </label>
             <textarea
               value={valores.descricao ?? ""}
               onChange={(e) => campo("descricao", e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
+              <label className="mb-1 block text-xs font-medium text-zinc-400">
                 Responsável
               </label>
               <input
                 value={valores.responsavel ?? ""}
                 onChange={(e) => campo("responsavel", e.target.value)}
                 placeholder="Ex: Victoria"
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
+              <label className="mb-1 block text-xs font-medium text-zinc-400">
                 Prazo
               </label>
               <input
                 type="date"
                 value={valores.prazo ?? ""}
                 onChange={(e) => campo("prazo", e.target.value)}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
+              <label className="mb-1 block text-xs font-medium text-zinc-400">
                 Prioridade
               </label>
               <select
                 value={valores.prioridade}
                 onChange={(e) => campo("prioridade", e.target.value as Prioridade)}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
               >
                 <option value="baixa">Baixa</option>
                 <option value="media">Média</option>
@@ -156,13 +156,13 @@ export default function TaskModal({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
+              <label className="mb-1 block text-xs font-medium text-zinc-400">
                 Coluna
               </label>
               <select
                 value={valores.coluna}
                 onChange={(e) => campo("coluna", e.target.value as ColunaTarefa)}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
               >
                 {COLUNAS_TAREFA.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -174,11 +174,11 @@ export default function TaskModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-zinc-200 px-5 py-4">
+        <div className="flex items-center justify-between gap-2 border-t border-zinc-700 px-5 py-4">
           {tarefa ? (
             <button
               onClick={() => onExcluir(tarefa.id)}
-              className="rounded-md px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              className="rounded-md px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
             >
               Excluir
             </button>
@@ -188,7 +188,7 @@ export default function TaskModal({
           <div className="flex gap-2">
             <button
               onClick={onFechar}
-              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-900"
             >
               Cancelar
             </button>

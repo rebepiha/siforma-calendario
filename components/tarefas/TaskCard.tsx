@@ -38,7 +38,7 @@ export default function TaskCard({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`cursor-pointer rounded-lg border border-zinc-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+      className={`cursor-pointer rounded-lg border border-zinc-700 bg-zinc-800 p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
         isDragging ? "opacity-50" : ""
       }`}
     >
@@ -55,14 +55,14 @@ export default function TaskCard({
         )}
       </div>
 
-      <p className="text-sm font-medium leading-snug text-zinc-900">
+      <p className="text-sm font-medium leading-snug text-zinc-100">
         {tarefa.titulo}
       </p>
 
       {tarefa.prazo && (
         <p
           className={`mt-2 text-xs font-medium ${
-            atrasada ? "text-red-600" : "text-zinc-400"
+            atrasada ? "text-red-400" : "text-zinc-600"
           }`}
         >
           {atrasada ? "Atrasada · " : "Prazo: "}

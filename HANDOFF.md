@@ -18,7 +18,15 @@
 - **Vercel**: workspace `siforma-marketing`, projeto `siforma-calendario`, importado via
   GitHub → auto-deploy a cada push em `main`. Projeto local linkado em `.vercel/project.json`.
 - **Stack**: Next.js 16 (App Router) + TypeScript + Tailwind CSS 4, `@dnd-kit` para
-  drag-and-drop, `@supabase/supabase-js`, `date-fns`.
+  drag-and-drop, `@supabase/supabase-js`, `date-fns`. Fonte: Mulish (`next/font/google`).
+- **Identidade visual**: app inteiro em **tema escuro** (ver Sessão 2). Brandbook oficial
+  em `/Users/rebep1/Documents/SIFORMA/Marca - RGB/BRANDBOOK SIFORMA.pdf` (cópia também na
+  pasta pai `SIFORMA/`) — paleta oliva/grafite vem de lá e é usada nos acentos (nav ativo,
+  botões primários, destaque de "hoje"), mas a cor dos cards do calendário editorial
+  (laranja/azul/vermelho) e das etiquetas de formato foi um pedido específico do usuário,
+  não vem do brandbook. Logo: `public/siforma-logo.png` (fundo claro, não usado
+  atualmente) e `public/siforma-logo-dark.png` (fundo escuro, em uso no `TopNav` — cópia
+  de `ASSINATURAS PNG/PNG - SEM TAGLINE/SIFORMA SEM  (6).png`).
 - **Sem autenticação**: acesso por link aberto. RLS habilitado nas 3 tabelas mas com
   política `using (true) with check (true)` (qualquer um com o link lê/escreve).
 - **Ambiente local**: máquina não tinha Node/npm/Homebrew — Node foi instalado via `nvm`
@@ -38,6 +46,17 @@
   do nome/email reais do usuário — não corrigido ainda, não é bloqueante.
 - Canal `linkedin` existe no schema mas ainda não tem nenhum post de exemplo usando-o
   (nem era pedido) — só fica disponível para quando a equipe quiser usar.
+- As cores por canal (texto laranja=Instagram/azul=LinkedIn/vermelho=YouTube, ver
+  Sessão 2) foram validadas só com posts de teste inseridos e removidos manualmente —
+  os 45 posts reais hoje são quase todos Instagram (há 1 "Teste" em LinkedIn). A
+  combinação final ficou: card com fundo escuro uniforme (`bg-zinc-800`), nome do canal
+  em texto colorido (`CORES_CANAL` em `lib/postStyles.ts`), e uma barrinha colorida no
+  topo do card indicando o *formato* (`CORES_FORMATO`, mesma fonte). Mudar é só editar
+  esses dois objetos.
+- Tema escuro foi aplicado convertendo classes Tailwind (não há `dark:` variants nem
+  toggle claro/escuro — é hardcoded escuro). Se um dia quiserem voltar ao tema claro ou
+  oferecer os dois, vai precisar reintroduzir as classes claras como variante, não é
+  uma reversão trivial de 1 linha.
 
 ## Como autenticar (se precisar fazer push/deploy futuro)
 
@@ -54,6 +73,139 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 2 — 2026-06-17
+
+**Contexto**: usuário pediu três coisas no início da sessão: (1) aplicar a identidade
+visual da Siforma usando o brandbook oficial, (2) trocar a cor dos cards do calendário
+editorial — etiquetas de cor para story/feed e canal em vez da cor por `tipo` que
+existia — e (3) uma vista de calendário para as tarefas da Victoria (um dia, uma lista
+de tarefas). Depois de uma primeira implementação, o usuário pediu ajustes e por fim
+mandou duas imagens de referência (prints de um board do Notion) pedindo para seguir
+aquele modelo visual, o que levou a uma revisão grande do design.
+
+**1. Brandbook — leitura e extração**
+- Usuário apontou o caminho `/Users/rebep1/Documents/SIFORMA/Marca - RGB`. Achei o PDF
+  `BRANDBOOK SIFORMA.pdf` (42 páginas) e também uma pasta `ASSINATURAS PNG` com várias
+  variações do logo já exportadas.
+- Máquina não tinha `poppler`/`ghostscript`/ImageMagick para renderizar PDF em imagem e
+  não há Homebrew. Resolvi instalando `pymupdf` via `pip3 install --user` (lib
+  autocontida, não depende de binários de sistema) e renderizando cada página como PNG
+  com `fitz` para poder "ver" o conteúdo do PDF.
+- Paleta extraída: **Verde Oliva** `#68A04A` (principal), **Oliva Forte** `#375126`,
+  **Oliva Claro** `#DBF2CC`, **Cinza Grafite** `#494B4C` (principal), **Grafite Escuro**
+  `#2E3133`, **Grafite Claro** `#7F7F7F`. Apenas essas 2 matizes existem oficialmente
+  (sem 3ª cor). Tipografia oficial: **Mulish**. Logo oficial tem variação para fundo
+  claro (ícone+texto em oliva/grafite médio) e para fundo escuro (oliva/grafite claro).
+
+**2. Primeira rodada (depois revisada — ver item 4)**
+- Troquei a fonte de Inter para Mulish em `app/layout.tsx`, adicionei os tokens de cor
+  da marca em `app/globals.css`, troquei o placeholder "S" do `TopNav` pelo logo real
+  (`public/siforma-logo.png`), e recolori os botões primários e o estado ativo da nav
+  para verde oliva.
+- Primeira versão das cores de canal: testei com fundo do card tingido por canal
+  (Instagram=verde oliva claro, LinkedIn=cinza claro, YouTube=grafite escuro sólido) —
+  essa versão **foi descartada** depois (ver item 4).
+- Primeira versão do calendário de tarefas: vista **mensal** (grid 7×~5 igual ao
+  calendário editorial), com toggle Kanban/Calendário, filtro por responsável (default
+  "Victoria"), seção "Sem prazo definido". O usuário depois pediu para trocar de mensal
+  para **semanal** (uma linha de 7 colunas, bem mais alta, pra caber muitas tarefas por
+  dia sem aperto) — implementado em `components/tarefas/TaskCalendarGrid.tsx` /
+  `TaskCalendarDayCell.tsx`, navegação trocada de `addMonths/subMonths` para
+  `addWeeks/subWeeks` em `app/tarefas/page.tsx`.
+- Nessa mesma rodada o usuário também pediu pra trocar a cor de canal pra algo mais
+  neutro: laranja (Instagram) / azul (LinkedIn) / vermelho (YouTube), tons claros e
+  discretos — e que a etiqueta de formato (story/feed/etc.) tivesse cor própria por
+  formato. Implementei isso em `lib/postStyles.ts` (`CORES_CANAL` com tons pastel
+  `orange-50/blue-50/red-50`, `CORES_FORMATO` novo, um tom por formato).
+
+**3. Verificação visual sem navegador interativo**
+- Não há ferramenta de browser/screenshot disponível por padrão neste ambiente de
+  agente. Resolvi instalando `playwright` via `pip3 install --user` e usando o Chrome
+  já instalado no Mac (`channel="chrome"`, sem precisar baixar Chromium) para abrir o
+  `localhost:3000`, clicar em elementos (ex: toggle "Calendário") e tirar screenshot.
+  Para casos simples (sem clique) usei `Google Chrome --headless=new --screenshot=...`
+  direto, mais rápido.
+- Para validar visualmente cores de canal/formato e os chips de tarefa, inserí posts e
+  tarefas temporários direto via REST API do Supabase (`curl` + anon key do
+  `.env.local`), tirei o print, e **sempre apaguei** os registros de teste depois
+  (filtrando por prefixo `TESTE` no título). Nenhum dado de teste ficou no banco.
+
+**4. Pivô grande: tema escuro + redesign inspirado em referências do Notion**
+- Usuário mandou 2 imagens: uma de um board "Tarefas Victoria" no Notion (vista semanal,
+  tema escuro, colunas por dia, dia atual destacado com borda azul, cards minimalistas
+  só com título, sem avatar — porque o board já é por pessoa) e um close-up de cards
+  com uma **barrinha colorida fina no topo** indicando categoria (ex: dourado=Carrossel,
+  roxo=Stories, azul=LinkedIn), em vez de pill/badge.
+- Perguntei se era só pra seguir a estrutura/layout mantendo tema claro, ou migrar tudo
+  pra escuro — usuário respondeu **"tema escuro no app todo"**. Isso expandiu bastante o
+  escopo (afeta todas as 3 abas, todos os componentes).
+- **Conversão de tema**: troquei `--background`/`--foreground` em `app/globals.css` pra
+  tons escuros (`#0e0f11` / `#e4e4e7`) e adicionei `color-scheme: dark` (faz o navegador
+  renderizar `<select>`, scrollbar, date picker nativos no estilo escuro automaticamente).
+  Converti as classes Tailwind claras→escuras em massa com `perl -pi -e` rodando em todos
+  os arquivos de `app/` e `components/` de uma vez (mapeamento tipo `bg-white→bg-zinc-900`,
+  `text-zinc-900→text-zinc-100`, `text-zinc-600↔text-zinc-400` invertido, etc).
+  - **Armadilha 1**: usei um placeholder `@@TMP600@@` no meio da troca de
+    `text-zinc-600`/`text-zinc-400` (pra evitar que uma regra desfizesse a outra) mas
+    escrevi o placeholder sem escapar o `@` no **lado de substituição** do `s///` do
+    Perl — Perl interpreta `@algumacoisa` como interpolação de array nesse contexto, e
+    silenciosamente "comeu" o placeholder, deixando literais `@@@` em vários arquivos
+    (`TopNav.tsx`, `app/tarefas/page.tsx`, `TaskModal.tsx`, etc). Corrigido com um
+    replace global de `@@@` → `text-zinc-400` (o único valor que o placeholder podia
+    ter sido) depois de confirmar visualmente que era seguro.
+  - **Armadilha 2**: a regra `bg-red-50→bg-red-500/10` colidiu como *substring* com
+    `bg-red-500` (que já existia, ex. cor do indicador de prioridade "alta") — virou
+    `bg-red-500/100` (sufixo de opacidade indevido). Corrigido manualmente em
+    `GoalCard.tsx`, `TaskCard.tsx`, `TaskChip.tsx`.
+  - **Armadilha 3 (mais sutil)**: o mapeamento direto `bg-white→bg-zinc-900` e
+    `bg-zinc-50→bg-zinc-800` inverteu a relação de profundidade que existia no tema
+    claro (lá, container=`zinc-50` mais escuro que o card=`white`; depois da troca
+    ingênua, container=`zinc-800` ficou **mais claro** que o card=`zinc-900`, invertendo
+    o efeito "card destacado sobre o fundo do container"). Corrigi com uma segunda
+    passada trocando `bg-zinc-900 ↔ bg-zinc-800` (swap) em todos os arquivos, o que
+    resolveu de uma vez tanto o `KanbanColumn`/`TaskCard` quanto o esmaecimento dos dias
+    fora do mês no `DayCell.tsx`. Também tive que ajustar manualmente a borda dos grids
+    de dia (`DayCell.tsx`/`TaskCalendarDayCell.tsx`) de `border-zinc-800` pra
+    `border-zinc-700`, já que depois do swap ela ficou da mesma cor do card (invisível).
+  - Encontrei também um `text-zinc-800` perdido no `TaskChip.tsx` (cor de texto escura
+    que nenhuma regra cobria, sobrou do código original em tema claro) — texto ficaria
+    invisível num card escuro. Corrigido pra `text-zinc-200` ao reescrever o componente.
+- **Logo**: trocado para a variante "fundos escuros" do brandbook
+  (`SIFORMA SEM  (6).png` → `public/siforma-logo-dark.png`), usada agora no `TopNav`.
+- **PostCard redesenhado** (`components/calendario/PostCard.tsx` +
+  `lib/postStyles.ts`): card passou a ter fundo escuro uniforme (não mais tingido por
+  canal); `CORES_CANAL` agora só define cor de **texto** (laranja/azul/vermelho) pro
+  nome do canal; `CORES_FORMATO` agora define `{ barra, texto }` — uma barrinha fina
+  (`h-1 w-7 rounded-full`) no topo do card com cor própria por formato (cinza=Feed,
+  violeta=Stories, rosa=Reels, âmbar=Carrossel, teal=Enquete, índigo=Quiz,
+  ciano=Caixa de perguntas), igual ao estilo do print de referência.
+- **TaskChip e calendário semanal redesenhados** seguindo a referência: dia atual com
+  borda superior verde-oliva (2px) + texto do cabeçalho em oliva; fins de semana com
+  fundo ligeiramente mais escuro (`bg-zinc-900/60`) pra parecer "menos relevante"; ícone
+  de check verde (SVG inline) substituindo o ponto de prioridade quando a tarefa está
+  concluída; **avatar do responsável só aparece quando o filtro é "Todos os
+  responsáveis"** (`mostrarResponsavel` prop, passada de `app/tarefas/page.tsx` →
+  `TaskCalendarGrid` → `TaskCalendarDayCell` → `TaskChip`) — fica redundante mostrar
+  avatar quando já filtrou pra uma pessoa só, igual ao board "Tarefas Victoria" do
+  Notion que não mostra avatar nenhum.
+- Removido `CORES_TIPO` (e os tokens `--color-produto-*`/`lancamento-*`/`evento-*`/
+  `naoproduto-*` em `globals.css`) de `lib/postStyles.ts` — ficou morto depois que o
+  card passou a colorir por canal em vez de por tipo (o campo `tipo` continua existindo
+  no schema/modal/filtro, só não tem mais cor associada).
+
+**5. Testes**
+- `npm run lint` e `npm run build` passaram limpos depois de cada rodada.
+- Validação visual feita com Playwright/Chrome headless (ver item 3), inclusive
+  conferindo as 3 cores de canal, as 7 cores de formato, o destaque do dia atual, tarefa
+  atrasada (borda vermelha), tarefa concluída (check + tachado), e a troca de avatar
+  visível/oculto ao mudar o filtro de responsável — tudo com dados de teste inseridos e
+  removidos via REST API do Supabase.
+
+**6. Pendente / observações pro futuro**
+- Ver bullets atualizados em "Pendências" no topo deste arquivo (cores por canal ainda
+  não vistas com dados reais de LinkedIn/YouTube; tema escuro é hardcoded, não tem
+  toggle nem variante clara).
 
 ### Sessão 1 — 2026-06-17
 

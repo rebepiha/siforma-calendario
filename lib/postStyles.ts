@@ -1,50 +1,19 @@
 import { Canal, Formato, StatusPost, TipoPost } from "./types";
 
-export const CORES_TIPO: Record<
-  TipoPost,
-  { bg: string; border: string; text: string }
-> = {
-  produto: {
-    bg: "bg-produto-bg",
-    border: "border-produto-border",
-    text: "text-produto-text",
-  },
-  lancamento: {
-    bg: "bg-lancamento-bg",
-    border: "border-lancamento-border",
-    text: "text-lancamento-text",
-  },
-  evento: {
-    bg: "bg-evento-bg",
-    border: "border-evento-border",
-    text: "text-evento-text",
-  },
-  nao_produto: {
-    bg: "bg-naoproduto-bg",
-    border: "border-naoproduto-border",
-    text: "text-naoproduto-text",
-  },
+export const CORES_CANAL: Record<Canal, { text: string }> = {
+  instagram: { text: "text-orange-400" },
+  linkedin: { text: "text-blue-400" },
+  youtube: { text: "text-red-400" },
 };
 
-export const CORES_CANAL: Record<
-  Canal,
-  { bg: string; border: string; text: string }
-> = {
-  instagram: {
-    bg: "bg-instagram-bg",
-    border: "border-instagram-border",
-    text: "text-instagram-text",
-  },
-  linkedin: {
-    bg: "bg-linkedin-bg",
-    border: "border-linkedin-border",
-    text: "text-linkedin-text",
-  },
-  youtube: {
-    bg: "bg-youtube-bg",
-    border: "border-youtube-border",
-    text: "text-youtube-text",
-  },
+export const CORES_FORMATO: Record<Formato, { barra: string; texto: string }> = {
+  feed: { barra: "bg-zinc-500", texto: "text-zinc-400" },
+  stories: { barra: "bg-violet-500", texto: "text-violet-400" },
+  reels: { barra: "bg-pink-500", texto: "text-pink-400" },
+  carrossel: { barra: "bg-amber-500", texto: "text-amber-400" },
+  enquete: { barra: "bg-teal-500", texto: "text-teal-400" },
+  quiz: { barra: "bg-indigo-500", texto: "text-indigo-400" },
+  caixa_perguntas: { barra: "bg-cyan-500", texto: "text-cyan-400" },
 };
 
 export const LABEL_TIPO: Record<TipoPost, string> = {

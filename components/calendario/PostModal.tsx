@@ -79,16 +79,16 @@ export default function PostModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/30">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/60">
       <div className="absolute inset-0" onClick={onFechar} />
-      <div className="relative flex h-full w-full max-w-md flex-col overflow-y-auto bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
-          <h2 className="text-base font-semibold text-zinc-900">
+      <div className="relative flex h-full w-full max-w-md flex-col overflow-y-auto bg-zinc-800 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-zinc-700 px-5 py-4">
+          <h2 className="text-base font-semibold text-zinc-100">
             {post ? "Editar post" : "Novo post"}
           </h2>
           <button
             onClick={onFechar}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+            className="rounded p-1 text-zinc-600 hover:bg-zinc-900 hover:text-zinc-300"
           >
             ✕
           </button>
@@ -96,38 +96,38 @@ export default function PostModal({
 
         <div className="flex flex-1 flex-col gap-4 px-5 py-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">
+            <label className="mb-1 block text-xs font-medium text-zinc-400">
               Título
             </label>
             <input
               value={valores.titulo}
               onChange={(e) => campo("titulo", e.target.value)}
               placeholder="Nome do produto ou tema do post"
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">
+            <label className="mb-1 block text-xs font-medium text-zinc-400">
               Data
             </label>
             <input
               type="date"
               value={valores.data}
               onChange={(e) => campo("data", e.target.value)}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
+              <label className="mb-1 block text-xs font-medium text-zinc-400">
                 Canal
               </label>
               <select
                 value={valores.canal}
                 onChange={(e) => campo("canal", e.target.value as Canal)}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
               >
                 {(Object.keys(LABEL_CANAL) as Canal[]).map((canal) => (
                   <option key={canal} value={canal}>
@@ -137,13 +137,13 @@ export default function PostModal({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
+              <label className="mb-1 block text-xs font-medium text-zinc-400">
                 Tipo
               </label>
               <select
                 value={valores.tipo}
                 onChange={(e) => campo("tipo", e.target.value as TipoPost)}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
               >
                 {(Object.keys(LABEL_TIPO) as TipoPost[]).map((tipo) => (
                   <option key={tipo} value={tipo}>
@@ -156,13 +156,13 @@ export default function PostModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
+              <label className="mb-1 block text-xs font-medium text-zinc-400">
                 Formato
               </label>
               <select
                 value={valores.formato}
                 onChange={(e) => campo("formato", e.target.value as Formato)}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
               >
                 {(Object.keys(LABEL_FORMATO) as Formato[]).map((formato) => (
                   <option key={formato} value={formato}>
@@ -172,13 +172,13 @@ export default function PostModal({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
+              <label className="mb-1 block text-xs font-medium text-zinc-400">
                 Status
               </label>
               <select
                 value={valores.status}
                 onChange={(e) => campo("status", e.target.value as StatusPost)}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
               >
                 {(Object.keys(LABEL_STATUS) as StatusPost[]).map((status) => (
                   <option key={status} value={status}>
@@ -190,68 +190,68 @@ export default function PostModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">
+            <label className="mb-1 block text-xs font-medium text-zinc-400">
               Categoria
             </label>
             <input
               value={valores.categoria ?? ""}
               onChange={(e) => campo("categoria", e.target.value)}
               placeholder="Ex: Tendências, Marcenarias, Formobile..."
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
             />
           </div>
 
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-zinc-700">
+            <label className="flex items-center gap-2 text-sm text-zinc-300">
               <input
                 type="checkbox"
                 checked={valores.novo_produto}
                 onChange={(e) => campo("novo_produto", e.target.checked)}
-                className="h-4 w-4 rounded border-zinc-300"
+                className="h-4 w-4 rounded border-zinc-700"
               />
               Produto novo (NOVO)
             </label>
-            <label className="flex items-center gap-2 text-sm text-zinc-700">
+            <label className="flex items-center gap-2 text-sm text-zinc-300">
               <input
                 type="checkbox"
                 checked={valores.video_pronto}
                 onChange={(e) => campo("video_pronto", e.target.checked)}
-                className="h-4 w-4 rounded border-zinc-300"
+                className="h-4 w-4 rounded border-zinc-700"
               />
               Vídeo já feito
             </label>
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">
+            <label className="mb-1 block text-xs font-medium text-zinc-400">
               Copy / roteiro
             </label>
             <textarea
               value={valores.copy ?? ""}
               onChange={(e) => campo("copy", e.target.value)}
               rows={4}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">
+            <label className="mb-1 block text-xs font-medium text-zinc-400">
               Observações
             </label>
             <textarea
               value={valores.observacoes ?? ""}
               onChange={(e) => campo("observacoes", e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-zinc-200 px-5 py-4">
+        <div className="flex items-center justify-between gap-2 border-t border-zinc-700 px-5 py-4">
           {post ? (
             <button
               onClick={() => onExcluir(post.id)}
-              className="rounded-md px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              className="rounded-md px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
             >
               Excluir
             </button>
@@ -261,7 +261,7 @@ export default function PostModal({
           <div className="flex gap-2">
             <button
               onClick={onFechar}
-              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-900"
             >
               Cancelar
             </button>

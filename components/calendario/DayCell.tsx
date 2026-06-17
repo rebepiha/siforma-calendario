@@ -26,8 +26,8 @@ export default function DayCell({
   return (
     <div
       ref={setNodeRef}
-      className={`group flex min-h-[110px] flex-col gap-1 border border-zinc-100 p-1.5 sm:min-h-[130px] ${
-        noMesAtual ? "bg-white" : "bg-zinc-50"
+      className={`group flex min-h-[110px] flex-col gap-1 border border-zinc-700 p-1.5 sm:min-h-[130px] ${
+        noMesAtual ? "bg-zinc-800" : "bg-zinc-900"
       } ${isOver ? "bg-oliva-claro/40 ring-2 ring-oliva" : ""}`}
     >
       <div className="flex items-center justify-between">
@@ -36,15 +36,15 @@ export default function DayCell({
             ehHoje
               ? "bg-oliva font-semibold text-white"
               : noMesAtual
-                ? "text-zinc-700"
-                : "text-zinc-400"
+                ? "text-zinc-300"
+                : "text-zinc-600"
           }`}
         >
           {numeroDia}
         </span>
         <button
           onClick={() => onNovoPost(dataStr)}
-          className="invisible rounded px-1 text-xs font-medium text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 group-hover:visible"
+          className="invisible rounded px-1 text-xs font-medium text-zinc-600 hover:bg-zinc-900 hover:text-zinc-300 group-hover:visible"
           title="Novo post"
         >
           + Novo post

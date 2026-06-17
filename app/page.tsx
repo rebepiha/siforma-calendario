@@ -137,17 +137,17 @@ export default function PaginaCalendario() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMesAtual((m) => subMonths(m, 1))}
-            className="rounded-md border border-zinc-300 px-2.5 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100"
+            className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
             aria-label="Mês anterior"
           >
             ←
           </button>
-          <h1 className="min-w-[160px] text-lg font-semibold capitalize text-zinc-900">
+          <h1 className="min-w-[160px] text-lg font-semibold capitalize text-zinc-100">
             {format(mesAtual, "MMMM yyyy", { locale: ptBR })}
           </h1>
           <button
             onClick={() => setMesAtual((m) => addMonths(m, 1))}
-            className="rounded-md border border-zinc-300 px-2.5 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100"
+            className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
             aria-label="Próximo mês"
           >
             →
@@ -166,13 +166,13 @@ export default function PaginaCalendario() {
       </div>
 
       {erro && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
           Erro ao carregar posts: {erro}
         </p>
       )}
 
       {carregando ? (
-        <p className="py-12 text-center text-sm text-zinc-400">Carregando...</p>
+        <p className="py-12 text-center text-sm text-zinc-600">Carregando...</p>
       ) : (
         <DndContext sensors={sensors} onDragEnd={aoFinalizarArraste}>
           <CalendarGrid

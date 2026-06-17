@@ -1,62 +1,44 @@
 "use client";
 
-import {
-  addDays,
-  endOfMonth,
-  endOfWeek,
-  format,
-  isSameDay,
-  isSameMonth,
-  startOfMonth,
-  startOfWeek,
-} from "date-fns";
+import { addDays, format, isSameDay, startOfWeek } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Tarefa } from "@/lib/types";
 import TaskCalendarDayCell from "./TaskCalendarDayCell";
 
-const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-
 export default function TaskCalendarGrid({
-  mesAtual,
+  semanaAtual,
   tarefas,
+  mostrarResponsavel,
   onClickTarefa,
   onNovaTarefa,
 }: {
-  mesAtual: Date;
+  semanaAtual: Date;
   tarefas: Tarefa[];
+  mostrarResponsavel: boolean;
   onClickTarefa: (tarefa: Tarefa) => void;
   onNovaTarefa: (data: string) => void;
 }) {
-  const inicio = startOfWeek(startOfMonth(mesAtual), { weekStartsOn: 1 });
-  const fim = endOfWeek(endOfMonth(mesAtual), { weekStartsOn: 1 });
-
-  const dias: Date[] = [];
-  for (let dia = inicio; dia <= fim; dia = addDays(dia, 1)) {
-    dias.push(dia);
-  }
-
+  const inicio = startOfWeek(semanaAtual, { weekStartsOn: 1 });
+  const dias = Array.from({ length: 7 }, (_, i) => addDays(inicio, i));
   const hoje = new Date();
 
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-      <div className="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50 text-center text-xs font-semibold text-zinc-500">
-        {DIAS_SEMANA.map((dia) => (
-          <div key={dia} className="py-2">
-            {dia}
-          </div>
-        ))}
-      </div>
+    <div className="overflow-hidden rounded-xl shadow-sm">
       <div className="grid grid-cols-7">
         {dias.map((dia) => {
           const dataStr = format(dia, "yyyy-MM-dd");
           const tarefasDoDia = tarefas.filter((t) => t.prazo === dataStr);
+          const diaDaSemana = dia.getDay();
           return (
             <TaskCalendarDayCell
               key={dataStr}
               dataStr={dataStr}
+              nomeDiaSemana={format(dia, "EEE", { locale: ptBR })}
               numeroDia={dia.getDate()}
-              noMesAtual={isSameMonth(dia, mesAtual)}
               ehHoje={isSameDay(dia, hoje)}
+              ehFimDeSemana={diaDaSemana === 0 || diaDaSemana === 6}
               tarefas={tarefasDoDia}
+              mostrarResponsavel={mostrarResponsavel}
               onClickTarefa={onClickTarefa}
               onNovaTarefa={onNovaTarefa}
             />

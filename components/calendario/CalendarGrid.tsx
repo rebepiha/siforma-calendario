@@ -37,8 +37,8 @@ export default function CalendarGrid({
   const hoje = new Date();
 
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-      <div className="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50 text-center text-xs font-semibold text-zinc-500">
+    <div className="overflow-hidden rounded-xl border border-zinc-700 bg-zinc-800 shadow-sm">
+      <div className="grid grid-cols-7 border-b border-zinc-700 bg-zinc-900 text-center text-xs font-semibold text-zinc-500">
         {DIAS_SEMANA.map((dia) => (
           <div key={dia} className="py-2">
             {dia}

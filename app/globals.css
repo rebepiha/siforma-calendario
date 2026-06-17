@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafafa;
-  --foreground: #1f2430;
+  --background: #0e0f11;
+  --foreground: #e4e4e7;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -17,39 +18,6 @@
   --color-grafite: #494b4c;
   --color-grafite-escuro: #2e3133;
   --color-grafite-claro: #7f7f7f;
-
-  /* Produto */
-  --color-produto-bg: #e6f1fb;
-  --color-produto-border: #85b7eb;
-  --color-produto-text: #042c53;
-
-  /* Lançamento */
-  --color-lancamento-bg: #eeedfe;
-  --color-lancamento-border: #afa9ec;
-  --color-lancamento-text: #26215c;
-
-  /* Evento / Formobile */
-  --color-evento-bg: #fbeaf0;
-  --color-evento-border: #ed93b1;
-  --color-evento-text: #72243e;
-
-  /* Não-produto / Carrossel de respiro */
-  --color-naoproduto-bg: #eaf3de;
-  --color-naoproduto-border: #97c459;
-  --color-naoproduto-text: #173404;
-
-  /* Canal — cor de fundo dos cards do calendário editorial */
-  --color-instagram-bg: #dbf2cc;
-  --color-instagram-border: #68a04a;
-  --color-instagram-text: #375126;
-
-  --color-linkedin-bg: #e9e9ea;
-  --color-linkedin-border: #7f7f7f;
-  --color-linkedin-text: #2e3133;
-
-  --color-youtube-bg: #2e3133;
-  --color-youtube-border: #1c1e1f;
-  --color-youtube-text: #ffffff;
 
   /* Badges */
   --color-badge-novo: #d4537e;
