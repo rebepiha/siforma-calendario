@@ -90,7 +90,7 @@ export default function GoalModal({
               value={valores.titulo}
               onChange={(e) => campo("titulo", e.target.value)}
               placeholder="Ex: Seguidores no Instagram"
-              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
           </div>
 
@@ -103,7 +103,7 @@ export default function GoalModal({
                 type="number"
                 value={valores.valor_atual}
                 onChange={(e) => campo("valor_atual", Number(e.target.value))}
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               />
             </div>
             <div>
@@ -114,7 +114,7 @@ export default function GoalModal({
                 type="number"
                 value={valores.valor_meta}
                 onChange={(e) => campo("valor_meta", Number(e.target.value))}
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               />
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function GoalModal({
                 value={valores.unidade ?? ""}
                 onChange={(e) => campo("unidade", e.target.value)}
                 placeholder="Ex: seguidores, posts, leads"
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               />
             </div>
             <div>
@@ -139,7 +139,7 @@ export default function GoalModal({
                 type="date"
                 value={valores.prazo ?? ""}
                 onChange={(e) => campo("prazo", e.target.value)}
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               />
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function GoalModal({
               value={valores.categoria ?? ""}
               onChange={(e) => campo("categoria", e.target.value)}
               placeholder="Para agrupar metas relacionadas"
-              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
           </div>
         </div>

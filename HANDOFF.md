@@ -23,10 +23,15 @@
   em `/Users/rebep1/Documents/SIFORMA/Marca - RGB/BRANDBOOK SIFORMA.pdf` (cópia também na
   pasta pai `SIFORMA/`) — paleta oliva/grafite vem de lá e é usada nos acentos (nav ativo,
   botões primários, destaque de "hoje"), mas a cor dos cards do calendário editorial
-  (laranja/azul/vermelho) e das etiquetas de formato foi um pedido específico do usuário,
-  não vem do brandbook. Logo: `public/siforma-logo.png` (fundo claro, não usado
-  atualmente) e `public/siforma-logo-dark.png` (fundo escuro, em uso no `TopNav` — cópia
-  de `ASSINATURAS PNG/PNG - SEM TAGLINE/SIFORMA SEM  (6).png`).
+  (laranja/azul/vermelho por canal) foi um pedido específico do usuário, não vem do
+  brandbook. Logo: `public/siforma-logo.png` (fundo claro, não usado atualmente) e
+  `public/siforma-logo-dark.png` (fundo escuro, em uso no `TopNav` — cópia de
+  `ASSINATURAS PNG/PNG - SEM TAGLINE/SIFORMA SEM  (6).png`).
+- **Etiquetas dos posts** (ver Sessão 3): o antigo campo fixo `formato` (enum) foi
+  substituído por um sistema de etiquetas livre estilo Trello — tabelas `etiquetas`
+  (nome + cor) e `post_etiquetas` (relação N:N), gerenciável dentro do modal de editar
+  post (`components/calendario/EtiquetaPicker.tsx`). Equipe pode criar, renomear,
+  recolorir e excluir etiquetas livremente; cada post pode ter várias.
 - **Sem autenticação**: acesso por link aberto. RLS habilitado nas 3 tabelas mas com
   política `using (true) with check (true)` (qualquer um com o link lê/escreve).
 - **Ambiente local**: máquina não tinha Node/npm/Homebrew — Node foi instalado via `nvm`
@@ -48,15 +53,21 @@
   (nem era pedido) — só fica disponível para quando a equipe quiser usar.
 - As cores por canal (texto laranja=Instagram/azul=LinkedIn/vermelho=YouTube, ver
   Sessão 2) foram validadas só com posts de teste inseridos e removidos manualmente —
-  os 45 posts reais hoje são quase todos Instagram (há 1 "Teste" em LinkedIn). A
-  combinação final ficou: card com fundo escuro uniforme (`bg-zinc-800`), nome do canal
-  em texto colorido (`CORES_CANAL` em `lib/postStyles.ts`), e uma barrinha colorida no
-  topo do card indicando o *formato* (`CORES_FORMATO`, mesma fonte). Mudar é só editar
-  esses dois objetos.
+  os posts reais hoje são quase todos Instagram (há 1 "Teste" em LinkedIn). A combinação
+  final ficou: card com fundo escuro uniforme (`bg-zinc-800`), nome do canal em texto
+  colorido (`CORES_CANAL` em `lib/postStyles.ts`), e uma barrinha colorida por etiqueta
+  no topo do card (cor vem do banco agora, não mais de um objeto fixo no código).
 - Tema escuro foi aplicado convertendo classes Tailwind (não há `dark:` variants nem
   toggle claro/escuro — é hardcoded escuro). Se um dia quiserem voltar ao tema claro ou
   oferecer os dois, vai precisar reintroduzir as classes claras como variante, não é
   uma reversão trivial de 1 linha.
+- As 7 etiquetas iniciais (Feed/Stories/Reels/Carrossel/Enquete/Quiz/Caixa de perguntas)
+  foram criadas automaticamente pela migration 0003 com cores arbitrárias só pra não
+  ficar tudo cinza — a equipe pode renomear/recolorir/excluir cada uma livremente pelo
+  painel de etiquetas, não há nada de especial preso a esses 7 nomes no código.
+- A paleta de cores oferecida ao criar/editar uma etiqueta é fixa (12 cores, ver
+  `lib/etiquetaCores.ts`, `PALETA_ETIQUETAS`) — não é um color picker livre (RGB/hex
+  manual). Se pedirem mais variedade de cores, é só adicionar hex novos nesse array.
 
 ## Como autenticar (se precisar fazer push/deploy futuro)
 
@@ -73,6 +84,113 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 3 — 2026-06-17
+
+**Contexto**: continuação da Sessão 2, mesma conversa. Dois pedidos do usuário: (1)
+poder selecionar/editar a cor e o texto da etiqueta de formato — mandou um print do
+painel de etiquetas do Trello (checkbox + swatch de cor + lápis de editar + "criar nova
+etiqueta") como modelo; (2) o calendário editorial não deveria mais mostrar dias de
+outros meses preenchendo a última semana da grade.
+
+**1. Calendário só do mês atual**
+- `components/calendario/CalendarGrid.tsx`: a grade de 7 colunas continua sendo
+  calculada com padding (`startOfWeek`/`endOfWeek`) pra manter o alinhamento por dia da
+  semana, mas agora, se um dia da grade não pertence ao `mesAtual`, renderiza uma
+  `<div>` vazia (sem número, sem posts, sem drop target) em vez de um `DayCell`
+  completo. `DayCell.tsx` perdeu a prop `noMesAtual` (não precisa mais saber se está
+  "fora do mês", porque só é renderizado quando está dentro).
+
+**2. Sistema de etiquetas livre (substituiu o campo `formato`)**
+- Decisão de escopo: perguntei se era só para deixar editável os 7 formatos fixos, ou
+  um sistema de etiquetas totalmente livre estilo Trello (várias por post, criadas pela
+  equipe). Usuário escolheu o segundo, com a UI dentro do modal de editar post (não uma
+  tela de configuração separada).
+- **Banco de dados**: criei `supabase/migrations/0003_etiquetas.sql` — tabela
+  `etiquetas` (id, nome, cor hex, criado_em) e tabela de junção `post_etiquetas`
+  (post_id, etiqueta_id, FK com `on delete cascade` nos dois lados). Seed automático das
+  7 etiquetas equivalentes aos formatos antigos (mesmos nomes, cores arbitrárias da
+  paleta nova). Migra os 47 posts existentes (cada um pro seu formato antigo
+  correspondente, via `ALTER TYPE`... não, via `case` + `join`, já que não dá pra
+  renomear enum pra uma FK) e por fim **remove a coluna `formato` e o tipo
+  `formato_enum`**. Usuária rodou no SQL Editor do Supabase e confirmei via REST API
+  (`select=formato` retornou erro "column does not exist", `post_etiquetas` tinha 47
+  linhas — uma por post, exatamente o esperado).
+- Também atualizei `supabase/migrations/0001_init.sql` pra refletir o schema novo em
+  instalações do zero (mesmo padrão das sessões anteriores: 0001 não é histórico
+  imutável, é o "schema correto se alguém clonar o projeto hoje) — removi
+  `formato_enum`/coluna `formato`, adicionei as tabelas `etiquetas`/`post_etiquetas` e o
+  seed das 7 etiquetas, e tirei o valor de formato de cada uma das 44 linhas do seed de
+  posts (column list e tuplas, via regex — confirmei contagem de colunas depois).
+- **Modelo de dados no app**: `lib/types.ts` — removi `Formato`/`formato`; `Post` ganhou
+  `etiqueta_ids: string[]` (resolvido em memória a partir de `post_etiquetas`, não é
+  coluna real); novo tipo `Etiqueta { id, nome, cor }`. `NovoPost` exclui
+  `etiqueta_ids` (não é enviado direto pra tabela `posts`).
+- **`lib/etiquetaCores.ts`** (novo): paleta fixa de 12 cores (`PALETA_ETIQUETAS`, hex)
+  oferecida no seletor de cor, e `corTextoContraste(hex)` — calcula luminância e
+  devolve branco ou quase-preto, pra texto sempre legível em cima de qualquer cor que a
+  equipe escolher (não dá pra gerar classe Tailwind em runtime pra cor arbitrária, por
+  isso cor é sempre via `style={{ backgroundColor }}` inline, mesmo padrão que
+  `lib/avatar.ts` já usava pros avatares de responsável).
+- **`components/calendario/EtiquetaPicker.tsx`** (novo): painel modal (estilo
+  Trello) com busca, lista de etiquetas com checkbox + cor de fundo + lápis de editar,
+  formulário inline de criar/editar (nome + grade de cores + excluir), idêntico nas
+  duas situações (criar e editar reusam o mesmo `FormularioEtiqueta`).
+- **`components/calendario/PostCard.tsx`**: não tinta mais o fundo do card pela etiqueta
+  — fundo voltou a ser cinza-escuro uniforme (`bg-zinc-800`). Cada etiqueta do post
+  aparece como uma barrinha curta colorida (`h-1.5 w-6`) lado a lado no topo do card
+  (várias etiquetas = várias barrinhas), com `title` (tooltip) mostrando o nome —
+  decisão consciente de não escrever o nome por extenso no card pra não estourar o
+  espaço quando há 2-3 etiquetas; o nome aparece no tooltip e, com mais destaque, no
+  modal de edição.
+- **`components/calendario/PostModal.tsx`**: campo "Formato" trocado por "Etiquetas" —
+  mostra as etiquetas já marcadas como chips coloridos (com botão ✕ pra desmarcar
+  direto, sem abrir o painel) e um botão "+ Adicionar" que abre o `EtiquetaPicker`.
+  `onSalvar` agora recebe um terceiro argumento (`etiquetaIds: string[]`) além de
+  `id`/`valores`.
+- **`components/calendario/Filtros.tsx`**: terceiro filtro trocou de "formato" (lista
+  fixa) pra "etiqueta" (lista dinâmica vinda do banco, via nova prop `etiquetas`).
+- **`app/page.tsx`** (mudança mais profunda): carrega `posts` e `post_etiquetas` em
+  paralelo (`Promise.all`) e funde os dois em memória pra montar `Post.etiqueta_ids`;
+  carrega `etiquetas` numa chamada separada. Novas funções `criarEtiqueta` (retorna a
+  etiqueta criada, pra poder marcá-la automaticamente no post que está sendo editado —
+  igual ao Trello), `editarEtiqueta`, `excluirEtiqueta` (também limpa `etiqueta_ids` dos
+  posts em memória que tinham aquela etiqueta, já que o `on delete cascade` do banco não
+  atualiza o estado React sozinho). `salvarPost` agora: salva a linha em `posts` (sem
+  `etiqueta_ids`, que não é coluna real), depois substitui todas as linhas de
+  `post_etiquetas` daquele post (`delete` + `insert` do conjunto novo — mais simples que
+  fazer diff).
+
+**3. Erros e decisões durante a implementação**
+- Os inputs/selects/textareas dos 3 modais (`PostModal`, `TaskModal`, `GoalModal`) não
+  tinham `bg-*`/`text-*` explícitos desde a Sessão 2 (dependiam de `color-scheme: dark`
+  e do `color: inherit` do preflight do Tailwind pra ficarem legíveis) — funcionava, mas
+  decidi deixar explícito (`bg-zinc-900 text-zinc-100`) em todos pra não depender de
+  comportamento de navegador, já que ia editar esses arquivos de qualquer forma.
+- `CORES_TIPO` (cores por `tipo` de post) já estava morto desde a Sessão 2 (quando o
+  card passou a colorir por canal) mas só removi agora, junto com o resto da limpeza.
+
+**4. Testes**
+- Pedi pra usuária rodar a migration 0003 antes de testar (app depende do schema novo:
+  sem a coluna `formato`, com as tabelas `etiquetas`/`post_etiquetas`). Confirmei via
+  REST API que rodou certo (7 etiquetas, 47 `post_etiquetas`, coluna `formato` ausente)
+  antes de seguir.
+- Testei o fluxo completo via Playwright/Chrome headless contra o banco de produção já
+  migrado: abrir post → criar etiqueta nova (cor laranja) → confirmar que seleciona
+  automaticamente e aparece como chip → salvar post → card mostra 2 barrinhas (Feed +
+  a nova) → filtrar pela etiqueta "Stories" (mostra só o post certo) → editar
+  nome/cor de uma etiqueta existente (e depois revertido, já que era dado real da
+  equipe, não teste) → criar e excluir uma etiqueta de teste pelo botão "Excluir" do
+  próprio formulário de edição (confirma que remove da lista E do post que estava
+  usando). Em alguns testes criei etiquetas de teste duplicadas por rodar o mesmo
+  script do Playwright mais de uma vez sem persistir estado entre execuções — todas
+  removidas via REST API antes de finalizar; banco ficou só com as 7 etiquetas
+  originais + a real "Carrossel" revertida pro nome/cor originais.
+- `npm run lint` e `npm run build` limpos antes de cada commit.
+
+**5. Pendente / observações pro futuro**
+- Ver bullets novos em "Pendências" no topo deste arquivo (paleta de cores fixa de 12
+  opções, as 7 etiquetas iniciais não têm nada de especial/hardcoded).
 
 ### Sessão 2 — 2026-06-17
 

@@ -11,7 +11,7 @@ import {
 import { addMonths, format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
-import { NovoPost, Post } from "@/lib/types";
+import { Etiqueta, NovoPost, Post } from "@/lib/types";
 import CalendarGrid from "@/components/calendario/CalendarGrid";
 import PostModal from "@/components/calendario/PostModal";
 import Filtros, { FiltrosState } from "@/components/calendario/Filtros";
@@ -19,12 +19,13 @@ import Filtros, { FiltrosState } from "@/components/calendario/Filtros";
 export default function PaginaCalendario() {
   const [mesAtual, setMesAtual] = useState(() => new Date());
   const [posts, setPosts] = useState<Post[]>([]);
+  const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosState>({
     canal: "todos",
     tipo: "todos",
-    formato: "todos",
+    etiqueta: "todos",
   });
   const [modalAberto, setModalAberto] = useState(false);
   const [postSelecionado, setPostSelecionado] = useState<Post | null>(null);
@@ -38,28 +39,47 @@ export default function PaginaCalendario() {
 
   async function carregarPosts() {
     setCarregando(true);
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*")
-      .order("data", { ascending: true });
-    if (error) {
-      setErro(error.message);
+    const [{ data: postsData, error: erroPosts }, { data: relsData, error: erroRels }] =
+      await Promise.all([
+        supabase.from("posts").select("*").order("data", { ascending: true }),
+        supabase.from("post_etiquetas").select("post_id, etiqueta_id"),
+      ]);
+    if (erroPosts || erroRels) {
+      setErro(erroPosts?.message ?? erroRels?.message ?? "Erro desconhecido");
     } else {
-      setPosts(data as Post[]);
+      const posts = (postsData ?? []).map((p) => ({
+        ...(p as Omit<Post, "etiqueta_ids">),
+        etiqueta_ids: (relsData ?? [])
+          .filter((r) => r.post_id === p.id)
+          .map((r) => r.etiqueta_id as string),
+      }));
+      setPosts(posts);
       setErro(null);
     }
     setCarregando(false);
   }
 
+  async function carregarEtiquetas() {
+    const { data, error } = await supabase
+      .from("etiquetas")
+      .select("*")
+      .order("criado_em", { ascending: true });
+    if (!error && data) {
+      setEtiquetas(data as Etiqueta[]);
+    }
+  }
+
   useEffect(() => {
     carregarPosts();
+    carregarEtiquetas();
   }, []);
 
   const postsFiltrados = useMemo(() => {
     return posts.filter((post) => {
       if (filtros.canal !== "todos" && post.canal !== filtros.canal) return false;
       if (filtros.tipo !== "todos" && post.tipo !== filtros.tipo) return false;
-      if (filtros.formato !== "todos" && post.formato !== filtros.formato) return false;
+      if (filtros.etiqueta !== "todos" && !post.etiqueta_ids.includes(filtros.etiqueta))
+        return false;
       return true;
     });
   }, [posts, filtros]);
@@ -75,7 +95,8 @@ export default function PaginaCalendario() {
     setModalAberto(true);
   }
 
-  async function salvarPost(id: string | null, valores: NovoPost) {
+  async function salvarPost(id: string | null, valores: NovoPost, etiquetaIds: string[]) {
+    let postSalvo: Post | null = null;
     if (id) {
       const { data, error } = await supabase
         .from("posts")
@@ -83,19 +104,28 @@ export default function PaginaCalendario() {
         .eq("id", id)
         .select()
         .single();
-      if (!error && data) {
-        setPosts((atual) => atual.map((p) => (p.id === id ? (data as Post) : p)));
-      }
+      if (error || !data) return;
+      postSalvo = { ...(data as Omit<Post, "etiqueta_ids">), etiqueta_ids: etiquetaIds };
     } else {
       const { data, error } = await supabase
         .from("posts")
         .insert(valores)
         .select()
         .single();
-      if (!error && data) {
-        setPosts((atual) => [...atual, data as Post]);
-      }
+      if (error || !data) return;
+      postSalvo = { ...(data as Omit<Post, "etiqueta_ids">), etiqueta_ids: etiquetaIds };
     }
+
+    await supabase.from("post_etiquetas").delete().eq("post_id", postSalvo.id);
+    if (etiquetaIds.length > 0) {
+      await supabase
+        .from("post_etiquetas")
+        .insert(etiquetaIds.map((etiqueta_id) => ({ post_id: postSalvo!.id, etiqueta_id })));
+    }
+
+    setPosts((atual) =>
+      id ? atual.map((p) => (p.id === id ? postSalvo! : p)) : [...atual, postSalvo!]
+    );
     setModalAberto(false);
   }
 
@@ -105,6 +135,42 @@ export default function PaginaCalendario() {
       setPosts((atual) => atual.filter((p) => p.id !== id));
     }
     setModalAberto(false);
+  }
+
+  async function criarEtiqueta(nome: string, cor: string): Promise<Etiqueta> {
+    const { data, error } = await supabase
+      .from("etiquetas")
+      .insert({ nome, cor })
+      .select()
+      .single();
+    if (error || !data) throw error;
+    setEtiquetas((atual) => [...atual, data as Etiqueta]);
+    return data as Etiqueta;
+  }
+
+  async function editarEtiqueta(id: string, nome: string, cor: string) {
+    const { data, error } = await supabase
+      .from("etiquetas")
+      .update({ nome, cor })
+      .eq("id", id)
+      .select()
+      .single();
+    if (!error && data) {
+      setEtiquetas((atual) => atual.map((e) => (e.id === id ? (data as Etiqueta) : e)));
+    }
+  }
+
+  async function excluirEtiqueta(id: string) {
+    const { error } = await supabase.from("etiquetas").delete().eq("id", id);
+    if (!error) {
+      setEtiquetas((atual) => atual.filter((e) => e.id !== id));
+      setPosts((atual) =>
+        atual.map((p) => ({
+          ...p,
+          etiqueta_ids: p.etiqueta_ids.filter((eid) => eid !== id),
+        }))
+      );
+    }
   }
 
   async function moverPost(postId: string, novaData: string) {
@@ -155,7 +221,7 @@ export default function PaginaCalendario() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Filtros filtros={filtros} onChange={setFiltros} />
+          <Filtros filtros={filtros} etiquetas={etiquetas} onChange={setFiltros} />
           <button
             onClick={() => abrirNovoPost(format(new Date(), "yyyy-MM-dd"))}
             className="rounded-md bg-oliva px-3 py-2 text-sm font-medium text-white hover:bg-oliva-forte"
@@ -178,6 +244,7 @@ export default function PaginaCalendario() {
           <CalendarGrid
             mesAtual={mesAtual}
             posts={postsFiltrados}
+            etiquetas={etiquetas}
             onClickPost={abrirEdicaoPost}
             onNovoPost={abrirNovoPost}
           />
@@ -188,9 +255,13 @@ export default function PaginaCalendario() {
         <PostModal
           post={postSelecionado}
           dataPadrao={dataParaNovoPost}
+          etiquetas={etiquetas}
           onFechar={() => setModalAberto(false)}
           onSalvar={salvarPost}
           onExcluir={excluirPost}
+          onCriarEtiqueta={criarEtiqueta}
+          onEditarEtiqueta={editarEtiqueta}
+          onExcluirEtiqueta={excluirEtiqueta}
         />
       )}
     </div>

@@ -2,40 +2,22 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Post } from "@/lib/types";
-import { CORES_CANAL, CORES_FORMATO, LABEL_CANAL, LABEL_FORMATO } from "@/lib/postStyles";
-
-function IconeStory() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className="h-3 w-3 shrink-0"
-      aria-label="Story"
-    >
-      <circle
-        cx="12"
-        cy="12"
-        r="9"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeDasharray="3 3"
-      />
-      <circle cx="12" cy="12" r="3" fill="currentColor" />
-    </svg>
-  );
-}
+import { Etiqueta, Post } from "@/lib/types";
+import { CORES_CANAL, LABEL_CANAL } from "@/lib/postStyles";
 
 export default function PostCard({
   post,
+  etiquetas,
   onClick,
 }: {
   post: Post;
+  etiquetas: Etiqueta[];
   onClick: () => void;
 }) {
   const corCanal = CORES_CANAL[post.canal];
-  const corFormato = CORES_FORMATO[post.formato];
-  const ehStory = post.formato === "stories";
+  const etiquetasDoPost = post.etiqueta_ids
+    .map((id) => etiquetas.find((e) => e.id === id))
+    .filter((e): e is Etiqueta => !!e);
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: post.id });
 
@@ -60,15 +42,22 @@ export default function PostCard({
         </span>
       )}
 
-      <span className={`mb-1.5 block h-1 w-7 rounded-full ${corFormato.barra}`} />
+      {etiquetasDoPost.length > 0 && (
+        <div className="mb-1.5 flex flex-wrap gap-1">
+          {etiquetasDoPost.map((et) => (
+            <span
+              key={et.id}
+              title={et.nome}
+              className="h-1.5 w-6 rounded-full"
+              style={{ backgroundColor: et.cor }}
+            />
+          ))}
+        </div>
+      )}
 
-      <div className="flex items-center justify-between gap-1.5 text-[11px] font-medium">
-        <span className={corCanal.text}>{LABEL_CANAL[post.canal]}</span>
-        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${corFormato.texto}`}>
-          {ehStory && <IconeStory />}
-          {LABEL_FORMATO[post.formato]}
-        </span>
-      </div>
+      <span className={`text-[11px] font-medium ${corCanal.text}`}>
+        {LABEL_CANAL[post.canal]}
+      </span>
 
       <p className="text-sm font-semibold leading-snug text-zinc-100">{post.titulo}</p>
 

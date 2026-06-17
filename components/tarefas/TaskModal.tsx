@@ -99,7 +99,7 @@ export default function TaskModal({
             <input
               value={valores.titulo}
               onChange={(e) => campo("titulo", e.target.value)}
-              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
           </div>
 
@@ -111,7 +111,7 @@ export default function TaskModal({
               value={valores.descricao ?? ""}
               onChange={(e) => campo("descricao", e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
           </div>
 
@@ -124,7 +124,7 @@ export default function TaskModal({
                 value={valores.responsavel ?? ""}
                 onChange={(e) => campo("responsavel", e.target.value)}
                 placeholder="Ex: Victoria"
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               />
             </div>
             <div>
@@ -135,7 +135,7 @@ export default function TaskModal({
                 type="date"
                 value={valores.prazo ?? ""}
                 onChange={(e) => campo("prazo", e.target.value)}
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               />
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function TaskModal({
               <select
                 value={valores.prioridade}
                 onChange={(e) => campo("prioridade", e.target.value as Prioridade)}
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               >
                 <option value="baixa">Baixa</option>
                 <option value="media">Média</option>
@@ -162,7 +162,7 @@ export default function TaskModal({
               <select
                 value={valores.coluna}
                 onChange={(e) => campo("coluna", e.target.value as ColunaTarefa)}
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               >
                 {COLUNAS_TAREFA.map((c) => (
                   <option key={c.id} value={c.id}>

@@ -10,7 +10,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { Post } from "@/lib/types";
+import { Etiqueta, Post } from "@/lib/types";
 import DayCell from "./DayCell";
 
 const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
@@ -18,19 +18,21 @@ const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 export default function CalendarGrid({
   mesAtual,
   posts,
+  etiquetas,
   onClickPost,
   onNovoPost,
 }: {
   mesAtual: Date;
   posts: Post[];
+  etiquetas: Etiqueta[];
   onClickPost: (post: Post) => void;
   onNovoPost: (data: string) => void;
 }) {
-  const inicio = startOfWeek(startOfMonth(mesAtual), { weekStartsOn: 1 });
-  const fim = endOfWeek(endOfMonth(mesAtual), { weekStartsOn: 1 });
+  const inicioGrade = startOfWeek(startOfMonth(mesAtual), { weekStartsOn: 1 });
+  const fimGrade = endOfWeek(endOfMonth(mesAtual), { weekStartsOn: 1 });
 
   const dias: Date[] = [];
-  for (let dia = inicio; dia <= fim; dia = addDays(dia, 1)) {
+  for (let dia = inicioGrade; dia <= fimGrade; dia = addDays(dia, 1)) {
     dias.push(dia);
   }
 
@@ -47,6 +49,14 @@ export default function CalendarGrid({
       </div>
       <div className="grid grid-cols-7">
         {dias.map((dia) => {
+          if (!isSameMonth(dia, mesAtual)) {
+            return (
+              <div
+                key={format(dia, "yyyy-MM-dd")}
+                className="min-h-[110px] border border-zinc-700 bg-zinc-900/40 sm:min-h-[130px]"
+              />
+            );
+          }
           const dataStr = format(dia, "yyyy-MM-dd");
           const postsDoDia = posts.filter((p) => p.data === dataStr);
           return (
@@ -54,9 +64,9 @@ export default function CalendarGrid({
               key={dataStr}
               dataStr={dataStr}
               numeroDia={dia.getDate()}
-              noMesAtual={isSameMonth(dia, mesAtual)}
               ehHoje={isSameDay(dia, hoje)}
               posts={postsDoDia}
+              etiquetas={etiquetas}
               onClickPost={onClickPost}
               onNovoPost={onNovoPost}
             />

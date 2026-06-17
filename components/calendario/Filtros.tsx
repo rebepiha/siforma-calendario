@@ -1,19 +1,21 @@
 "use client";
 
-import { Canal, Formato, TipoPost } from "@/lib/types";
-import { LABEL_CANAL, LABEL_FORMATO, LABEL_TIPO } from "@/lib/postStyles";
+import { Canal, Etiqueta, TipoPost } from "@/lib/types";
+import { LABEL_CANAL, LABEL_TIPO } from "@/lib/postStyles";
 
 export interface FiltrosState {
   canal: Canal | "todos";
   tipo: TipoPost | "todos";
-  formato: Formato | "todos";
+  etiqueta: string | "todos";
 }
 
 export default function Filtros({
   filtros,
+  etiquetas,
   onChange,
 }: {
   filtros: FiltrosState;
+  etiquetas: Etiqueta[];
   onChange: (filtros: FiltrosState) => void;
 }) {
   return (
@@ -49,16 +51,14 @@ export default function Filtros({
       </select>
 
       <select
-        value={filtros.formato}
-        onChange={(e) =>
-          onChange({ ...filtros, formato: e.target.value as FiltrosState["formato"] })
-        }
+        value={filtros.etiqueta}
+        onChange={(e) => onChange({ ...filtros, etiqueta: e.target.value })}
         className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300"
       >
-        <option value="todos">Todos os formatos</option>
-        {(Object.keys(LABEL_FORMATO) as Formato[]).map((formato) => (
-          <option key={formato} value={formato}>
-            {LABEL_FORMATO[formato]}
+        <option value="todos">Todas as etiquetas</option>
+        {etiquetas.map((et) => (
+          <option key={et.id} value={et.id}>
+            {et.nome}
           </option>
         ))}
       </select>

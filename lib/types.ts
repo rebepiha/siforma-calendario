@@ -2,15 +2,6 @@ export type Canal = "instagram" | "linkedin" | "youtube";
 
 export type TipoPost = "produto" | "lancamento" | "nao_produto" | "evento";
 
-export type Formato =
-  | "feed"
-  | "stories"
-  | "reels"
-  | "carrossel"
-  | "enquete"
-  | "quiz"
-  | "caixa_perguntas";
-
 export type StatusPost = "pendente" | "em_producao" | "agendado" | "publicado";
 
 export type Prioridade = "baixa" | "media" | "alta";
@@ -24,15 +15,21 @@ export interface Post {
   canal: Canal;
   tipo: TipoPost;
   categoria: string | null;
-  formato: Formato;
   video_pronto: boolean;
   novo_produto: boolean;
   status: StatusPost;
   copy: string | null;
   observacoes: string | null;
+  etiqueta_ids: string[];
 }
 
-export type NovoPost = Omit<Post, "id">;
+export type NovoPost = Omit<Post, "id" | "etiqueta_ids">;
+
+export interface Etiqueta {
+  id: string;
+  nome: string;
+  cor: string;
+}
 
 export interface Tarefa {
   id: string;

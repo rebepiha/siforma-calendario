@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Canal, Formato, NovoPost, Post, StatusPost, TipoPost } from "@/lib/types";
-import { LABEL_CANAL, LABEL_FORMATO, LABEL_STATUS, LABEL_TIPO } from "@/lib/postStyles";
+import { Canal, Etiqueta, NovoPost, Post, StatusPost, TipoPost } from "@/lib/types";
+import { LABEL_CANAL, LABEL_STATUS, LABEL_TIPO } from "@/lib/postStyles";
+import { corTextoContraste } from "@/lib/etiquetaCores";
+import EtiquetaPicker from "./EtiquetaPicker";
 
 function valoresIniciais(dataPadrao: string): NovoPost {
   return {
@@ -11,7 +13,6 @@ function valoresIniciais(dataPadrao: string): NovoPost {
     canal: "instagram",
     tipo: "produto",
     categoria: "",
-    formato: "feed",
     video_pronto: false,
     novo_produto: false,
     status: "pendente",
@@ -23,15 +24,23 @@ function valoresIniciais(dataPadrao: string): NovoPost {
 export default function PostModal({
   post,
   dataPadrao,
+  etiquetas,
   onFechar,
   onSalvar,
   onExcluir,
+  onCriarEtiqueta,
+  onEditarEtiqueta,
+  onExcluirEtiqueta,
 }: {
   post: Post | null;
   dataPadrao: string;
+  etiquetas: Etiqueta[];
   onFechar: () => void;
-  onSalvar: (id: string | null, valores: NovoPost) => Promise<void>;
+  onSalvar: (id: string | null, valores: NovoPost, etiquetaIds: string[]) => Promise<void>;
   onExcluir: (id: string) => Promise<void>;
+  onCriarEtiqueta: (nome: string, cor: string) => Promise<Etiqueta>;
+  onEditarEtiqueta: (id: string, nome: string, cor: string) => Promise<void>;
+  onExcluirEtiqueta: (id: string) => Promise<void>;
 }) {
   const [valores, setValores] = useState<NovoPost>(
     post
@@ -41,7 +50,6 @@ export default function PostModal({
           canal: post.canal,
           tipo: post.tipo,
           categoria: post.categoria ?? "",
-          formato: post.formato,
           video_pronto: post.video_pronto,
           novo_produto: post.novo_produto,
           status: post.status,
@@ -50,6 +58,8 @@ export default function PostModal({
         }
       : valoresIniciais(dataPadrao)
   );
+  const [etiquetaIds, setEtiquetaIds] = useState<string[]>(post?.etiqueta_ids ?? []);
+  const [pickerAberto, setPickerAberto] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
@@ -63,20 +73,34 @@ export default function PostModal({
     setValores((v) => ({ ...v, [chave]: valor }));
   }
 
+  function alternarEtiqueta(id: string) {
+    setEtiquetaIds((atual) =>
+      atual.includes(id) ? atual.filter((e) => e !== id) : [...atual, id]
+    );
+  }
+
   async function salvar() {
     if (!valores.titulo.trim()) return;
     setSalvando(true);
     try {
-      await onSalvar(post?.id ?? null, {
-        ...valores,
-        categoria: valores.categoria?.trim() ? valores.categoria : null,
-        copy: valores.copy?.trim() ? valores.copy : null,
-        observacoes: valores.observacoes?.trim() ? valores.observacoes : null,
-      });
+      await onSalvar(
+        post?.id ?? null,
+        {
+          ...valores,
+          categoria: valores.categoria?.trim() ? valores.categoria : null,
+          copy: valores.copy?.trim() ? valores.copy : null,
+          observacoes: valores.observacoes?.trim() ? valores.observacoes : null,
+        },
+        etiquetaIds
+      );
     } finally {
       setSalvando(false);
     }
   }
+
+  const etiquetasSelecionadas = etiquetaIds
+    .map((id) => etiquetas.find((e) => e.id === id))
+    .filter((e): e is Etiqueta => !!e);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60">
@@ -103,7 +127,7 @@ export default function PostModal({
               value={valores.titulo}
               onChange={(e) => campo("titulo", e.target.value)}
               placeholder="Nome do produto ou tema do post"
-              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
           </div>
 
@@ -115,7 +139,7 @@ export default function PostModal({
               type="date"
               value={valores.data}
               onChange={(e) => campo("data", e.target.value)}
-              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
           </div>
 
@@ -127,7 +151,7 @@ export default function PostModal({
               <select
                 value={valores.canal}
                 onChange={(e) => campo("canal", e.target.value as Canal)}
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               >
                 {(Object.keys(LABEL_CANAL) as Canal[]).map((canal) => (
                   <option key={canal} value={canal}>
@@ -143,7 +167,7 @@ export default function PostModal({
               <select
                 value={valores.tipo}
                 onChange={(e) => campo("tipo", e.target.value as TipoPost)}
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               >
                 {(Object.keys(LABEL_TIPO) as TipoPost[]).map((tipo) => (
                   <option key={tipo} value={tipo}>
@@ -154,39 +178,47 @@ export default function PostModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-400">
-                Formato
-              </label>
-              <select
-                value={valores.formato}
-                onChange={(e) => campo("formato", e.target.value as Formato)}
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-400">
+              Etiquetas
+            </label>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {etiquetasSelecionadas.map((et) => (
+                <span
+                  key={et.id}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium"
+                  style={{ backgroundColor: et.cor, color: corTextoContraste(et.cor) }}
+                >
+                  {et.nome}
+                  <button onClick={() => alternarEtiqueta(et.id)} className="opacity-70 hover:opacity-100">
+                    ✕
+                  </button>
+                </span>
+              ))}
+              <button
+                onClick={() => setPickerAberto(true)}
+                className="rounded-md border border-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-900"
               >
-                {(Object.keys(LABEL_FORMATO) as Formato[]).map((formato) => (
-                  <option key={formato} value={formato}>
-                    {LABEL_FORMATO[formato]}
-                  </option>
-                ))}
-              </select>
+                + Adicionar
+              </button>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-400">
-                Status
-              </label>
-              <select
-                value={valores.status}
-                onChange={(e) => campo("status", e.target.value as StatusPost)}
-                className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
-              >
-                {(Object.keys(LABEL_STATUS) as StatusPost[]).map((status) => (
-                  <option key={status} value={status}>
-                    {LABEL_STATUS[status]}
-                  </option>
-                ))}
-              </select>
-            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-400">
+              Status
+            </label>
+            <select
+              value={valores.status}
+              onChange={(e) => campo("status", e.target.value as StatusPost)}
+              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+            >
+              {(Object.keys(LABEL_STATUS) as StatusPost[]).map((status) => (
+                <option key={status} value={status}>
+                  {LABEL_STATUS[status]}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -197,7 +229,7 @@ export default function PostModal({
               value={valores.categoria ?? ""}
               onChange={(e) => campo("categoria", e.target.value)}
               placeholder="Ex: Tendências, Marcenarias, Formobile..."
-              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
           </div>
 
@@ -230,7 +262,7 @@ export default function PostModal({
               value={valores.copy ?? ""}
               onChange={(e) => campo("copy", e.target.value)}
               rows={4}
-              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
           </div>
 
@@ -242,7 +274,7 @@ export default function PostModal({
               value={valores.observacoes ?? ""}
               onChange={(e) => campo("observacoes", e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-zinc-700 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
           </div>
         </div>
@@ -275,6 +307,24 @@ export default function PostModal({
           </div>
         </div>
       </div>
+
+      {pickerAberto && (
+        <EtiquetaPicker
+          etiquetas={etiquetas}
+          selecionadas={etiquetaIds}
+          onToggle={alternarEtiqueta}
+          onCriar={async (nome, cor) => {
+            const nova = await onCriarEtiqueta(nome, cor);
+            setEtiquetaIds((atual) => [...atual, nova.id]);
+          }}
+          onEditar={onEditarEtiqueta}
+          onExcluir={async (id) => {
+            await onExcluirEtiqueta(id);
+            setEtiquetaIds((atual) => atual.filter((e) => e !== id));
+          }}
+          onFechar={() => setPickerAberto(false)}
+        />
+      )}
     </div>
   );
 }
