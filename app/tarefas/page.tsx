@@ -281,6 +281,7 @@ export default function PaginaTarefas() {
                 tarefas={tarefas.filter((t) => t.coluna === coluna.id)}
                 onClickTarefa={abrirEdicaoTarefa}
                 onNovaTarefa={abrirNovaTarefa}
+                onToggleConcluida={alternarConcluida}
               />
             ))}
           </div>

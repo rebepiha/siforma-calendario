@@ -65,16 +65,27 @@
   mais tela cheia), clique no card abre direto o modal de edição de sempre (não há mais
   conceito de "post selecionado" separado de "post em edição"). Ver Sessão 6 para a
   lista exata de arquivos revertidos/removidos e o que ficou só no banco (não na UI).
-- **Marcar concluído/publicado direto no card** (ver Sessão 8): em Tarefas (`TaskChip.tsx`,
-  vista Calendário e a caixa "Sem prazo definido") e no Calendário Editorial
+- **Marcar concluído/publicado direto no card** (Sessão 8, estendido na Sessão 9): em
+  Tarefas (`TaskChip.tsx` — vista Calendário e a caixa "Sem prazo definido" — e também
+  `TaskCard.tsx` do board Kanban, desde a Sessão 9) e no Calendário Editorial
   (`PostCard.tsx`), tem um botão pequeno no canto esquerdo do card (ponto de prioridade ou
   círculo vazio) que alterna o status sem abrir o card — em tarefas, alterna entre a coluna
   atual e `concluido` (some pra `a_fazer` se desmarcado); em posts, alterna `status` entre
   `publicado` e `pendente`. Usa `e.stopPropagation()` pra não disparar o clique do
-  card/abrir o modal. TaskCard.tsx (board Kanban) **não** ganhou esse botão — só a vista
-  Calendário de tarefas e o Calendário Editorial, conforme pedido.
+  card/abrir o modal. Card inteiro fica com `opacity-60` quando concluído/publicado (em
+  Tarefas já era assim desde a Sessão 8; faltava em `PostCard.tsx`, corrigido na Sessão 9
+  depois que o usuário confirmou que esperava o mesmo efeito de transparência lá também).
 - **Vista padrão de Tarefas de Marketing é Calendário** (ver Sessão 8), não mais Kanban —
   botão "Calendário" também vem primeiro na UI, "Kanban" depois.
+- **Tamanhos de fonte/card ajustados na Sessão 9**: `PostCard.tsx` (Calendário Editorial)
+  ficou mais compacto (título `text-sm`→`text-xs`, textos secundários `11px`/`10px`→`10px`/
+  `9px`, menos padding/gap) pra caber mais posts visíveis por dia sem precisar do scroll
+  interno (ver bullet sobre altura fixa dos dias, Sessão 7) — pedido explícito do usuário
+  ("aparecer mais detalhes em cada dia"). Já o `TaskChip.tsx` (Tarefas, vista Calendário)
+  foi na direção contrária — aumentado (`text-xs`→`text-sm`, mais padding/gap) a pedido do
+  usuário. São ajustes de gosto/densidade independentes entre as duas páginas, não uma
+  regra geral — se pedirem mais ajuste fino de tamanho no futuro, é só variar essas mesmas
+  classes Tailwind.
 - **Sem autenticação**: acesso por link aberto. RLS habilitado nas 3 tabelas mas com
   política `using (true) with check (true)` (qualquer um com o link lê/escreve).
 - **Ambiente local**: máquina não tinha Node/npm/Homebrew — Node foi instalado via `nvm`
@@ -145,6 +156,53 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 9 — 2026-06-18
+
+**Contexto**: continuação direta da Sessão 8, mesmo dia. Usuário mandou o mesmo print de
+referência (card de tarefa com check verde) e pediu três coisas: (1) o checkbox de
+concluído "em cada card" — entendi como extensão pro board Kanban de Tarefas, que a
+Sessão 8 tinha deixado de fora de propósito; (2) fonte menor no Calendário Editorial pra
+mostrar mais detalhes por dia; (3) cards um pouco maiores nas Tarefas (Victoria).
+
+**1. Checkbox de concluído também no Kanban**
+- `components/tarefas/TaskCard.tsx`: ganhou a mesma estrutura da Sessão 8
+  (`TaskChip.tsx`/`PostCard.tsx`) — o ponto de prioridade virou um `<button>` com
+  `stopPropagation`, mostra `IconeCheck` (novo, duplicado localmente, mesmo SVG dos
+  outros dois arquivos) quando `tarefa.coluna === "concluido"`, título com `line-through`
+  e card com `opacity-60` quando concluída. Prop `onToggleConcluida` passada por
+  `KanbanColumn.tsx` → `app/tarefas/page.tsx` (reaproveitando o `alternarConcluida` criado
+  na Sessão 8 — desmarcar sempre volta pra `a_fazer`, mesma regra de antes).
+
+**2. Calendário Editorial mais compacto**
+- `components/calendario/PostCard.tsx`: reduzi padding (`px-2 py-1.5`→`px-1.5 py-1`),
+  título (`text-sm`→`text-xs`), nome do canal e categoria (`11px`→`10px`), badges
+  NOVO/vídeo (`10px`→`9px`), barrinhas de etiqueta (`h-1.5 w-6`→`h-1 w-5`), ícone de
+  check/círculo do botão de status também encolheu um pouco.
+- `components/calendario/DayCell.tsx`: gap entre cards de `gap-1`→`gap-0.5`. Não mudei a
+  altura fixa do dia (`h-[130px] sm:h-[150px]`, da Sessão 7) — só o conteúdo ficou mais
+  denso, então mais posts cabem antes de precisar do scroll interno.
+
+**3. Cards de Tarefas maiores**
+- `components/tarefas/TaskChip.tsx` (vista Calendário de Tarefas, que é a padrão desde a
+  Sessão 8): padding (`px-2 py-1`→`px-2.5 py-1.5`), título (`text-xs`→`text-sm`), gap
+  (`gap-0.5`/`gap-1.5`→`gap-1`/`gap-2`), avatar de responsável (`h-3.5 w-3.5`→`h-4 w-4`,
+  texto `10px`→`11px`), ícone de check (`h-3.5 w-3.5`→`h-4 w-4`). Não toquei no
+  `TaskCard.tsx` do Kanban nem no `KanbanColumn.tsx` — o pedido foi especificamente sobre
+  os cards da vista Calendário (que é a referência do print e a vista padrão agora).
+
+**4. Testes**
+- `npm run lint` e `npm run build` limpos.
+- Playwright/Chrome headless: confirmei visualmente que dias com 2 posts no Calendário
+  Editorial (ex: 20/jun) agora mostram os 2 sem precisar rolar (antes só 1 cabia). No
+  Kanban de Tarefas, cliquei no botão de uma tarefa "teste" em "A Fazer" e confirmei que
+  moveu pra "Concluído" (check verde, tachado) sem abrir o modal (contei ocorrências de
+  "Editar tarefa" na página = 0), depois revertido pelo mesmo botão.
+
+**5. Pendente**
+- Nada novo. Mudanças ainda não commitadas nesta sessão — perguntei ao usuário antes de
+  commitar/dar push, já que ele não confirmou explicitamente nesta rodada (diferente da
+  Sessão 8, onde pediu push de forma explícita).
 
 ### Sessão 8 — 2026-06-18
 

@@ -10,7 +10,7 @@ function IconeCheck() {
     <svg
       viewBox="0 0 20 20"
       fill="none"
-      className="h-3.5 w-3.5 shrink-0 text-green-500"
+      className="h-3 w-3 shrink-0 text-green-500"
       aria-label="Publicado"
     >
       <circle cx="10" cy="10" r="9" fill="currentColor" fillOpacity="0.15" />
@@ -55,30 +55,30 @@ export default function PostCard({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`relative cursor-pointer rounded-lg border border-white/10 bg-white/10 px-2 py-1.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md ${
-        isDragging ? "opacity-50" : ""
-      }`}
+      className={`relative cursor-pointer rounded-lg border border-white/10 bg-white/10 px-1.5 py-1 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md ${
+        publicado ? "opacity-60" : ""
+      } ${isDragging ? "opacity-50" : ""}`}
     >
       {post.novo_produto && (
-        <span className="absolute -top-2 -right-2 rounded-full bg-badge-novo px-1.5 py-0.5 text-[10px] font-bold text-white shadow">
+        <span className="absolute -top-2 -right-2 rounded-full bg-badge-novo px-1 py-0.5 text-[9px] font-bold text-white shadow">
           NOVO
         </span>
       )}
 
       {etiquetasDoPost.length > 0 && (
-        <div className="mb-1.5 flex flex-wrap gap-1">
+        <div className="mb-1 flex flex-wrap gap-1">
           {etiquetasDoPost.map((et) => (
             <span
               key={et.id}
               title={et.nome}
-              className="h-1.5 w-6 rounded-full"
+              className="h-1 w-5 rounded-full"
               style={{ backgroundColor: et.cor }}
             />
           ))}
         </div>
       )}
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={(e) => {
@@ -91,22 +91,22 @@ export default function PostCard({
           {publicado ? (
             <IconeCheck />
           ) : (
-            <span className="block h-3 w-3 rounded-full border-2 border-zinc-500" />
+            <span className="block h-2.5 w-2.5 rounded-full border-2 border-zinc-500" />
           )}
         </button>
-        <span className={`text-[11px] font-medium ${corCanal.text}`}>
+        <span className={`text-[10px] font-medium ${corCanal.text}`}>
           {LABEL_CANAL[post.canal]}
         </span>
       </div>
 
-      <p className="text-sm font-semibold leading-snug text-zinc-100">{post.titulo}</p>
+      <p className="text-xs font-semibold leading-snug text-zinc-100">{post.titulo}</p>
 
       {post.categoria && (
-        <p className="truncate text-[11px] text-zinc-500">{post.categoria}</p>
+        <p className="truncate text-[10px] text-zinc-500">{post.categoria}</p>
       )}
 
       {post.video_pronto && (
-        <span className="mt-1 inline-block rounded bg-badge-video px-1.5 py-0.5 text-[10px] font-semibold text-white">
+        <span className="mt-0.5 inline-block rounded bg-badge-video px-1 py-0.5 text-[9px] font-semibold text-white">
           ✓ vídeo já feito
         </span>
       )}

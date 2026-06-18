@@ -10,12 +10,14 @@ export default function KanbanColumn({
   tarefas,
   onClickTarefa,
   onNovaTarefa,
+  onToggleConcluida,
 }: {
   coluna: ColunaTarefa;
   titulo: string;
   tarefas: Tarefa[];
   onClickTarefa: (tarefa: Tarefa) => void;
   onNovaTarefa: (coluna: ColunaTarefa) => void;
+  onToggleConcluida: (tarefa: Tarefa) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: coluna });
 
@@ -48,6 +50,7 @@ export default function KanbanColumn({
             key={tarefa.id}
             tarefa={tarefa}
             onClick={() => onClickTarefa(tarefa)}
+            onToggleConcluida={() => onToggleConcluida(tarefa)}
           />
         ))}
       </div>

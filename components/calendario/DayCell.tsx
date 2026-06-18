@@ -55,7 +55,7 @@ export default function DayCell({
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 overflow-y-auto">
+      <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
         {posts.map((post) => (
           <PostCard
             key={post.id}
