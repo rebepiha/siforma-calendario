@@ -12,6 +12,7 @@ import { addMonths, format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
 import { Etiqueta, NovoPost, Post } from "@/lib/types";
+import { useUndoStack } from "@/lib/useUndoStack";
 import CalendarGrid from "@/components/calendario/CalendarGrid";
 import PostModal from "@/components/calendario/PostModal";
 import Filtros, { FiltrosState } from "@/components/calendario/Filtros";
@@ -36,6 +37,8 @@ export default function PaginaCalendario() {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
+
+  const { registrarAcao } = useUndoStack(!modalAberto);
 
   async function carregarPosts() {
     setCarregando(true);
@@ -95,7 +98,55 @@ export default function PaginaCalendario() {
     setModalAberto(true);
   }
 
+  function paraNovoPost(post: Post): NovoPost {
+    return {
+      titulo: post.titulo,
+      data: post.data,
+      canal: post.canal,
+      tipo: post.tipo,
+      categoria: post.categoria,
+      video_pronto: post.video_pronto,
+      novo_produto: post.novo_produto,
+      status: post.status,
+      copy: post.copy,
+      observacoes: post.observacoes,
+    };
+  }
+
+  async function sincronizarEtiquetasPost(postId: string, etiquetaIds: string[]) {
+    await supabase.from("post_etiquetas").delete().eq("post_id", postId);
+    if (etiquetaIds.length > 0) {
+      await supabase
+        .from("post_etiquetas")
+        .insert(etiquetaIds.map((etiqueta_id) => ({ post_id: postId, etiqueta_id })));
+    }
+  }
+
+  async function aplicarCamposPost(id: string, campos: Partial<NovoPost>) {
+    setPosts((atual) => atual.map((p) => (p.id === id ? { ...p, ...campos } : p)));
+    const { error } = await supabase.from("posts").update(campos).eq("id", id);
+    if (error) carregarPosts();
+  }
+
+  async function aplicarEtiquetasPost(id: string, etiquetaIds: string[]) {
+    await sincronizarEtiquetasPost(id, etiquetaIds);
+    setPosts((atual) => atual.map((p) => (p.id === id ? { ...p, etiqueta_ids: etiquetaIds } : p)));
+  }
+
+  async function aplicarExclusaoPost(id: string) {
+    const { error } = await supabase.from("posts").delete().eq("id", id);
+    if (!error) setPosts((atual) => atual.filter((p) => p.id !== id));
+  }
+
+  async function aplicarRestauracaoPost(post: Post) {
+    const { error } = await supabase.from("posts").insert({ id: post.id, ...paraNovoPost(post) });
+    if (error) return;
+    await sincronizarEtiquetasPost(post.id, post.etiqueta_ids);
+    setPosts((atual) => [...atual, post]);
+  }
+
   async function salvarPost(id: string | null, valores: NovoPost, etiquetaIds: string[]) {
+    const postAnterior = id ? posts.find((p) => p.id === id) ?? null : null;
     let postSalvo: Post | null = null;
     if (id) {
       const { data, error } = await supabase
@@ -116,23 +167,31 @@ export default function PaginaCalendario() {
       postSalvo = { ...(data as Omit<Post, "etiqueta_ids">), etiqueta_ids: etiquetaIds };
     }
 
-    await supabase.from("post_etiquetas").delete().eq("post_id", postSalvo.id);
-    if (etiquetaIds.length > 0) {
-      await supabase
-        .from("post_etiquetas")
-        .insert(etiquetaIds.map((etiqueta_id) => ({ post_id: postSalvo!.id, etiqueta_id })));
-    }
-
+    await sincronizarEtiquetasPost(postSalvo.id, etiquetaIds);
     setPosts((atual) =>
       id ? atual.map((p) => (p.id === id ? postSalvo! : p)) : [...atual, postSalvo!]
     );
     setModalAberto(false);
+
+    if (postAnterior) {
+      registrarAcao(async () => {
+        await aplicarCamposPost(postAnterior.id, paraNovoPost(postAnterior));
+        await aplicarEtiquetasPost(postAnterior.id, postAnterior.etiqueta_ids);
+      });
+    } else {
+      const idCriado = postSalvo.id;
+      registrarAcao(() => aplicarExclusaoPost(idCriado));
+    }
   }
 
   async function excluirPost(id: string) {
+    const postAnterior = posts.find((p) => p.id === id) ?? null;
     const { error } = await supabase.from("posts").delete().eq("id", id);
     if (!error) {
       setPosts((atual) => atual.filter((p) => p.id !== id));
+      if (postAnterior) {
+        registrarAcao(() => aplicarRestauracaoPost(postAnterior));
+      }
     }
     setModalAberto(false);
   }
@@ -174,30 +233,14 @@ export default function PaginaCalendario() {
   }
 
   async function alternarStatusPublicado(post: Post) {
+    const statusAnterior = post.status;
     const novoStatus: Post["status"] = post.status === "publicado" ? "pendente" : "publicado";
-    setPosts((atual) =>
-      atual.map((p) => (p.id === post.id ? { ...p, status: novoStatus } : p))
-    );
-    const { error } = await supabase
-      .from("posts")
-      .update({ status: novoStatus })
-      .eq("id", post.id);
-    if (error) {
-      carregarPosts();
-    }
+    await aplicarCamposPost(post.id, { status: novoStatus });
+    registrarAcao(() => aplicarCamposPost(post.id, { status: statusAnterior }));
   }
 
   async function moverPost(postId: string, novaData: string) {
-    setPosts((atual) =>
-      atual.map((p) => (p.id === postId ? { ...p, data: novaData } : p))
-    );
-    const { error } = await supabase
-      .from("posts")
-      .update({ data: novaData })
-      .eq("id", postId);
-    if (error) {
-      carregarPosts();
-    }
+    await aplicarCamposPost(postId, { data: novaData });
   }
 
   function aoFinalizarArraste(evento: DragEndEvent) {
@@ -207,7 +250,9 @@ export default function PaginaCalendario() {
     const novaData = String(over.id);
     const post = posts.find((p) => p.id === postId);
     if (post && post.data !== novaData) {
+      const dataAnterior = post.data;
       moverPost(postId, novaData);
+      registrarAcao(() => aplicarCamposPost(postId, { data: dataAnterior }));
     }
   }
 

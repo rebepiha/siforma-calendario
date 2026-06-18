@@ -13,6 +13,7 @@ import { addWeeks, endOfWeek, format, startOfWeek, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
 import { ColunaTarefa, NovaTarefa, Tarefa } from "@/lib/types";
+import { useUndoStack } from "@/lib/useUndoStack";
 import TaskCalendarGrid from "@/components/tarefas/TaskCalendarGrid";
 import TaskChip from "@/components/tarefas/TaskChip";
 import TaskModal from "@/components/tarefas/TaskModal";
@@ -35,6 +36,8 @@ export default function PaginaTarefas() {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
+
+  const { registrarAcao } = useUndoStack(!modalAberto);
 
   async function carregarTarefas() {
     setCarregando(true);
@@ -73,7 +76,10 @@ export default function PaginaTarefas() {
     [tarefasDoResponsavel]
   );
   const tarefasSemPrazo = useMemo(
-    () => tarefasDoResponsavel.filter((t) => !t.prazo),
+    () =>
+      tarefasDoResponsavel
+        .filter((t) => !t.prazo)
+        .sort((a, b) => a.ordem - b.ordem || a.criado_em.localeCompare(b.criado_em)),
     [tarefasDoResponsavel]
   );
 
@@ -89,7 +95,53 @@ export default function PaginaTarefas() {
     setModalAberto(true);
   }
 
+  function paraNovaTarefa(tarefa: Tarefa): NovaTarefa {
+    return {
+      titulo: tarefa.titulo,
+      descricao: tarefa.descricao,
+      responsavel: tarefa.responsavel,
+      prazo: tarefa.prazo,
+      prioridade: tarefa.prioridade,
+      coluna: tarefa.coluna,
+    };
+  }
+
+  async function aplicarCamposTarefa(id: string, campos: Partial<NovaTarefa>) {
+    setTarefas((atual) => atual.map((t) => (t.id === id ? { ...t, ...campos } : t)));
+    const { error } = await supabase.from("tarefas").update(campos).eq("id", id);
+    if (error) carregarTarefas();
+  }
+
+  async function aplicarExclusaoTarefa(id: string) {
+    const { error } = await supabase.from("tarefas").delete().eq("id", id);
+    if (!error) setTarefas((atual) => atual.filter((t) => t.id !== id));
+  }
+
+  async function aplicarRestauracaoTarefa(tarefa: Tarefa) {
+    const { error } = await supabase.from("tarefas").insert(tarefa);
+    if (error) return;
+    setTarefas((atual) => [...atual, tarefa]);
+  }
+
+  async function aplicarPosicoes(
+    posicoes: { id: string; prazo: string | null; ordem: number }[]
+  ) {
+    setTarefas((atual) => {
+      const porId = new Map(posicoes.map((p) => [p.id, p]));
+      return atual.map((t) => {
+        const p = porId.get(t.id);
+        return p ? { ...t, prazo: p.prazo, ordem: p.ordem } : t;
+      });
+    });
+    await Promise.all(
+      posicoes.map((p) =>
+        supabase.from("tarefas").update({ prazo: p.prazo, ordem: p.ordem }).eq("id", p.id)
+      )
+    );
+  }
+
   async function salvarTarefa(id: string | null, valores: NovaTarefa) {
+    const tarefaAnterior = id ? tarefas.find((t) => t.id === id) ?? null : null;
     if (id) {
       const { data, error } = await supabase
         .from("tarefas")
@@ -99,6 +151,9 @@ export default function PaginaTarefas() {
         .single();
       if (!error && data) {
         setTarefas((atual) => atual.map((t) => (t.id === id ? (data as Tarefa) : t)));
+        if (tarefaAnterior) {
+          registrarAcao(() => aplicarCamposTarefa(id, paraNovaTarefa(tarefaAnterior)));
+        }
       }
     } else {
       const { data, error } = await supabase
@@ -107,48 +162,34 @@ export default function PaginaTarefas() {
         .select()
         .single();
       if (!error && data) {
-        setTarefas((atual) => [...atual, data as Tarefa]);
+        const tarefaCriada = data as Tarefa;
+        setTarefas((atual) => [...atual, tarefaCriada]);
+        registrarAcao(() => aplicarExclusaoTarefa(tarefaCriada.id));
       }
     }
     setModalAberto(false);
   }
 
   async function excluirTarefa(id: string) {
+    const tarefaAnterior = tarefas.find((t) => t.id === id) ?? null;
     const { error } = await supabase.from("tarefas").delete().eq("id", id);
     if (!error) {
       setTarefas((atual) => atual.filter((t) => t.id !== id));
+      if (tarefaAnterior) {
+        registrarAcao(() => aplicarRestauracaoTarefa(tarefaAnterior));
+      }
     }
     setModalAberto(false);
   }
 
   async function moverTarefa(tarefaId: string, novaColuna: ColunaTarefa) {
-    setTarefas((atual) =>
-      atual.map((t) => (t.id === tarefaId ? { ...t, coluna: novaColuna } : t))
-    );
-    const { error } = await supabase
-      .from("tarefas")
-      .update({ coluna: novaColuna })
-      .eq("id", tarefaId);
-    if (error) {
-      carregarTarefas();
-    }
+    await aplicarCamposTarefa(tarefaId, { coluna: novaColuna });
   }
 
   function alternarConcluida(tarefa: Tarefa) {
+    const colunaAnterior = tarefa.coluna;
     moverTarefa(tarefa.id, tarefa.coluna === "concluido" ? "a_fazer" : "concluido");
-  }
-
-  async function moverPrazoTarefa(tarefaId: string, novoPrazo: string | null) {
-    setTarefas((atual) =>
-      atual.map((t) => (t.id === tarefaId ? { ...t, prazo: novoPrazo } : t))
-    );
-    const { error } = await supabase
-      .from("tarefas")
-      .update({ prazo: novoPrazo })
-      .eq("id", tarefaId);
-    if (error) {
-      carregarTarefas();
-    }
+    registrarAcao(() => aplicarCamposTarefa(tarefa.id, { coluna: colunaAnterior }));
   }
 
   const inicioSemana = startOfWeek(semanaAtual, { weekStartsOn: 1 });
@@ -163,15 +204,48 @@ export default function PaginaTarefas() {
     id: "sem-prazo",
   });
 
+  function ordenarGrupo(lista: Tarefa[]) {
+    return [...lista].sort((a, b) => a.ordem - b.ordem || a.criado_em.localeCompare(b.criado_em));
+  }
+
   function aoFinalizarArrasteCalendario(evento: DragEndEvent) {
     const { active, over } = evento;
     if (!over) return;
     const tarefaId = String(active.id);
-    const novoPrazo = String(over.id) === "sem-prazo" ? null : String(over.id);
+    const overId = String(over.id);
+    if (tarefaId === overId) return;
+
     const tarefa = tarefas.find((t) => t.id === tarefaId);
-    if (tarefa && tarefa.prazo !== novoPrazo) {
-      moverPrazoTarefa(tarefaId, novoPrazo);
-    }
+    if (!tarefa) return;
+
+    // soltar em cima de outro card: vai pro dia desse card, na posição dele.
+    // soltar num dia (ou em "sem-prazo") vazio: vai pro fim daquele dia.
+    const tarefaAlvo = tarefas.find((t) => t.id === overId);
+    const novoPrazo = tarefaAlvo ? tarefaAlvo.prazo : overId === "sem-prazo" ? null : overId;
+
+    const outrasDoDestino = ordenarGrupo(
+      tarefas.filter((t) => t.id !== tarefaId && t.prazo === novoPrazo)
+    );
+    const indice = tarefaAlvo
+      ? Math.max(0, outrasDoDestino.findIndex((t) => t.id === tarefaAlvo.id))
+      : outrasDoDestino.length;
+    const novaOrdemDoDestino = [
+      ...outrasDoDestino.slice(0, indice),
+      tarefa,
+      ...outrasDoDestino.slice(indice),
+    ];
+
+    const grupoAtual = ordenarGrupo(tarefas.filter((t) => t.prazo === tarefa.prazo));
+    const semMudanca =
+      tarefa.prazo === novoPrazo &&
+      grupoAtual.map((t) => t.id).join() === novaOrdemDoDestino.map((t) => t.id).join();
+    if (semMudanca) return;
+
+    const antes = novaOrdemDoDestino.map((t) => ({ id: t.id, prazo: t.prazo, ordem: t.ordem }));
+    const depois = novaOrdemDoDestino.map((t, i) => ({ id: t.id, prazo: novoPrazo, ordem: i }));
+
+    aplicarPosicoes(depois);
+    registrarAcao(() => aplicarPosicoes(antes));
   }
 
   return (

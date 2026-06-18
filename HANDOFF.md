@@ -20,6 +20,22 @@
   sessão). Se no início de uma sessão `git fetch` mostrar commits em `origin/main` que não
   fazem sentido com o que está documentado aqui, **pare e avise o usuário antes de
   push/pull** — não dá pra saber se é trabalho real perdido ou outra sessão concorrente.
+- **Ctrl+Z desfaz a última ação** (ver Sessão 25), no Calendário Editorial e em
+  Tarefas: criar/editar/excluir/mover (drag) post ou tarefa, e marcar
+  publicado/concluído. Hook `lib/useUndoStack.ts` — pilha em memória (perdida ao
+  recarregar a página), sem redo, desativada automaticamente enquanto um modal está
+  aberto (pra não capturar o Ctrl+Z nativo de um campo de texto). **Não cobre**
+  criar/editar/excluir etiqueta nem nada em Metas e Progresso — só os cards de post e
+  tarefa, que foi o que o usuário pediu.
+- **Tarefas: arrastar para reordenar dentro do mesmo dia** (ver Sessão 25), além de
+  mover entre dias (já existia). Usa a coluna `ordem` (inteiro) da tabela `tarefas` —
+  essa coluna **já existia no banco em produção mas não estava em nenhuma migration
+  do repo** (alguém deve ter rodado um `alter table` direto no SQL Editor do Supabase
+  em algum momento não documentado); adicionei `ordem: number` ao tipo `Tarefa` em
+  `lib/types.ts` mas **não criei uma migration nova pra ela** já que a coluna já existe
+  na prática — se reconstruir o banco do zero algum dia a partir só das migrations em
+  `supabase/migrations/`, vai faltar essa coluna (precisa de
+  `alter table tarefas add column ordem integer not null default 0;`).
 - **Link de produção**: https://siforma-calendario.vercel.app
 - **Repositório**: https://github.com/rebepiha/siforma-calendario (público, branch `main`)
 - **Supabase**: projeto com URL `https://ayfbzhyykcqrkfpscgkv.supabase.co` (ref `ayfbzhyykcqrkfpscgkv`)
@@ -282,6 +298,108 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 25 — 2026-06-18
+
+**Contexto**: dois pedidos na mesma sessão. (1) "opção desfazer ctrl z desfaz a ultima
+ação" — usuário quer um Ctrl+Z genérico de desfazer. (2) "nas tarefas vitoria, quero
+poder arrastar os cards dentro do dia, a ordem deles" — quer reordenar os cards de
+tarefa dentro de um mesmo dia por drag-and-drop (já existia arrastar entre dias
+diferentes, mas não reordenar dentro do mesmo dia).
+
+**1. Escopo do Ctrl+Z — perguntei ao usuário antes de implementar**
+Três perguntas via AskUserQuestion: (a) em quais páginas — escolheu Calendário +
+Tarefas (não Metas, não etiquetas); (b) quais ações — escolheu todas (criar, editar,
+excluir, mover, marcar concluído/publicado), não só as destrutivas; (c) sobrevive a
+F5 — escolheu não, só em memória (mais simples, sem risco de desfazer ação de outra
+pessoa que editou o mesmo post/tarefa depois, dado que não há login).
+
+**2. Implementação do Ctrl+Z**
+- Novo `lib/useUndoStack.ts`: hook genérico com uma pilha (`useRef`) de funções
+  "desfazer". `registrarAcao(fn)` empilha; ouve `keydown` global pra Ctrl+Z/Cmd+Z,
+  desempilha e executa a mais recente (sem redo — é só desfazer, na ordem inversa).
+  Ignora o atalho se o foco estiver num `input`/`textarea`/`contentEditable` (deixa o
+  undo nativo do navegador funcionar dentro de campo de texto) ou se `ativo=false`
+  (uso: `useUndoStack(!modalAberto)` nas duas páginas, pra não competir com edição
+  dentro do modal).
+- `app/page.tsx` (Calendário Editorial): refatorei `salvarPost`/`excluirPost`/
+  `alternarStatusPublicado`/`moverPost` em torno de helpers "raw" reutilizáveis —
+  `aplicarCamposPost`, `aplicarEtiquetasPost`, `aplicarExclusaoPost`,
+  `aplicarRestauracaoPost` — que fazem a mutação (Supabase + state) sem registrar
+  undo, pra evitar que desfazer uma ação empilhe um novo undo (o que faria Ctrl+Z
+  repetido alternar pra frente e pra trás em vez de voltar no tempo). Cada handler
+  público captura o estado anterior (post inteiro pra editar/excluir, só o campo
+  pra mover/status) antes de mutar, e registra o helper raw com esse valor anterior
+  como ação de desfazer. Criar um post → desfazer exclui; excluir → desfazer
+  reinsere com o mesmo `id` e reconstrói as etiquetas (`post_etiquetas`).
+- `app/tarefas/page.tsx`: mesmo padrão — `aplicarCamposTarefa`, `aplicarExclusaoTarefa`,
+  `aplicarRestauracaoTarefa`. `moverTarefa`/`alternarConcluida` simplificados pra
+  delegar no helper genérico em vez de duplicar a lógica de update.
+- Não cobri criar/editar/excluir etiqueta (`EtiquetaPicker.tsx`) nem nada em Metas —
+  fora do escopo que o usuário definiu nas perguntas.
+
+**3. Reordenar tarefas dentro do dia (drag-and-drop)**
+- Descobri que a tabela `tarefas` já tem uma coluna `ordem` (inteiro, default 0) em
+  produção que **não existe em nenhuma migration do repo** — só percebi isso
+  conferindo o schema real via REST (`GET /rest/v1/tarefas?limit=1`), porque o
+  `HANDOFF.md` antigo (Sessão 8) já citava essa coluna como existente mas não usada.
+  Não criei uma migration retroativa pra ela (ver bullet em "Estado atual" sobre o
+  risco se o banco for recriado do zero).
+- `lib/types.ts`: adicionei `ordem: number` em `Tarefa`; `NovaTarefa` continua
+  excluindo `id`/`criado_em`/`ordem` (editar uma tarefa pelo modal nunca toca a
+  ordem).
+- `components/tarefas/TaskChip.tsx`: cada card agora é **draggable E droppable**
+  (antes só draggable) — `useDroppable({id: tarefa.id})` além do `useDraggable` já
+  existente, com os refs combinados (`setRefs`) no mesmo nó do DOM. Isso permite
+  soltar um card "em cima" de outro (`over.id` vira o id da tarefa-alvo, não só o id
+  do dia). Adicionei destaque visual `ring-2 ring-oliva` quando `isOver`, igual ao
+  padrão já usado no quadrado do dia e na caixa "Sem prazo".
+- `app/tarefas/page.tsx`: reescrevi `aoFinalizarArrasteCalendario` (era só
+  `moverPrazoTarefa`, removida) pra um fluxo único que cobre os três casos: soltar
+  sobre outro card (move pro dia desse card, na posição dele — antes ou depois
+  dependendo de onde exatamente, baseado no índice dele na lista ordenada do dia),
+  soltar no quadrado vazio de um dia ou na caixa "Sem prazo" (vai pro fim daquele
+  grupo). Recalcula `ordem` (0, 1, 2...) de todas as tarefas do dia de destino e
+  persiste via `Promise.all` de updates individuais — escala bem pra poucas tarefas
+  por dia, que é o caso real aqui. Novo helper `aplicarPosicoes` faz a mutação raw
+  (local + Supabase); o handler registra undo com o snapshot "antes" de
+  prazo+ordem de cada tarefa afetada, capturado antes de qualquer mutação.
+- `components/tarefas/TaskCalendarGrid.tsx` e a lista "Sem prazo definido" em
+  `app/tarefas/page.tsx`: agora ordenam explicitamente por `ordem` (com `criado_em`
+  como critério de desempate) ao agrupar por dia, em vez de confiar na ordem de
+  chegada do array vindo do fetch — necessário porque depois de um drag o array de
+  `tarefas` no state não se reordena sozinho só porque o campo `ordem` mudou.
+
+**4. Testes**
+- `npm run lint` e `npm run build` limpos (depois de cada uma das duas mudanças).
+- Sem Playwright como devDependency do projeto — reinstalei via `npx playwright
+  install chromium` numa pasta temporária (`/tmp/pwtest`), só pra validar
+  visualmente; não alterou nada no repo.
+- Testei via Playwright contra o dev server local (`npm run dev`), criando/
+  editando/excluindo/movendo posts e tarefas de teste reais no banco de produção
+  (mesmo Supabase do app, não tem ambiente de teste separado) e sempre limpando no
+  final — confirmei depois via `GET /rest/v1/posts` e `/tarefas` com filtro
+  `ilike.*Teste*`/`*Reorder*`/`*Cross Day*` que não sobrou nada. Casos cobertos:
+  criar post→desfazer (remove), editar título→desfazer (volta), marcar
+  publicado→desfazer (volta, com asserção *escopada ao card certo* — a primeira
+  tentativa usou `.first()` num seletor de página inteira e testou o card errado por
+  engano, não era bug no app), excluir→desfazer (restaura), arrastar dentro do
+  mesmo dia→desfazer (reordena e volta), arrastar entre dias diferentes→desfazer
+  (move e volta). Um primeiro teste de drag em posts não conseguiu simular o
+  arraste corretamente (seletor de destino ruim) — não era bug, e o Ctrl+Z nesse
+  caso corretamente desfez a ação anterior da pilha (a criação), confirmando que a
+  pilha LIFO funciona mesmo quando uma ação não chega a ser registrada.
+- Não tentei automatizar um teste de arrastar pra fora do "modalAberto" guard
+  (Ctrl+Z dentro de um campo de texto) — confiei na leitura do código
+  (`alvo?.tagName === "INPUT" || ...`) em vez de testar interativamente esse caso
+  específico.
+
+**5. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
+- Migration retroativa da coluna `ordem` (ver "Estado atual") não foi criada.
+- Não implementei undo para etiquetas nem para Metas e Progresso (fora do escopo
+  definido pelo usuário nesta sessão) — se pedirem depois, é só repetir o mesmo
+  padrão (`useUndoStack` + helpers raw) nessas páginas/componentes.
 
 ### Sessão 24 — 2026-06-18
 

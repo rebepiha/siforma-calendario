@@ -40,9 +40,10 @@ export interface Tarefa {
   prioridade: Prioridade;
   coluna: ColunaTarefa;
   criado_em: string;
+  ordem: number;
 }
 
-export type NovaTarefa = Omit<Tarefa, "id" | "criado_em">;
+export type NovaTarefa = Omit<Tarefa, "id" | "criado_em" | "ordem">;
 
 export interface Meta {
   id: string;
