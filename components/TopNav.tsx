@@ -14,7 +14,7 @@ export default function TopNav() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-zinc-700 bg-zinc-800">
+    <header className="sticky top-0 z-30 border-b border-zinc-600 bg-zinc-700">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-2.5">
           <Image
@@ -25,7 +25,7 @@ export default function TopNav() {
             className="h-7 w-auto"
             priority
           />
-          <span className="hidden text-sm text-zinc-600 sm:inline">
+          <span className="hidden text-sm text-zinc-300 sm:inline">
             Calendário de Marketing
           </span>
         </div>
@@ -40,7 +40,7 @@ export default function TopNav() {
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   ativo
                     ? "bg-oliva text-white"
-                    : "text-zinc-400 hover:bg-zinc-900 hover:text-oliva-claro"
+                    : "text-zinc-200 hover:bg-zinc-900 hover:text-oliva-claro"
                 }`}
               >
                 {aba.label}

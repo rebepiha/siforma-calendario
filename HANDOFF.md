@@ -35,6 +35,19 @@
   brandbook. Logo: `public/siforma-logo.png` (fundo claro, não usado atualmente) e
   `public/siforma-logo-dark.png` (fundo escuro, em uso no `TopNav` — cópia de
   `ASSINATURAS PNG/PNG - SEM TAGLINE/SIFORMA SEM  (6).png`).
+- **Header mais claro/destacado** (ver Sessão 21): `TopNav.tsx` foi de `bg-zinc-800`
+  pra `bg-zinc-700` (e borda `border-zinc-700`→`border-zinc-600`) — usuário achou o
+  header original pouco destacado do fundo da página. Textos secundários ajustados pra
+  manter contraste no fundo mais claro: subtítulo "Calendário de Marketing"
+  `text-zinc-600`→`text-zinc-300`, abas inativas `text-zinc-400`→`text-zinc-200`.
+- **Cards "Stories"/"Feed" vazios não mostram etiqueta colorida** (ver Sessão 21): os
+  posts placeholder criados em massa na Sessão 17 (título exatamente "Stories" ou
+  "Feed", sem conteúdo real ainda) deixaram de mostrar a barrinha de cor da etiqueta de
+  formato no topo do card (`PostCard.tsx`, variável `semConteudo` — título, sem espaços
+  nas pontas e em minúsculas, igual a "stories" ou "feed"). Posts com conteúdo real
+  (qualquer outro título, mesmo que comece com "Stories"/"Feed", ex: "Stories - Backstage
+  Cobertura") continuam mostrando a barrinha normalmente — a checagem é por
+  correspondência exata do título inteiro, não por prefixo.
 - **Favicon** (ver Sessão 16): `app/favicon.ico` (multi-resolução 16/32/48/64) e
   `app/icon.png` (512×512) são o ícone de calendário (fundo verde-oliva no topo, corpo
   branco, grade preta) que o usuário forneceu como PNG com fundo branco — removi o fundo
@@ -262,6 +275,39 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 21 — 2026-06-18
+
+**Contexto**: dois pedidos rápidos: (1) header do app pouco destacado, pedido pra ficar
+mais claro; (2) os cards placeholder de Stories (Sessão 17, sem conteúdo real ainda)
+deveriam parar de mostrar a etiqueta colorida, que ficava sem sentido num card vazio.
+
+**1. Header mais claro**
+- `components/TopNav.tsx`: fundo `bg-zinc-800`→`bg-zinc-700`, borda
+  `border-zinc-700`→`border-zinc-600`. Subi o contraste dos textos secundários pra
+  acompanhar o fundo mais claro: subtítulo `text-zinc-600`→`text-zinc-300`, abas
+  inativas `text-zinc-400`→`text-zinc-200` (aba ativa continua `bg-oliva text-white`,
+  sem mudança).
+
+**2. Esconder etiqueta colorida nos cards de Stories/Feed vazios**
+- `components/calendario/PostCard.tsx`: nova variável `semConteudo` — `true` quando
+  `post.titulo` (trim + lowercase) é exatamente `"stories"` ou `"feed"` (esses são os
+  únicos títulos usados pelos 80 placeholders da Sessão 17). Quando `true`, a barrinha
+  de etiqueta não renderiza, mesmo que o post tenha a etiqueta Stories/Feed anexada
+  (continua tendo a etiqueta no banco, só não mostra a cor no card). Posts com título
+  real (incluindo os que começam com "Stories"/"Feed" mas têm mais texto, ex: "Stories
+  - Backstage Cobertura") não são afetados — a comparação é com o título completo, não
+  prefixo.
+
+**3. Testes**
+- `npm run lint` e `npm run build` limpos.
+- Playwright/Chrome headless: confirmei visualmente o header mais claro/contrastado, e
+  que os cards genéricos "Stories" (ex: 19, 20, 21, 23, 25, 26/jun) não têm mais
+  barrinha colorida, enquanto cards com conteúdo real (ex: "Stories - Backstage
+  Cobertura" 28/jun, "Feed: SI Camarão..." 24/jun) continuam mostrando normalmente.
+
+**4. Pendente**
+- Nada novo. Mudanças ainda não commitadas — perguntar antes de commitar/push.
 
 ### Sessão 20 — 2026-06-18
 
