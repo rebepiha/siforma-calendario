@@ -73,10 +73,12 @@
   (Sessões 14–15 revertidas/substituídas na Sessão 19): o usuário achou o card poluído
   com "Instagram - Stories"/"Instagram - Feed" coloridos (laranja/amarelo) competindo
   com a barrinha de etiqueta. Simplificado: o label do canal em `PostCard.tsx` voltou a
-  ser sempre só `LABEL_CANAL[post.canal]` na cor fixa de `CORES_CANAL` (Instagram em rosa
-  — `text-pink-300/80`, suavizado na Sessão 20 a partir do `text-pink-400` original da
-  Sessão 14, que o usuário achou ainda chamativo demais mesmo depois da simplificação).
-  O formato passou a aparecer como prefixo do
+  ser sempre só `LABEL_CANAL[post.canal]` na cor fixa de `CORES_CANAL` — Instagram
+  passou por rosa vibrante (`text-pink-400`, Sessão 14) → rosa suave (`text-pink-300/80`,
+  Sessão 20) → **neutro** (`text-zinc-400`, Sessão 22, sem nenhum tom de rosa) — usuário
+  foi pedindo mais discrição em rodadas sucessivas até tirar a cor de identidade do
+  canal completamente; LinkedIn (azul) e YouTube (vermelho) não foram tocados em
+  nenhuma dessas rodadas. O formato passou a aparecer como prefixo do
   **título** — `"Stories- "` ou `"Feed: "` — só quando o post tem a etiqueta
   correspondente *e* o título ainda não começa com essa palavra (regex
   `/^(stories|feed)\b/i`, pra não duplicar em posts que a equipe já escreveu manualmente
@@ -275,6 +277,25 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 22 — 2026-06-18
+
+**Contexto**: continuação direta da Sessão 21. Usuário pediu pra tirar completamente a
+cor rosa da palavra "Instagram" no Calendário Editorial (terceira rodada nessa mesma
+direção — Sessão 14 trocou de laranja pra rosa vibrante, Sessão 20 suavizou pra um rosa
+mais claro, agora vira neutro).
+
+**1. Mudança**
+- `lib/postStyles.ts`: `CORES_CANAL.instagram.text` de `text-pink-300/80` para
+  `text-zinc-400` — mesmo tom neutro usado em outros textos secundários do app. LinkedIn
+  e YouTube não foram alterados.
+
+**2. Testes**
+- `npm run lint` e `npm run build` limpos. Confirmado visualmente via Playwright/Chrome
+  headless.
+
+**3. Pendente**
+- Nada novo. Mudança ainda não commitada — perguntar antes de commitar/push.
 
 ### Sessão 21 — 2026-06-18
 
