@@ -431,6 +431,7 @@ export default function PaginaCalendario() {
               etiquetas={etiquetas}
               onClickPost={abrirEdicaoPost}
               onNovoPost={abrirNovoPost}
+              onChangeStatus={atualizarStatus}
             />
           </DndContext>
         ) : visao === "lista" ? (
@@ -443,6 +444,7 @@ export default function PaginaCalendario() {
               etiquetas={etiquetas}
               onClickPost={abrirEdicaoPost}
               onNovoPost={abrirNovoPost}
+              onChangeStatus={atualizarStatus}
             />
           </DndContext>
         )}

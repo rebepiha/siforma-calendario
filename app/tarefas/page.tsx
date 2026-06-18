@@ -5,6 +5,7 @@ import {
   DndContext,
   DragEndEvent,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -144,6 +145,19 @@ export default function PaginaTarefas() {
     }
   }
 
+  async function moverPrazoTarefa(tarefaId: string, novoPrazo: string | null) {
+    setTarefas((atual) =>
+      atual.map((t) => (t.id === tarefaId ? { ...t, prazo: novoPrazo } : t))
+    );
+    const { error } = await supabase
+      .from("tarefas")
+      .update({ prazo: novoPrazo })
+      .eq("id", tarefaId);
+    if (error) {
+      carregarTarefas();
+    }
+  }
+
   const inicioSemana = startOfWeek(semanaAtual, { weekStartsOn: 1 });
   const fimSemana = endOfWeek(semanaAtual, { weekStartsOn: 1 });
   const rotuloSemana = `${format(inicioSemana, "d MMM", { locale: ptBR })} – ${format(
@@ -160,6 +174,21 @@ export default function PaginaTarefas() {
     const tarefa = tarefas.find((t) => t.id === tarefaId);
     if (tarefa && tarefa.coluna !== novaColuna) {
       moverTarefa(tarefaId, novaColuna);
+    }
+  }
+
+  const { setNodeRef: setSemPrazoRef, isOver: semPrazoIsOver } = useDroppable({
+    id: "sem-prazo",
+  });
+
+  function aoFinalizarArrasteCalendario(evento: DragEndEvent) {
+    const { active, over } = evento;
+    if (!over) return;
+    const tarefaId = String(active.id);
+    const novoPrazo = String(over.id) === "sem-prazo" ? null : String(over.id);
+    const tarefa = tarefas.find((t) => t.id === tarefaId);
+    if (tarefa && tarefa.prazo !== novoPrazo) {
+      moverPrazoTarefa(tarefaId, novoPrazo);
     }
   }
 
@@ -253,31 +282,40 @@ export default function PaginaTarefas() {
           </div>
         </DndContext>
       ) : (
-        <div className="flex flex-col gap-3">
-          {tarefasSemPrazo.length > 0 && (
-            <div className="flex flex-col gap-2 rounded-xl border border-zinc-700 bg-zinc-900 p-3">
+        <DndContext sensors={sensors} onDragEnd={aoFinalizarArrasteCalendario}>
+          <div className="flex flex-col gap-3">
+            <div
+              ref={setSemPrazoRef}
+              className={`flex flex-col gap-2 rounded-xl border p-3 ${
+                semPrazoIsOver ? "border-oliva bg-oliva-claro/10" : "border-zinc-700 bg-zinc-900"
+              }`}
+            >
               <h2 className="text-xs font-semibold text-zinc-500">Sem prazo definido</h2>
-              <div className="flex flex-wrap gap-2">
-                {tarefasSemPrazo.map((tarefa) => (
-                  <div key={tarefa.id} className="w-56">
-                    <TaskChip
-                      tarefa={tarefa}
-                      mostrarResponsavel={filtroResponsavel === "todos"}
-                      onClick={() => abrirEdicaoTarefa(tarefa)}
-                    />
-                  </div>
-                ))}
-              </div>
+              {tarefasSemPrazo.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {tarefasSemPrazo.map((tarefa) => (
+                    <div key={tarefa.id} className="w-56">
+                      <TaskChip
+                        tarefa={tarefa}
+                        mostrarResponsavel={filtroResponsavel === "todos"}
+                        onClick={() => abrirEdicaoTarefa(tarefa)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-600">Arraste uma tarefa aqui para remover o prazo.</p>
+              )}
             </div>
-          )}
-          <TaskCalendarGrid
-            semanaAtual={semanaAtual}
-            tarefas={tarefasComPrazo}
-            mostrarResponsavel={filtroResponsavel === "todos"}
-            onClickTarefa={abrirEdicaoTarefa}
-            onNovaTarefa={abrirNovaTarefaNoDia}
-          />
-        </div>
+            <TaskCalendarGrid
+              semanaAtual={semanaAtual}
+              tarefas={tarefasComPrazo}
+              mostrarResponsavel={filtroResponsavel === "todos"}
+              onClickTarefa={abrirEdicaoTarefa}
+              onNovaTarefa={abrirNovaTarefaNoDia}
+            />
+          </div>
+        </DndContext>
       )}
 
       {modalAberto && (

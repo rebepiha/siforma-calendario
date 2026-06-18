@@ -64,12 +64,15 @@
   do nome/email reais do usuário — não corrigido ainda, não é bloqueante.
 - Canal `linkedin` existe no schema mas ainda não tem nenhum post de exemplo usando-o
   (nem era pedido) — só fica disponível para quando a equipe quiser usar.
-- As cores por canal (texto laranja=Instagram/azul=LinkedIn/vermelho=YouTube, ver
-  Sessão 2) foram validadas só com posts de teste inseridos e removidos manualmente —
-  os posts reais hoje são quase todos Instagram (há 1 "Teste" em LinkedIn). A combinação
-  final ficou: card com fundo escuro uniforme (`bg-zinc-800`), nome do canal em texto
-  colorido (`CORES_CANAL` em `lib/postStyles.ts`), e uma barrinha colorida por etiqueta
-  no topo do card (cor vem do banco agora, não mais de um objeto fixo no código).
+- **PostCard atual** (ver Sessão 5, substitui a descrição de cores por canal das
+  Sessões 2–4): card com fundo translúcido (`bg-white/10` + `backdrop-blur-sm`) e uma
+  barra colorida na borda esquerda — cor vem da **primeira etiqueta do post**
+  (`post.etiqueta_ids[0]`), com fallback pra cor do canal (`CORES_CANAL[canal].dot`) se
+  o post não tiver etiqueta nenhuma. Não mostra mais o nome do canal nem todas as
+  etiquetas no card (só a principal, com ícone) — informação completa só aparece no
+  painel de detalhe ao clicar. Checkbox no canto superior esquerdo marca
+  `status='publicado'` direto no card (sem abrir nada); quando marcado, a tag do
+  rodapé do card muda pra "Publicado DD/MM" em verde em vez de mostrar tipo/categoria.
 - Tema escuro foi aplicado convertendo classes Tailwind (não há `dark:` variants nem
   toggle claro/escuro — é hardcoded escuro). Se um dia quiserem voltar ao tema claro ou
   oferecer os dois, vai precisar reintroduzir as classes claras como variante, não é
@@ -110,6 +113,71 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 5 — 2026-06-18
+
+**Contexto**: dois pedidos curtos, mas o primeiro eu interpretei errado da primeira vez.
+
+**1. Drag-and-drop nas Tarefas de Marketing**
+- Usuário: "não consigo mover as tarefas de marketing entre os dias". Conferi e
+  confirmei — a vista de Calendário das Tarefas (`app/tarefas/page.tsx`) nunca teve
+  drag-and-drop implementado, só o Kanban tinha (`DndContext` só envolvia a vista
+  Kanban). `TaskChip.tsx` não usava `useDraggable`, `TaskCalendarDayCell.tsx` não usava
+  `useDroppable`.
+- Corrigido: `TaskChip.tsx` ganhou `useDraggable` (mesmo padrão do `PostCard.tsx`),
+  `TaskCalendarDayCell.tsx` ganhou `useDroppable` com destaque visual ao arrastar por
+  cima. A vista de calendário agora também fica dentro de um `DndContext` próprio
+  (`aoFinalizarArrasteCalendario`), com uma função nova `moverPrazoTarefa` que
+  atualiza o campo `prazo`. A caixa "Sem prazo definido" também virou uma zona de
+  drop (`useDroppable({id: "sem-prazo"})`) — arrastar uma tarefa pra lá agora limpa o
+  prazo (`prazo: null`); antes só aparecia quando havia tarefas sem prazo, agora
+  aparece sempre (com texto de dica "Arraste uma tarefa aqui para remover o prazo.")
+  pra sempre ter um lugar pra soltar.
+
+**2. Redesign do PostCard — pedido mal interpretado na primeira tentativa**
+- Primeiro pedido do usuário (em texto): "as etiquetas e opções de cada card devem
+  aparecer apenas quando clicar no card, como era antes. em cada card, um checkbox no
+  canto superior esquerdo para quando ele for postado/finalizado". Interpretei como
+  "remover etiquetas/pills do card e só mostrar no painel de detalhe" + adicionei um
+  checkbox simples. Usuário respondeu que eu **não fiz o que pedi** e mandou um print
+  de refer��ncia (calendário de Junho/Julho de outra ferramenta) mostrando exatamente o
+  layout esperado — bem mais específico do que eu tinha entendido do texto.
+- Layout do card, conforme a referência (`components/calendario/PostCard.tsx`,
+  reescrito do zero):
+  - Barra vertical colorida na borda esquerda do card inteiro (`<span className="w-1"
+    style={{backgroundColor: corPrincipal}} />`), cor = primeira etiqueta do post (ou
+    cor do canal se não tiver etiqueta).
+  - Linha 1: checkbox (marca/desmarca `status='publicado'` direto, sem abrir o post —
+    `onClick`/`onChange` com `stopPropagation` pra não disparar o clique do card) + um
+    círculo pequeno colorido com um ícone (criei `IconeFormato` com reconhecimento
+    simples por substring no nome da etiqueta: "reel"→play, "carrossel"→quadrados,
+    "stor"→círculo pontilhado, "enquete"/"quiz"/"pergunta"→"?", fallback→quadrado
+    genérico — já que etiquetas são livres agora, não há like 1:1 garantido com um
+    "formato" oficial) + nome da etiqueta principal.
+  - Linha 2: título do post.
+  - Linha 3: uma tag colorida (`tagPrincipal()` — mostra "Publicado DD/MM" em verde se
+    `status==='publicado'`; senão mostra a `categoria` se o post for evento e a
+    categoria for curta tipo "Formobile"; senão mostra o `LABEL_TIPO`) + avatar do
+    responsável à direita.
+  - Não mostra mais o nome do canal (Instagram/LinkedIn/YouTube) nem a lista completa
+    de etiquetas no card — só a principal. Informação completa continua no painel de
+    detalhe ao clicar.
+  - Como `PostCard` deixou de precisar só de `etiquetas` e passou a precisar também de
+    `onChangeStatus` (pro checkbox), toda a cadeia de props mudou:
+    `DayCell`/`CalendarGrid`/`PostWeekGrid` agora recebem e repassam os dois
+    (`etiquetas` E `onChangeStatus`) — `app/page.tsx` passa `onChangeStatus=
+    {atualizarStatus}` (função já existente, criada na Sessão 4 pro painel de
+    detalhe).
+- Testado via Playwright: marcar o checkbox de um post real mudou o status pra
+  "publicado" e a tag pra "Publicado DD/MM" corretamente; revertido depois (era post
+  real, não de teste). Testado o arraste de tarefa entre dias na vista de calendário
+  (terça → quinta) e confirmado no banco. Tarefas "teste" que apareceram na coluna de
+  quarta durante o teste **não foram criadas por mim** — são da própria usuária
+  testando o app ao vivo enquanto eu trabalhava; identifiquei isso pelo timestamp
+  `criado_em` e não toquei nelas, só apaguei a tarefa de teste que eu mesmo criei.
+
+**3. Pendente**
+- Nada novo. Arquivos anexados ao post continuam pendentes (ver Sessão 4).
 
 ### Sessão 4 — 2026-06-17/18
 

@@ -2,7 +2,7 @@
 
 import { addDays, format, isSameDay, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Etiqueta, Post } from "@/lib/types";
+import { Etiqueta, Post, StatusPost } from "@/lib/types";
 import DayCell from "./DayCell";
 
 export default function PostWeekGrid({
@@ -11,12 +11,14 @@ export default function PostWeekGrid({
   etiquetas,
   onClickPost,
   onNovoPost,
+  onChangeStatus,
 }: {
   semanaAtual: Date;
   posts: Post[];
   etiquetas: Etiqueta[];
   onClickPost: (post: Post) => void;
   onNovoPost: (data: string) => void;
+  onChangeStatus: (id: string, status: StatusPost) => void;
 }) {
   const inicio = startOfWeek(semanaAtual, { weekStartsOn: 1 });
   const dias = Array.from({ length: 7 }, (_, i) => addDays(inicio, i));
@@ -45,6 +47,7 @@ export default function PostWeekGrid({
               etiquetas={etiquetas}
               onClickPost={onClickPost}
               onNovoPost={onNovoPost}
+              onChangeStatus={onChangeStatus}
             />
           );
         })}

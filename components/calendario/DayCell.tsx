@@ -1,7 +1,7 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import { Etiqueta, Post } from "@/lib/types";
+import { Etiqueta, Post, StatusPost } from "@/lib/types";
 import PostCard from "./PostCard";
 
 export default function DayCell({
@@ -12,6 +12,7 @@ export default function DayCell({
   etiquetas,
   onClickPost,
   onNovoPost,
+  onChangeStatus,
 }: {
   dataStr: string;
   numeroDia: number;
@@ -20,6 +21,7 @@ export default function DayCell({
   etiquetas: Etiqueta[];
   onClickPost: (post: Post) => void;
   onNovoPost: (data: string) => void;
+  onChangeStatus: (id: string, status: StatusPost) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: dataStr });
 
@@ -54,6 +56,7 @@ export default function DayCell({
             post={post}
             etiquetas={etiquetas}
             onClick={() => onClickPost(post)}
+            onChangeStatus={onChangeStatus}
           />
         ))}
       </div>

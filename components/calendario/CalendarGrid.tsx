@@ -10,7 +10,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { Etiqueta, Post } from "@/lib/types";
+import { Etiqueta, Post, StatusPost } from "@/lib/types";
 import DayCell from "./DayCell";
 
 const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
@@ -21,12 +21,14 @@ export default function CalendarGrid({
   etiquetas,
   onClickPost,
   onNovoPost,
+  onChangeStatus,
 }: {
   mesAtual: Date;
   posts: Post[];
   etiquetas: Etiqueta[];
   onClickPost: (post: Post) => void;
   onNovoPost: (data: string) => void;
+  onChangeStatus: (id: string, status: StatusPost) => void;
 }) {
   const inicioGrade = startOfWeek(startOfMonth(mesAtual), { weekStartsOn: 1 });
   const fimGrade = endOfWeek(endOfMonth(mesAtual), { weekStartsOn: 1 });
@@ -69,6 +71,7 @@ export default function CalendarGrid({
               etiquetas={etiquetas}
               onClickPost={onClickPost}
               onNovoPost={onNovoPost}
+              onChangeStatus={onChangeStatus}
             />
           );
         })}

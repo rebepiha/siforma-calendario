@@ -1,5 +1,6 @@
 "use client";
 
+import { useDroppable } from "@dnd-kit/core";
 import { Tarefa } from "@/lib/types";
 import TaskChip from "./TaskChip";
 
@@ -24,12 +25,15 @@ export default function TaskCalendarDayCell({
   onClickTarefa: (tarefa: Tarefa) => void;
   onNovaTarefa: (data: string) => void;
 }) {
+  const { setNodeRef, isOver } = useDroppable({ id: dataStr });
+
   return (
     <div
+      ref={setNodeRef}
       className={`group flex min-h-[480px] flex-col gap-1.5 border-x border-b p-2 ${
         ehHoje ? "border-t-2 border-t-oliva" : "border-t border-t-zinc-700"
       } border-x-zinc-700 border-b-zinc-700 ${
-        ehFimDeSemana ? "bg-zinc-900/60" : "bg-zinc-800"
+        isOver ? "bg-oliva-claro/10 ring-2 ring-oliva" : ehFimDeSemana ? "bg-zinc-900/60" : "bg-zinc-800"
       }`}
     >
       <div className="flex items-center justify-between">

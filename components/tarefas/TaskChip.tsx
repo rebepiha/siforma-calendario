@@ -1,5 +1,7 @@
 "use client";
 
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { isBefore, parseISO, startOfToday } from "date-fns";
 import { Tarefa } from "@/lib/types";
 import { corAvatar, inicialAvatar } from "@/lib/avatar";
@@ -43,12 +45,23 @@ export default function TaskChip({
   const atrasada =
     !!tarefa.prazo && !concluida && isBefore(parseISO(tarefa.prazo), startOfToday());
 
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: tarefa.id,
+  });
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform), zIndex: 50 }
+    : undefined;
+
   return (
     <button
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
       onClick={onClick}
       className={`flex w-full flex-col gap-0.5 rounded-md border bg-zinc-800 px-2 py-1 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
         atrasada ? "border-red-500/40" : "border-zinc-700"
-      } ${concluida ? "opacity-60" : ""}`}
+      } ${concluida ? "opacity-60" : ""} ${isDragging ? "opacity-50" : ""}`}
     >
       <div className="flex items-center gap-1.5">
         {concluida ? (
