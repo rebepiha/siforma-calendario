@@ -40,7 +40,17 @@ create table if not exists posts (
   novo_produto boolean not null default false,
   status status_post_enum not null default 'pendente',
   copy text,
-  observacoes text
+  observacoes text,
+  responsavel text,
+  checklist jsonb not null default
+    '[
+      {"item":"Roteiro","feito":false},
+      {"item":"Gravação","feito":false},
+      {"item":"Edição","feito":false},
+      {"item":"Arte/Capa","feito":false},
+      {"item":"Agendado","feito":false},
+      {"item":"Publicado","feito":false}
+    ]'::jsonb
 );
 
 create index if not exists idx_posts_data on posts (data);
@@ -88,6 +98,24 @@ alter table metas enable row level security;
 
 drop policy if exists "acesso publico total - metas" on metas;
 create policy "acesso publico total - metas" on metas
+  for all using (true) with check (true);
+
+-- ─── Tabela: campanhas ──────────────────────────────────────────────────
+-- Campanhas/eventos com data de início e fim explícitas (ex: Formobile),
+-- usadas no banner de contagem do calendário editorial.
+
+create table if not exists campanhas (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null,
+  data_inicio date not null,
+  data_fim date not null,
+  criado_em timestamptz not null default now()
+);
+
+alter table campanhas enable row level security;
+
+drop policy if exists "acesso publico total - campanhas" on campanhas;
+create policy "acesso publico total - campanhas" on campanhas
   for all using (true) with check (true);
 
 -- ─── Tabela: etiquetas ──────────────────────────────────────────────────

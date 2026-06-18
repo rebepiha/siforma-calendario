@@ -3,7 +3,8 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Etiqueta, Post } from "@/lib/types";
-import { CORES_CANAL, LABEL_CANAL } from "@/lib/postStyles";
+import { CORES_CANAL, CORES_TIPO, LABEL_CANAL, LABEL_TIPO } from "@/lib/postStyles";
+import { corAvatar, inicialAvatar } from "@/lib/avatar";
 
 export default function PostCard({
   post,
@@ -47,10 +48,11 @@ export default function PostCard({
           {etiquetasDoPost.map((et) => (
             <span
               key={et.id}
-              title={et.nome}
-              className="h-1.5 w-6 rounded-full"
-              style={{ backgroundColor: et.cor }}
-            />
+              className="truncate rounded px-1.5 py-0.5 text-[10px] font-semibold"
+              style={{ backgroundColor: `${et.cor}33`, color: et.cor }}
+            >
+              {et.nome}
+            </span>
           ))}
         </div>
       )}
@@ -70,6 +72,24 @@ export default function PostCard({
           ✓ vídeo já feito
         </span>
       )}
+
+      <div className="mt-1.5 flex items-center justify-between gap-1">
+        <span
+          className="truncate rounded px-1.5 py-0.5 text-[10px] font-semibold"
+          style={{ backgroundColor: `${CORES_TIPO[post.tipo]}33`, color: CORES_TIPO[post.tipo] }}
+        >
+          {LABEL_TIPO[post.tipo]}
+        </span>
+        {post.responsavel && (
+          <span
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+            style={{ backgroundColor: corAvatar(post.responsavel) }}
+            title={post.responsavel}
+          >
+            {inicialAvatar(post.responsavel)}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

@@ -32,6 +32,19 @@
   (nome + cor) e `post_etiquetas` (relação N:N), gerenciável dentro do modal de editar
   post (`components/calendario/EtiquetaPicker.tsx`). Equipe pode criar, renomear,
   recolorir e excluir etiquetas livremente; cada post pode ter várias.
+- **Calendário Editorial redesenhado** (ver Sessão 4): layout em 3 colunas —
+  `components/calendario/SidebarFiltros.tsx` (visão Mensal/Semanal/Lista + filtros
+  multi-seleção de canal/status/etiqueta), calendário no centro, e
+  `components/calendario/PostDetailPanel.tsx` fixo à direita (mostra detalhe do post
+  selecionado: status, responsável, checklist de produção, etiquetas, categoria,
+  observações — edição de campos como título/data/copy continua no modal de sempre,
+  aberto pelo lápis). `components/calendario/EstatisticasCards.tsx` mostra contagens do
+  período visível. `components/calendario/CampanhaBanner.tsx` mostra banners de
+  campanha/evento (ex: Formobile) com data de início/fim **explícitas e editáveis**
+  (tabela `campanhas`, não inferidas dos posts — ver Pendências). Posts agora têm
+  `responsavel` (texto livre) e `checklist` (jsonb, 6 itens fixos por post, marcáveis no
+  painel de detalhe). **Arquivos anexados ao post (upload/download) ainda não foram
+  implementados** — ficou pendente, ver abaixo.
 - **Sem autenticação**: acesso por link aberto. RLS habilitado nas 3 tabelas mas com
   política `using (true) with check (true)` (qualquer um com o link lê/escreve).
 - **Ambiente local**: máquina não tinha Node/npm/Homebrew — Node foi instalado via `nvm`
@@ -68,6 +81,19 @@
 - A paleta de cores oferecida ao criar/editar uma etiqueta é fixa (12 cores, ver
   `lib/etiquetaCores.ts`, `PALETA_ETIQUETAS`) — não é um color picker livre (RGB/hex
   manual). Se pedirem mais variedade de cores, é só adicionar hex novos nesse array.
+- **Arquivos anexados ao post (pendente)**: o painel de detalhe (ver Sessão 4) ainda não
+  tem a seção de arquivos (upload/download de vídeo, capa, etc. — vista no mockup que o
+  usuário mandou). Precisa de um bucket no Supabase Storage (configuração manual no
+  painel, igual às migrations SQL) antes de implementar. Usuário decidiu adiar essa
+  parte para uma sessão futura.
+- O painel de detalhe (`PostDetailPanel.tsx`) não tem um jeito de "fechar"/desselecionar
+  o post (só troca ao clicar em outro post, ou fica vazio se o post selecionado for
+  excluído). Não pedido explicitamente, mas pode ser uma melhoria pequena no futuro.
+- Nos cards do calendário mensal/semanal, quando o post tem responsável (mostra avatar)
+  E o tipo tem nome longo, a etiqueta de tipo no rodapé do card pode truncar (ex:
+  "Produto" → "Pro...") por falta de espaço — cosmético, não afeta dados.
+- O banner de campanha some quando o período visível (mês/semana) não tem overlap com
+  nenhuma campanha cadastrada — isso é esperado, não é bug.
 
 ## Como autenticar (se precisar fazer push/deploy futuro)
 
@@ -84,6 +110,118 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 4 — 2026-06-17/18
+
+**Contexto**: usuário mandou um arquivo HTML (`calendario_feed_siforma_atualizado.html`,
+salvo em Downloads) com uma versão atualizada do calendário editorial de junho, pedindo
+pra deletar os posts antigos divergentes e atualizar com o conteúdo novo. Depois,
+mandou um print de um mockup bem mais elaborado (sidebar de filtros, cards de
+estatística, banner de campanha, painel de detalhe rico com checklist/arquivos/
+responsável, perfil de usuário logado) pedindo pra replicar esse visual mantendo o
+conteúdo já atualizado.
+
+**1. Atualização de dados de junho (sem mudança de código)**
+- Extraí os 42 posts do HTML (datas exatas onde dadas, senão inferidas pelo padrão
+  Terça/Quinta/Sábado já usado) e mostrei a lista completa pro usuário confirmar antes
+  de qualquer escrita no banco.
+- Usuário corrigiu: não era pra substituir tudo, só atualizar o que **diverge** de
+  junho, mantendo o resto do calendário (julho–setembro) intacto. Comparei os posts
+  reais de junho no banco contra o HTML e identifiquei exatamente 10 mudanças: 4
+  updates de data/status (SI Rotary Easy, Contagem regressiva, OPK Perfect Pivot, e SI
+  Camarão que **saiu de agosto e entrou em junho** — atualizei a linha existente em vez
+  de duplicar), 4 remoções (posts que não existem mais no calendário atualizado: OPK
+  Perfect Pocket Wood, Spoiler, SI Porta Invisível Wood, SI 300/400 H-S) e 2 inserções
+  (Tendências em 16/jun, SI Porta Invisível Slim em 20/jun). Tudo feito via REST API do
+  Supabase direto (`curl` com a anon key), sem precisar de migration — são só
+  dados, não schema. Confirmei o resultado final consultando o banco depois.
+- Pedido seguinte: cards do calendário com "um pouco de contraste do fundo, com um
+  branco meio transparente" — troquei o fundo do `PostCard` de `bg-zinc-800` sólido
+  para `bg-white/10` com `backdrop-blur-sm` (efeito vidro). Só esse 1 arquivo mudou.
+
+**2. Redesign grande do Calendário Editorial (mockup com sidebar/painel)**
+- Antes de implementar, mapeei o que o mockup pedia e quais decisões precisavam de
+  confirmação do usuário, porque misturava (a) estilo puramente visual, (b)
+  funcionalidades novas de banco (checklist, arquivos, responsável, banner de
+  campanha) e (c) um perfil de usuário logado que **contradizia** a decisão explícita
+  de "sem login" do projeto. Perguntei e o usuário decidiu: quer aparência E as
+  funcionalidades novas; sem login (remover essa parte do mockup); quer Mensal +
+  Semanal + Lista funcionando (não só Mensal); manter os 4 status que já existem
+  (Pendente/Em produção/Agendado/Publicado) em vez dos 5 do mockup.
+- **Migration 0004**: `posts.responsavel` (text) e `posts.checklist` (jsonb, default
+  com 6 itens fixos: Roteiro/Gravação/Edição/Arte-Capa/Agendado/Publicado, todos
+  `feito:false`). Backfill automático via `default` na própria coluna — todos os posts
+  existentes ganharam o checklist padrão zerado.
+- **Migration 0005**: tabela `campanhas` (nome, data_inicio, data_fim) — ver item 3
+  abaixo sobre por que isso foi necessário além do que tinha sido planejado
+  originalmente.
+- **Novos componentes**: `SidebarFiltros.tsx` (visão + canais/status/etiquetas como
+  checkboxes multi-seleção, substituindo os 3 dropdowns de seleção única que existiam;
+  reaproveita o `EtiquetaPicker.tsx` já existente pro "+ Nova etiqueta"/editar/excluir,
+  só que agora as checkboxes do picker controlam o filtro em vez da seleção de um
+  post específico), `EstatisticasCards.tsx` (posts programados/reels/carrosséis/
+  lançamentos/eventos do período visível — reels/carrosséis contam por nome de
+  etiqueta, lançamentos/eventos contam por `tipo`), `CampanhaBanner.tsx` (ver item 3),
+  `PostDetailPanel.tsx` (painel fixo à direita — status com `<select>`, responsável com
+  input que só salva no `onBlur` pra não disparar um update por tecla, checklist com
+  checkboxes que persistem na hora), `PostWeekGrid.tsx` e `PostListView.tsx` (vistas
+  Semanal e Lista, reaproveitando `DayCell`/estilos já existentes).
+- `app/page.tsx` ficou bem mais complexo: estado de `visao` (mensal/semanal/lista) com
+  navegação por mês OU semana dependendo da visão; `periodoInicio`/`periodoFim`
+  calculados conforme a visão; filtros agora são arrays (`canaisFiltro: Canal[]`,
+  `statusFiltro: StatusPost[]`, `etiquetaIdsFiltro: string[]`) em vez de um valor único
+  + `"todos"`; separação entre "post selecionado" (popula o painel de detalhe, clique
+  simples no card) e "post em edição" (abre o modal de sempre, só pelo lápis do painel
+  ou pelo "+ Adicionar post"/"+ Novo post").
+- `PostCard.tsx` ganhou: pills de etiqueta com texto (em vez das barrinhas finas da
+  Sessão 3), pill de tipo (`CORES_TIPO`, reintroduzido em `postStyles.ts` — tinha sido
+  removido na Sessão 2/3 quando o card passou a colorir por canal, agora virou um
+  pill secundário, não mais a cor do card todo) e avatar do responsável (reaproveita
+  `lib/avatar.ts`, já usado nas tarefas).
+
+**3. Por que existe uma tabela `campanhas` separada (não estava no plano original)**
+- A primeira implementação do banner inferia o período (início/fim) a partir das datas dos
+  posts marcados `tipo=evento` agrupados por `categoria` (ex: todos os posts com
+  categoria "Formobile"). Usuário corrigiu: "formobile começa dia 30/6" — o post
+  "Contagem regressiva" (27/jun) e "É amanhã! Estaremos te esperando" (29/jun) são
+  *esquenta* publicados **antes** do evento, não dias do evento em si, e estavam
+  distorcendo o cálculo (banner mostrava "27 jun – 30 jun" em vez do período real).
+  Perguntei se queria um campo de data explícito (mais robusto pra eventos futuros) ou
+  só ignorar posts de esquenta por heurística de título (mais simples mas frágil) —​
+  escolheu o campo explícito. Criei a tabela `campanhas` com `data_inicio`/`data_fim`
+  editáveis direto no banner (ícone de lápis abre um formulário inline, mesmo padrão
+  do `EtiquetaPicker`), e segui via migration 0005, já semeando a campanha "Formobile"
+  com as datas certas (30/jun–3/jul) informadas pelo usuário.
+
+**4. Bug encontrado e corrigido durante os testes**
+- O filtro de etiquetas (checkboxes na sidebar) tinha um `useEffect` de sincronização
+  (pra adicionar etiquetas novas criadas automaticamente à lista de "selecionadas") que
+  dependia de `etiquetaIdsFiltro` no array de dependências — toda vez que o usuário
+  desmarcava uma etiqueta, o efeito rodava de novo, via que aquele id "não estava mais
+  selecionado" e o tratava como "etiqueta nova", **readicionando-o automaticamente**.
+  Resultado: impossível desmarcar uma etiqueta no filtro, ela "ressuscitava" sozinha.
+  Corrigido trocando a comparação por um `useRef<Set<string>>` que guarda quais ids já
+  foram "vistos" alguma vez (independente de estarem selecionados agora) — só ids
+  realmente novos (nunca vistos) são auto-selecionados; desmarcação manual nunca é
+  desfeita. O efeito agora só depende de `etiquetas` (com
+  `eslint-disable-next-line react-hooks/exhaustive-deps` proposital, já que incluir
+  `etiquetaIdsFiltro` reintroduziria o bug).
+
+**5. Testes**
+- `npm run lint` e `npm run build` limpos a cada etapa. Migrations 0004 e 0005
+  confirmadas via REST API antes de testar (coluna `responsavel`/`checklist` presentes;
+  tabela `campanhas` com a linha "Formobile" certa).
+- Testado via Playwright/Chrome headless contra produção: vista Mensal com sidebar +
+  stats + banner + cards novos; clicar um post populando o painel de detalhe; marcar
+  item do checklist, mudar status, definir responsável (apareceu como avatar no card);
+  vista Semanal e Lista; desmarcar/remarcar etiqueta no filtro (pegou o bug do item 4);
+  abrir o modal de edição pelo lápis do painel. Reverti no banco os campos de teste
+  (status/responsável/checklist) que setei no post real "SI Porta Invisível Slim"
+  durante o teste.
+
+**6. Pendente**
+- Arquivos anexados ao post (upload/download) — ver "Pendências" no topo. Usuário
+  decidiu adiar para depois de ver o resto funcionando em produção.
 
 ### Sessão 3 — 2026-06-17
 
