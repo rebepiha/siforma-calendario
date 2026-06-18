@@ -20,6 +20,19 @@
   sessão). Se no início de uma sessão `git fetch` mostrar commits em `origin/main` que não
   fazem sentido com o que está documentado aqui, **pare e avise o usuário antes de
   push/pull** — não dá pra saber se é trabalho real perdido ou outra sessão concorrente.
+- **Biblioteca** (ver Sessão 30): 5ª aba no `TopNav`, rota `/biblioteca`. **Não é
+  uma tabela nova** — busca direto de `posts` no Supabase com
+  `status = 'publicado'`, sem cadastro manual (decisão tomada perguntando ao
+  usuário, diferente do Banco de Ideias que é `localStorage`). Duas seções:
+  "Produtos já postados" (posts com `tipo` `produto` ou `lancamento`, agrupados
+  pelo título — `nomeBaseProduto()` em `app/biblioteca/page.tsx` remove um
+  prefixo `Stories`/`Feed` do início do título antes de agrupar, pra não separar
+  "Stories - X" de "Feed: X" como produtos diferentes; funciona só por
+  correspondência exata do nome resultante, sem fuzzy matching) e "Outros
+  conteúdos publicados" (tipo `nao_produto`/`evento`, lista plana por data). Só
+  busca por título, sem outros filtros — não pedido, fácil adicionar depois se
+  fizer falta. Puramente leitura (clicar num post da Biblioteca não abre nada —
+  pra editar, é preciso ir no Calendário Editorial).
 - **Banco de Ideias: cards clicáveis, edição completa, exclusão e "Enviar pro
   calendário"** (ver Sessão 29): clicar num card abre `IdeiaModal.tsx` (título,
   seção, tipo — o select de tipo atualiza junto se a seção mudar —, descrição,
@@ -382,6 +395,50 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 30 — 2026-06-18
+
+**Contexto**: usuário pediu "quero fazer também uma Biblioteca de conteúdos e
+produtos já postados". Antes de implementar, perguntei (AskUserQuestion) duas
+coisas: (1) puxar dos posts já publicados no Supabase vs lista separada
+cadastrada à parte (tipo Banco de Ideias) — escolheu reaproveitar os
+publicados; (2) agrupar por produto vs grade simples com filtro — escolheu
+agrupar por produto.
+
+**1. Implementação**
+- Novo `app/biblioteca/page.tsx`: busca `posts` com `.eq("status", "publicado")`
+  direto do Supabase (sem nova tabela). Separa em dois grupos pelo `tipo` do
+  post: `produto`/`lancamento` vão pra "Produtos já postados" (agrupados por
+  título normalizado), `nao_produto`/`evento` vão pra "Outros conteúdos
+  publicados" (lista plana por data desc).
+- `nomeBaseProduto(titulo)`: remove um prefixo `Stories`/`Feed` (com separador
+  `-`/`:`/espaço) do início do título antes de usar como chave de agrupamento —
+  sem isso, "Stories - SI20 Light" e "Feed: SI20 Light" apareceriam como dois
+  produtos diferentes em vez de um produto com 2 posts. Funciona só por
+  correspondência exata do nome resultante (sem fuzzy matching/typo-tolerance);
+  testei com dados sintéticos (3 posts pro mesmo produto, incluindo um com
+  prefixo Stories e outro Feed/lançamento) e confirmei que agrupou certo.
+- `components/TopNav.tsx`: 5ª aba "Biblioteca".
+- Decisão consciente de manter simples: só busca por título (sem filtro de
+  canal/tipo/etiqueta), e os cards não são clicáveis (puramente leitura/
+  referência) — usuário não pediu interação além de consultar, e abrir/editar
+  já existe no Calendário Editorial.
+
+**2. Testes**
+- `npm run lint`/`npm run build` limpos.
+- Como só havia 2 posts reais com `status=publicado` em produção (poucos pra
+  validar agrupamento), inseri 4 posts sintéticos via REST direto (`Biblioteca
+  Teste Produto A` em 3 variações de prefixo/tipo + 1 `nao_produto`) só pra
+  testar a lógica de agrupamento e a seção "Outros" via Playwright, depois
+  apaguei tudo via `DELETE` na REST API (confirmei com uma segunda consulta que
+  não sobrou nada). Confirmei visualmente por screenshot que o post real
+  "Stories - Resultado Enquete" aparece agrupado corretamente como "Resultado
+  Enquete" na Biblioteca.
+
+**3. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
+- Sem filtro por canal/tipo/etiqueta na Biblioteca (só busca por título) — fácil
+  de adicionar depois se o usuário sentir falta.
 
 ### Sessão 29 — 2026-06-18
 
