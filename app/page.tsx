@@ -17,6 +17,7 @@ import { mesmosValores } from "@/lib/mesmosValores";
 import CalendarGrid from "@/components/calendario/CalendarGrid";
 import PostModal from "@/components/calendario/PostModal";
 import Filtros, { FiltrosState } from "@/components/calendario/Filtros";
+import ContextMenu from "@/components/ContextMenu";
 
 export default function PaginaCalendario() {
   const [mesAtual, setMesAtual] = useState(() => new Date());
@@ -32,6 +33,9 @@ export default function PaginaCalendario() {
   });
   const [modalAberto, setModalAberto] = useState(false);
   const [postSelecionado, setPostSelecionado] = useState<Post | null>(null);
+  const [menuContexto, setMenuContexto] = useState<{ x: number; y: number; post: Post } | null>(
+    null
+  );
   const [dataParaNovoPost, setDataParaNovoPost] = useState(() =>
     format(new Date(), "yyyy-MM-dd")
   );
@@ -403,6 +407,9 @@ export default function PaginaCalendario() {
             onClickPost={abrirEdicaoPost}
             onNovoPost={abrirNovoPost}
             onToggleStatus={alternarStatusPublicado}
+            onContextMenuPost={(e, post) =>
+              setMenuContexto({ x: e.clientX, y: e.clientY, post })
+            }
           />
         </DndContext>
       )}
@@ -420,6 +427,30 @@ export default function PaginaCalendario() {
           onCriarEtiqueta={criarEtiqueta}
           onEditarEtiqueta={editarEtiqueta}
           onExcluirEtiqueta={excluirEtiqueta}
+        />
+      )}
+
+      {menuContexto && (
+        <ContextMenu
+          x={menuContexto.x}
+          y={menuContexto.y}
+          onFechar={() => setMenuContexto(null)}
+          itens={[
+            { label: "Editar", onClick: () => abrirEdicaoPost(menuContexto.post) },
+            { label: "Duplicar", onClick: () => duplicarPost(menuContexto.post) },
+            {
+              label:
+                menuContexto.post.status === "publicado"
+                  ? "Marcar como não publicado"
+                  : "Marcar como publicado",
+              onClick: () => alternarStatusPublicado(menuContexto.post),
+            },
+            {
+              label: "Excluir",
+              onClick: () => excluirPost(menuContexto.post.id),
+              destrutivo: true,
+            },
+          ]}
         />
       )}
     </div>

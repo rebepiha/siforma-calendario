@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Etiqueta, Post } from "@/lib/types";
@@ -30,11 +31,13 @@ export default function PostCard({
   etiquetas,
   onClick,
   onToggleStatus,
+  onContextMenu,
 }: {
   post: Post;
   etiquetas: Etiqueta[];
   onClick: () => void;
   onToggleStatus: () => void;
+  onContextMenu: (e: MouseEvent) => void;
 }) {
   const publicado = post.status === "publicado";
   const corCanal = CORES_CANAL[post.canal];
@@ -72,6 +75,11 @@ export default function PostCard({
       onClick={(e) => {
         e.stopPropagation();
         onClick();
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onContextMenu(e);
       }}
       className={`relative cursor-pointer rounded-lg border border-white/10 bg-white/10 px-1.5 py-1 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md ${
         publicado ? "opacity-60" : ""

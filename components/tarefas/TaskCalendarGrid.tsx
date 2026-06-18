@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { addDays, format, isSameDay, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tarefa } from "@/lib/types";
@@ -12,6 +13,7 @@ export default function TaskCalendarGrid({
   onClickTarefa,
   onNovaTarefa,
   onToggleConcluida,
+  onContextMenuTarefa,
 }: {
   semanaAtual: Date;
   tarefas: Tarefa[];
@@ -19,6 +21,7 @@ export default function TaskCalendarGrid({
   onClickTarefa: (tarefa: Tarefa) => void;
   onNovaTarefa: (data: string) => void;
   onToggleConcluida: (tarefa: Tarefa) => void;
+  onContextMenuTarefa: (e: MouseEvent, tarefa: Tarefa) => void;
 }) {
   const inicio = startOfWeek(semanaAtual, { weekStartsOn: 1 });
   const dias = Array.from({ length: 7 }, (_, i) => addDays(inicio, i));
@@ -46,6 +49,7 @@ export default function TaskCalendarGrid({
               onClickTarefa={onClickTarefa}
               onNovaTarefa={onNovaTarefa}
               onToggleConcluida={onToggleConcluida}
+              onContextMenuTarefa={onContextMenuTarefa}
             />
           );
         })}

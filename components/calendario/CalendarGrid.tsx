@@ -10,6 +10,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
+import type { MouseEvent } from "react";
 import { Etiqueta, Post } from "@/lib/types";
 import DayCell from "./DayCell";
 
@@ -22,6 +23,7 @@ export default function CalendarGrid({
   onClickPost,
   onNovoPost,
   onToggleStatus,
+  onContextMenuPost,
 }: {
   mesAtual: Date;
   posts: Post[];
@@ -29,6 +31,7 @@ export default function CalendarGrid({
   onClickPost: (post: Post) => void;
   onNovoPost: (data: string) => void;
   onToggleStatus: (post: Post) => void;
+  onContextMenuPost: (e: MouseEvent, post: Post) => void;
 }) {
   const inicioGrade = startOfWeek(startOfMonth(mesAtual), { weekStartsOn: 1 });
   const fimGrade = endOfWeek(endOfMonth(mesAtual), { weekStartsOn: 1 });
@@ -67,6 +70,7 @@ export default function CalendarGrid({
               onClickPost={onClickPost}
               onNovoPost={onNovoPost}
               onToggleStatus={onToggleStatus}
+              onContextMenuPost={onContextMenuPost}
             />
           );
         })}

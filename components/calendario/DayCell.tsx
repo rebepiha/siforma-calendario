@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Etiqueta, Post } from "@/lib/types";
 import PostCard from "./PostCard";
@@ -14,6 +15,7 @@ export default function DayCell({
   onClickPost,
   onNovoPost,
   onToggleStatus,
+  onContextMenuPost,
 }: {
   dataStr: string;
   numeroDia: number;
@@ -24,6 +26,7 @@ export default function DayCell({
   onClickPost: (post: Post) => void;
   onNovoPost: (data: string) => void;
   onToggleStatus: (post: Post) => void;
+  onContextMenuPost: (e: MouseEvent, post: Post) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: dataStr });
 
@@ -58,6 +61,7 @@ export default function DayCell({
             etiquetas={etiquetas}
             onClick={() => onClickPost(post)}
             onToggleStatus={() => onToggleStatus(post)}
+            onContextMenu={(e) => onContextMenuPost(e, post)}
           />
         ))}
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Tarefa } from "@/lib/types";
 import TaskChip from "./TaskChip";
@@ -15,6 +16,7 @@ export default function TaskCalendarDayCell({
   onClickTarefa,
   onNovaTarefa,
   onToggleConcluida,
+  onContextMenuTarefa,
 }: {
   dataStr: string;
   nomeDiaSemana: string;
@@ -26,6 +28,7 @@ export default function TaskCalendarDayCell({
   onClickTarefa: (tarefa: Tarefa) => void;
   onNovaTarefa: (data: string) => void;
   onToggleConcluida: (tarefa: Tarefa) => void;
+  onContextMenuTarefa: (e: MouseEvent, tarefa: Tarefa) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: dataStr });
 
@@ -69,6 +72,7 @@ export default function TaskCalendarDayCell({
             mostrarResponsavel={mostrarResponsavel}
             onClick={() => onClickTarefa(tarefa)}
             onToggleConcluida={() => onToggleConcluida(tarefa)}
+            onContextMenu={(e) => onContextMenuTarefa(e, tarefa)}
           />
         ))}
       </div>

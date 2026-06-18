@@ -18,6 +18,7 @@ import { mesmosValores } from "@/lib/mesmosValores";
 import TaskCalendarGrid from "@/components/tarefas/TaskCalendarGrid";
 import TaskChip from "@/components/tarefas/TaskChip";
 import TaskModal from "@/components/tarefas/TaskModal";
+import ContextMenu from "@/components/ContextMenu";
 
 export default function PaginaTarefas() {
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
@@ -25,6 +26,11 @@ export default function PaginaTarefas() {
   const [erro, setErro] = useState<string | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [tarefaSelecionada, setTarefaSelecionada] = useState<Tarefa | null>(null);
+  const [menuContexto, setMenuContexto] = useState<{
+    x: number;
+    y: number;
+    tarefa: Tarefa;
+  } | null>(null);
   const [colunaParaNovaTarefa, setColunaParaNovaTarefa] =
     useState<ColunaTarefa>("a_fazer");
   const [prazoParaNovaTarefa, setPrazoParaNovaTarefa] = useState<string | undefined>(
@@ -347,6 +353,9 @@ export default function PaginaTarefas() {
                         mostrarResponsavel={filtroResponsavel === "todos"}
                         onClick={() => abrirEdicaoTarefa(tarefa)}
                         onToggleConcluida={() => alternarConcluida(tarefa)}
+                        onContextMenu={(e) =>
+                          setMenuContexto({ x: e.clientX, y: e.clientY, tarefa })
+                        }
                       />
                     </div>
                   ))}
@@ -362,6 +371,9 @@ export default function PaginaTarefas() {
               onClickTarefa={abrirEdicaoTarefa}
               onNovaTarefa={abrirNovaTarefaNoDia}
               onToggleConcluida={alternarConcluida}
+              onContextMenuTarefa={(e, tarefa) =>
+                setMenuContexto({ x: e.clientX, y: e.clientY, tarefa })
+              }
             />
           </div>
         </DndContext>
@@ -378,6 +390,30 @@ export default function PaginaTarefas() {
           onSalvar={salvarTarefa}
           onExcluir={excluirTarefa}
           onDuplicar={duplicarTarefa}
+        />
+      )}
+
+      {menuContexto && (
+        <ContextMenu
+          x={menuContexto.x}
+          y={menuContexto.y}
+          onFechar={() => setMenuContexto(null)}
+          itens={[
+            { label: "Editar", onClick: () => abrirEdicaoTarefa(menuContexto.tarefa) },
+            { label: "Duplicar", onClick: () => duplicarTarefa(menuContexto.tarefa) },
+            {
+              label:
+                menuContexto.tarefa.coluna === "concluido"
+                  ? "Marcar como não concluída"
+                  : "Marcar como concluída",
+              onClick: () => alternarConcluida(menuContexto.tarefa),
+            },
+            {
+              label: "Excluir",
+              onClick: () => excluirTarefa(menuContexto.tarefa.id),
+              destrutivo: true,
+            },
+          ]}
         />
       )}
     </div>

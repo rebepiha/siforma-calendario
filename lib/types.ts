@@ -64,3 +64,17 @@ export const COLUNAS_TAREFA: { id: ColunaTarefa; titulo: string }[] = [
   { id: "em_revisao", titulo: "Em Revisão" },
   { id: "concluido", titulo: "Concluído" },
 ];
+
+export type SecaoIdeia = "stories" | "posts";
+
+export interface Ideia {
+  id: string;
+  secao: SecaoIdeia;
+  titulo: string;
+  tipo: string;
+  descricao: string;
+  usado: boolean;
+  criado_em: string;
+}
+
+export type NovaIdeia = Omit<Ideia, "id" | "criado_em" | "usado">;

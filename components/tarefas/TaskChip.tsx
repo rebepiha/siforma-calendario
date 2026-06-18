@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { isBefore, parseISO, startOfToday } from "date-fns";
@@ -31,11 +32,13 @@ export default function TaskChip({
   mostrarResponsavel,
   onClick,
   onToggleConcluida,
+  onContextMenu,
 }: {
   tarefa: Tarefa;
   mostrarResponsavel: boolean;
   onClick: () => void;
   onToggleConcluida: () => void;
+  onContextMenu: (e: MouseEvent) => void;
 }) {
   const concluida = tarefa.coluna === "concluido";
   const atrasada =
@@ -62,6 +65,11 @@ export default function TaskChip({
       onClick={(e) => {
         e.stopPropagation();
         onClick();
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onContextMenu(e);
       }}
       className={`flex w-full cursor-pointer flex-col gap-1 rounded-md border bg-zinc-800 px-1.5 py-1 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
         atrasada ? "border-red-500/40" : "border-zinc-700"

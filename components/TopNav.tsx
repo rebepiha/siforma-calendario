@@ -8,6 +8,7 @@ const ABAS = [
   { href: "/", label: "Calendário Editorial" },
   { href: "/tarefas", label: "Tarefas de Marketing" },
   { href: "/metas", label: "Metas e Progresso" },
+  { href: "/ideias", label: "Banco de Ideias" },
 ];
 
 export default function TopNav() {

@@ -20,6 +20,27 @@
   sessão). Se no início de uma sessão `git fetch` mostrar commits em `origin/main` que não
   fazem sentido com o que está documentado aqui, **pare e avise o usuário antes de
   push/pull** — não dá pra saber se é trabalho real perdido ou outra sessão concorrente.
+- **Banco de Ideias** (ver Sessão 27): 4ª aba no `TopNav`, rota `/ideias`. Duas
+  seções (Stories/Posts), cada uma com tipos fixos (`lib/ideiasSeed.ts`,
+  `TIPOS_IDEIA`) e ideias com título/tipo/descrição/usado. **Não usa Supabase — é
+  100% `localStorage`** (`lib/useIdeias.ts`, chave `siforma-banco-ideias`), a pedido
+  explícito do usuário. Isso significa **cada navegador/dispositivo tem seu próprio
+  banco de ideias, sem sincronizar entre usuário/Victoria/Roberto** — diferente de
+  todo o resto do app, que é Supabase compartilhado. Se isso virar problema no uso
+  real (alguém marcar uma ideia como usada e outra pessoa não ver), a solução é
+  migrar pra uma tabela Supabase nova (mesma forma de schema, troca o hook por
+  chamadas REST) — não implementado porque não foi pedido. Na primeira carga sem
+  nada salvo, semeia automaticamente as 24 ideias que o usuário forneceu em texto
+  (9 Stories + 15 Posts — ver `IDEIAS_SEED`). As 5 ideias de "Caixinha de perguntas"
+  (Stories) foram categorizadas como tipo **Outro** porque a lista de tipos que o
+  usuário deu pra Stories (Quiz/Enquete/Verdadeiro ou Falso/Antes e Depois/Outro)
+  não tinha uma categoria própria pra elas — avisar o usuário que isso foi uma
+  decisão minha, não pedido explícito, caso ele prefira recategorizar.
+- **Menu de contexto (botão direito) em posts e tarefas** (ver Sessão 27):
+  `components/ContextMenu.tsx`, genérico, usado nos cards do Calendário Editorial
+  (`PostCard.tsx`) e Tarefas (`TaskChip.tsx`) — clique direito abre Editar/Duplicar/
+  Marcar publicado-concluído/Excluir na posição do cursor (clamped pra não vazar da
+  tela), fecha ao clicar fora, rodar scroll ou Esc.
 - **Ctrl+Z desfaz a última ação** (ver Sessão 25), no Calendário Editorial e em
   Tarefas: criar/editar/excluir/mover (drag) post ou tarefa, e marcar
   publicado/concluído. Hook `lib/useUndoStack.ts` — pilha em memória (perdida ao
@@ -338,6 +359,105 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 27 — 2026-06-18
+
+**Contexto**: dois pedidos. (1) "clicar no botão direito para abrir opções de
+duplicar, excluir, etc" — menu de contexto nos cards. (2) "Quero abrir um Banco de
+Ideias" — pedido inicialmente em poucas linhas (tipos por seção + "ver imagem"/"ver
+pdf"); fiz três perguntas de esclarecimento (tipos fixos vs editável, status
+usada/não usada, integração com criar post) e o usuário rejeitou a ferramenta de
+perguntas pra dar mais contexto direto; na mensagem seguinte ele mandou a
+especificação completa por escrito (sem precisar das imagens/PDF originais) —
+estrutura de dados, as 24 ideias já cadastradas (9 Stories + 15 Posts), lista de
+funcionalidades e diretrizes de design.
+
+**1. Menu de contexto (botão direito)**
+- Novo `components/ContextMenu.tsx`, genérico (recebe `x`, `y`, `itens` com
+  `label`/`onClick`/`destrutivo?`, `onFechar`) — posiciona com `position: fixed`,
+  ajusta a posição depois de montado (`useLayoutEffect` medindo o próprio
+  `getBoundingClientRect()`) pra não vazar da borda da tela, fecha em qualquer
+  `click`/`contextmenu`/`scroll` fora dele ou tecla Esc.
+- `PostCard.tsx`/`TaskChip.tsx`: novo prop `onContextMenu`, handler no
+  `onContextMenu` do card faz `preventDefault` (sobrescreve o menu nativo do
+  navegador) + `stopPropagation` (não deixa borbulhar pro `onClick` do
+  dia/abrir o modal de edição por engano) e chama o prop.
+- Prop encadeada por `DayCell.tsx`→`CalendarGrid.tsx`→`app/page.tsx` e
+  `TaskCalendarDayCell.tsx`→`TaskCalendarGrid.tsx`→`app/tarefas/page.tsx` (e
+  também ligado direto no `TaskChip` da caixa "Sem prazo definido", que não passa
+  pelo `TaskCalendarGrid`). Cada página guarda um estado `menuContexto` (`{x, y,
+  post|tarefa}`) e monta os itens do menu reaproveitando os handlers que já
+  existiam (`abrirEdicaoPost`/`duplicarPost`/`alternarStatusPublicado`/
+  `excluirPost`, e os equivalentes de tarefa) — não duplica lógica nenhuma, só
+  oferece outro caminho de entrada pras mesmas ações.
+- Testado com Playwright: botão direito abre o menu com os 4 itens certos, clicar
+  fora fecha sem abrir o modal, e cada ação (Duplicar/Marcar publicado/Excluir)
+  funciona clicando pelo menu, nas duas páginas.
+
+**2. Banco de Ideias**
+- Decisão de arquitetura que vale destacar: **o usuário pediu explicitamente que
+  salvasse em `localStorage`**, não Supabase — diferente de tudo no resto do app.
+  Implementei exatamente assim, mas deixei avisado em "Estado atual" que isso
+  significa que as ideias não sincronizam entre dispositivos/pessoas (cada
+  navegador tem seu próprio banco) — se isso for um problema no uso real, precisa
+  migrar pra uma tabela Supabase (estrutura já pronta pra isso, é só troca de
+  hook).
+- `lib/types.ts`: `SecaoIdeia`, `Ideia`, `NovaIdeia` (Omit id/criado_em/usado).
+- `lib/ideiasSeed.ts`: `TIPOS_IDEIA` (mapa seção→lista de tipos fixos, exatamente
+  os que o usuário deu), `LABEL_SECAO_IDEIA`, e `IDEIAS_SEED` com as 24 ideias
+  fornecidas pelo usuário, transcritas (título = a pergunta/título dado, descrição
+  = o complemento — opções da enquete, ou o texto depois do "—"/"Gancho:"). As 5
+  ideias de "Caixinha de perguntas" não tinham um tipo correspondente na lista de
+  tipos de Stories que o usuário passou (Quiz/Enquete/Verdadeiro ou Falso/Antes e
+  Depois/Outro) — categorizei como **Outro**, decisão minha, vale confirmar com o
+  usuário se está certo.
+- `lib/ideiaStyles.ts`: cor por tipo (`COR_TIPO_IDEIA`) — reaproveitei o verde-oliva
+  oficial da marca (`#68a04a`, igual ao `--color-oliva` do `globals.css`) pro tipo
+  "Produto", e cores arbitrárias pros demais tipos (sem ligação com brandbook,
+  só pra diferenciar visualmente).
+- `lib/useIdeias.ts`: hook client-only — carrega de `localStorage` num
+  `useEffect` (não no `useState` inicial, pra não tentar acessar `localStorage`
+  durante a renderização server-side do Next.js e quebrar a hidratação); se não
+  tem nada salvo, semeia com `IDEIAS_SEED` (gerando `id`/`criado_em` em runtime via
+  `crypto.randomUUID()`) e já persiste. Expõe `adicionarIdeia`/`alternarUsado`,
+  ambos persistindo no `localStorage` a cada chamada.
+- `components/ideias/IdeiaCard.tsx`: borda esquerda colorida por tipo (`border-l-4`
+  + `style` inline com a cor, já que são cores arbitrárias fora da paleta Tailwind
+  fixa do projeto), tag de tipo pequena, título em destaque, descrição abaixo
+  (some se vazia — caso das ideias de caixinha de pergunta, que não têm um
+  "complemento" separado do título). Botão "Usado" no mesmo padrão visual do
+  checkbox de concluir/publicar já usado em `PostCard`/`TaskChip` (círculo vazio
+  ↔ ícone de check verde), card fica com `opacity-50` quando usado.
+- `app/ideias/page.tsx`: abas Stories/Posts com contador total (não afetado pelos
+  filtros, mesmo padrão do "resumo do mês" da Sessão 26), chips de tipo (só os da
+  seção ativa, mais "Todos"), busca por texto livre (título + descrição), botão
+  "+ Adicionar ideia" que abre um formulário inline (título, tipo via `<select>`
+  restrito aos tipos da seção ativa, descrição opcional) — sem integração com o
+  Calendário Editorial (usuário não pediu nessa rodada).
+- `components/TopNav.tsx`: 4ª aba "Banco de Ideias" → `/ideias`.
+- Sem integração com o Ctrl+Z (Sessão 25) — é um hook próprio sobre
+  `localStorage`, não passa pelas mutações Supabase que o `useUndoStack` cobre, e
+  o usuário não pediu desfazer aqui.
+
+**3. Testes**
+- `npm run lint`/`npm run build` limpos.
+- Playwright contra `npm run dev`: abas mostram as contagens certas (Stories 9,
+  Posts 15), filtro por tipo restringe corretamente, busca funciona, marcar/
+  desmarcar usado alterna a opacidade, adicionar ideia nova funciona e o contador
+  atualiza, e **recarregar a página preserva os dados** (confirma que o
+  `localStorage` está funcionando, não só o state em memória). Como é
+  `localStorage` do navegador headless (não Supabase), não precisei limpar nada
+  em produção depois — os dados de teste morreram junto com o navegador do teste.
+  Conferi visualmente em viewport largo (1600px) e mobile (390px) que o grid
+  responsivo funciona (`grid-cols-1` → `sm:grid-cols-2` → `lg:grid-cols-3`).
+
+**4. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
+- Confirmar com o usuário se a categorização "Outro" pras 5 ideias de caixinha de
+  perguntas (Stories) faz sentido, ou se prefere outro tipo/nome.
+- Banco de Ideias usa `localStorage`, não Supabase — ver risco de não sincronizar
+  entre usuários, documentado em "Estado atual". Sem integração com criar post no
+  Calendário Editorial (não pedido).
 
 ### Sessão 26 — 2026-06-18
 
