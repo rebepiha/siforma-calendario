@@ -35,6 +35,15 @@
   brandbook. Logo: `public/siforma-logo.png` (fundo claro, não usado atualmente) e
   `public/siforma-logo-dark.png` (fundo escuro, em uso no `TopNav` — cópia de
   `ASSINATURAS PNG/PNG - SEM TAGLINE/SIFORMA SEM  (6).png`).
+- **Favicon** (ver Sessão 16): `app/favicon.ico` (multi-resolução 16/32/48/64) e
+  `app/icon.png` (512×512) são o ícone de calendário (fundo verde-oliva no topo, corpo
+  branco, grade preta) que o usuário forneceu como PNG com fundo branco — removi o fundo
+  via flood-fill a partir das bordas (preservando o branco interno do calendário, que é
+  uma região fechada separada do fundo pela borda preta) usando Pillow/numpy num script
+  Python ad-hoc (não ficou nada salvo no repo, só os PNGs/ICO finais). Os dois arquivos
+  juntos cobrem navegadores antigos (`.ico`) e modernos (`.png`); o Next.js App Router já
+  detecta os dois automaticamente pela convenção de nome de arquivo em `app/`, sem
+  precisar editar `app/layout.tsx`.
 - **Etiquetas dos posts** (ver Sessão 3): o antigo campo fixo `formato` (enum) foi
   substituído por um sistema de etiquetas livre estilo Trello — tabelas `etiquetas`
   (nome + cor) e `post_etiquetas` (relação N:N), gerenciável dentro do modal de editar
@@ -214,6 +223,43 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 16 — 2026-06-18
+
+**Contexto**: usuário mandou um PNG (ícone de calendário, fundo branco, traço preto,
+faixa superior verde-oliva) pedindo pra usar como favicon, mas sem o fundo branco.
+
+**1. Remoção de fundo**
+- A máquina não tinha Pillow/numpy instalados — instalei via `pip3 install --user`
+  (mesmo padrão de sessões anteriores com pymupdf/playwright).
+- Não bastava trocar todo pixel branco por transparente — o corpo do calendário no
+  próprio ícone também é branco, e uma troca ingênua removeria isso também, deixando só
+  o contorno preto "flutuando". Resolvido com flood-fill (BFS) a partir das bordas da
+  imagem: só os pixels brancos **conectados ao fundo externo** ficam transparentes; o
+  branco interno do calendário, isolado do fundo pela linha preta do contorno, não é
+  alcançado pelo flood-fill e continua opaco.
+- Depois do flood-fill, recortei as margens transparentes pelo bounding box do conteúdo
+  visível, adicionei uma margem pequena uniforme de volta, e completei pra um canvas
+  quadrado (centralizado) antes de gerar os arquivos finais.
+
+**2. Arquivos gerados**
+- `app/icon.png` (novo, 512×512, PNG com alpha) — convenção do Next.js App Router,
+  detectado automaticamente sem precisar tocar em `app/layout.tsx`.
+- `app/favicon.ico` (sobrescrito, multi-resolução 16/32/48/64px) — primeira tentativa
+  com Pillow só gerou um ICO de 16×16 porque usei `append_images` (que não é o parâmetro
+  certo pra esse formato); corrigido chamando `.save(..., format="ICO", sizes=[...])`
+  direto na imagem quadrada de alta resolução, que faz o Pillow gerar os 4 tamanhos
+  internamente.
+
+**3. Testes**
+- `npm run build` confirmou a rota estática `/icon.png` gerada.
+- Rodei o dev server e inspecionei as tags `<link rel="icon">` no HTML servido —
+  confirmei as duas (`favicon.ico` 64×64 e `icon.png` 512×512) presentes. Baixei o
+  `icon.png` servido e abri pra confirmar visualmente o fundo transparente (xadrez no
+  visualizador) com o calendário intacto.
+
+**4. Pendente**
+- Nada novo. Mudanças ainda não commitadas — perguntar antes de commitar/push.
 
 ### Sessão 15 — 2026-06-18
 
