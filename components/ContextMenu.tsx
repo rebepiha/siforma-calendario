@@ -39,13 +39,16 @@ export default function ContextMenu({
     function aoTeclar(e: KeyboardEvent) {
       if (e.key === "Escape") onFechar();
     }
+    // Não fecha em "contextmenu" global: clicar com o botão direito em outro
+    // card já reabre/reposiciona este mesmo menu via state (outro onContextMenu
+    // chama setMenuContexto de novo) — um listener de "contextmenu" aqui correria
+    // o risco de fechar o próprio menu que acabou de abrir, dependendo de como o
+    // navegador agenda o evento em relação ao efeito que registra o listener.
     window.addEventListener("click", aoClicarFora);
-    window.addEventListener("contextmenu", aoClicarFora);
     window.addEventListener("scroll", aoClicarFora, true);
     window.addEventListener("keydown", aoTeclar);
     return () => {
       window.removeEventListener("click", aoClicarFora);
-      window.removeEventListener("contextmenu", aoClicarFora);
       window.removeEventListener("scroll", aoClicarFora, true);
       window.removeEventListener("keydown", aoTeclar);
     };

@@ -1,15 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { format } from "date-fns";
+import { supabase } from "@/lib/supabase";
 import { useIdeias } from "@/lib/useIdeias";
 import { TIPOS_IDEIA, LABEL_SECAO_IDEIA } from "@/lib/ideiasSeed";
-import { SecaoIdeia } from "@/lib/types";
+import { Ideia, SecaoIdeia } from "@/lib/types";
 import IdeiaCard from "@/components/ideias/IdeiaCard";
+import IdeiaModal from "@/components/ideias/IdeiaModal";
+import ContextMenu from "@/components/ContextMenu";
 
 const SECOES: SecaoIdeia[] = ["stories", "posts"];
 
 export default function PaginaIdeias() {
-  const { ideias, carregando, adicionarIdeia, alternarUsado } = useIdeias();
+  const router = useRouter();
+  const { ideias, carregando, adicionarIdeia, editarIdeia, excluirIdeia } = useIdeias();
   const [secaoAtiva, setSecaoAtiva] = useState<SecaoIdeia>("stories");
   const [tipoFiltro, setTipoFiltro] = useState<string>("todos");
   const [busca, setBusca] = useState("");
@@ -17,6 +23,12 @@ export default function PaginaIdeias() {
   const [novoTitulo, setNovoTitulo] = useState("");
   const [novoTipo, setNovoTipo] = useState(TIPOS_IDEIA[secaoAtiva][0]);
   const [novaDescricao, setNovaDescricao] = useState("");
+  const [ideiaSelecionada, setIdeiaSelecionada] = useState<Ideia | null>(null);
+  const [menuContexto, setMenuContexto] = useState<{
+    x: number;
+    y: number;
+    ideia: Ideia;
+  } | null>(null);
 
   const ideiasDaSecao = useMemo(
     () => ideias.filter((i) => i.secao === secaoAtiva),
@@ -56,6 +68,41 @@ export default function PaginaIdeias() {
     setNovaDescricao("");
     setNovoTipo(TIPOS_IDEIA[secaoAtiva][0]);
     setFormAberto(false);
+  }
+
+  async function enviarParaCalendario(ideia: Ideia) {
+    const { data: etiquetas } = await supabase.from("etiquetas").select("*");
+    const nomeEtiqueta = ideia.secao === "stories" ? "Stories" : "Feed";
+    const etiqueta = (etiquetas ?? []).find((e) => e.nome === nomeEtiqueta);
+
+    const { data: postCriado, error } = await supabase
+      .from("posts")
+      .insert({
+        titulo: ideia.titulo,
+        data: format(new Date(), "yyyy-MM-dd"),
+        canal: "instagram",
+        tipo: ideia.tipo === "Produto" ? "produto" : "nao_produto",
+        categoria: ideia.tipo,
+        video_pronto: false,
+        novo_produto: false,
+        status: "pendente",
+        copy: ideia.descricao || null,
+        observacoes: null,
+      })
+      .select()
+      .single();
+    if (error || !postCriado) return;
+
+    if (etiqueta) {
+      await supabase
+        .from("post_etiquetas")
+        .insert({ post_id: postCriado.id, etiqueta_id: etiqueta.id });
+    }
+
+    editarIdeia(ideia.id, { usado: true });
+    setIdeiaSelecionada(null);
+    setMenuContexto(null);
+    router.push("/");
   }
 
   return (
@@ -176,10 +223,56 @@ export default function PaginaIdeias() {
             <IdeiaCard
               key={ideia.id}
               ideia={ideia}
-              onToggleUsado={() => alternarUsado(ideia.id)}
+              onClick={() => setIdeiaSelecionada(ideia)}
+              onToggleUsado={() => editarIdeia(ideia.id, { usado: !ideia.usado })}
+              onContextMenu={(e) =>
+                setMenuContexto({ x: e.clientX, y: e.clientY, ideia })
+              }
             />
           ))}
         </div>
+      )}
+
+      {ideiaSelecionada && (
+        <IdeiaModal
+          key={ideiaSelecionada.id}
+          ideia={ideiaSelecionada}
+          onFechar={() => setIdeiaSelecionada(null)}
+          onSalvar={(id, valores) => {
+            editarIdeia(id, valores);
+            setIdeiaSelecionada(null);
+          }}
+          onExcluir={(id) => {
+            excluirIdeia(id);
+            setIdeiaSelecionada(null);
+          }}
+          onEnviarParaCalendario={enviarParaCalendario}
+        />
+      )}
+
+      {menuContexto && (
+        <ContextMenu
+          x={menuContexto.x}
+          y={menuContexto.y}
+          onFechar={() => setMenuContexto(null)}
+          itens={[
+            { label: "Editar", onClick: () => setIdeiaSelecionada(menuContexto.ideia) },
+            {
+              label: menuContexto.ideia.usado ? "Marcar como não usada" : "Marcar como usada",
+              onClick: () =>
+                editarIdeia(menuContexto.ideia.id, { usado: !menuContexto.ideia.usado }),
+            },
+            {
+              label: "Enviar pro calendário",
+              onClick: () => enviarParaCalendario(menuContexto.ideia),
+            },
+            {
+              label: "Excluir",
+              onClick: () => excluirIdeia(menuContexto.ideia.id),
+              destrutivo: true,
+            },
+          ]}
+        />
       )}
     </div>
   );

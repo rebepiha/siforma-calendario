@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { Ideia } from "@/lib/types";
 import { corTipoIdeia } from "@/lib/ideiaStyles";
 
@@ -25,15 +26,24 @@ function IconeCheck() {
 
 export default function IdeiaCard({
   ideia,
+  onClick,
   onToggleUsado,
+  onContextMenu,
 }: {
   ideia: Ideia;
+  onClick: () => void;
   onToggleUsado: () => void;
+  onContextMenu: (e: MouseEvent) => void;
 }) {
   return (
     <div
       style={{ borderLeftColor: corTipoIdeia(ideia.tipo) }}
-      className={`flex flex-col gap-1.5 rounded-md border-l-4 border-y border-r border-zinc-700 bg-zinc-800 p-3 ${
+      onClick={onClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onContextMenu(e);
+      }}
+      className={`flex cursor-pointer flex-col gap-1.5 rounded-md border-l-4 border-y border-r border-zinc-700 bg-zinc-800 p-3 transition hover:-translate-y-0.5 hover:bg-zinc-800/70 ${
         ideia.usado ? "opacity-50" : ""
       }`}
     >
@@ -49,7 +59,10 @@ export default function IdeiaCard({
         </span>
         <button
           type="button"
-          onClick={onToggleUsado}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleUsado();
+          }}
           className="flex items-center gap-1 rounded-full px-1 py-0.5 text-[10px] font-medium text-zinc-400 hover:bg-zinc-900"
           aria-label={ideia.usado ? "Marcar como não usada" : "Marcar como usada"}
         >

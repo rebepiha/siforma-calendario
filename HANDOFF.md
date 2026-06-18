@@ -20,6 +20,21 @@
   sessão). Se no início de uma sessão `git fetch` mostrar commits em `origin/main` que não
   fazem sentido com o que está documentado aqui, **pare e avise o usuário antes de
   push/pull** — não dá pra saber se é trabalho real perdido ou outra sessão concorrente.
+- **Banco de Ideias: cards clicáveis, edição completa, exclusão e "Enviar pro
+  calendário"** (ver Sessão 29): clicar num card abre `IdeiaModal.tsx` (título,
+  seção, tipo — o select de tipo atualiza junto se a seção mudar —, descrição,
+  checkbox "Já usei essa ideia"), com Excluir no rodapé. Botão direito abre o mesmo
+  `ContextMenu` genérico já usado em posts/tarefas (Editar/Marcar usada/Enviar pro
+  calendário/Excluir). "Enviar pro calendário" cria um post no Calendário Editorial
+  (`titulo`=título da ideia, `copy`=descrição, `categoria`=tipo da ideia, etiqueta
+  "Stories" ou "Feed" conforme a seção, data=hoje), marca a ideia como usada, e
+  navega pra `/`. Achei e corrigi de quebra um bug real no `ContextMenu.tsx`: o
+  listener de `contextmenu` em `window` (que fechava o menu se o usuário abrisse
+  outro em outro lugar) tinha uma corrida de eventos que ocasionalmente fechava o
+  próprio menu que tinha acabado de abrir (mais perceptível em automação via
+  Playwright/CDP, mas o listener era redundante mesmo sem isso — abrir o menu em
+  outro card já reposiciona via state) — removido; "fechar ao clicar fora" continua
+  funcionando via o listener de `click`.
 - **Banco de Ideias** (ver Sessão 27): 4ª aba no `TopNav`, rota `/ideias`. Duas
   seções (Stories/Posts), cada uma com tipos fixos (`lib/ideiasSeed.ts`,
   `TIPOS_IDEIA`) e ideias com título/tipo/descrição/usado. **Não usa Supabase — é
@@ -30,12 +45,20 @@
   real (alguém marcar uma ideia como usada e outra pessoa não ver), a solução é
   migrar pra uma tabela Supabase nova (mesma forma de schema, troca o hook por
   chamadas REST) — não implementado porque não foi pedido. Na primeira carga sem
-  nada salvo, semeia automaticamente as 24 ideias que o usuário forneceu em texto
-  (9 Stories + 15 Posts — ver `IDEIAS_SEED`). As 5 ideias de "Caixinha de perguntas"
-  (Stories) foram categorizadas como tipo **Outro** porque a lista de tipos que o
-  usuário deu pra Stories (Quiz/Enquete/Verdadeiro ou Falso/Antes e Depois/Outro)
-  não tinha uma categoria própria pra elas — avisar o usuário que isso foi uma
-  decisão minha, não pedido explícito, caso ele prefira recategorizar.
+  nada salvo, semeia automaticamente com `IDEIAS_SEED` (37 ideias ao todo: 23
+  Stories + 15 Posts, depois da Sessão 28 — ver `lib/ideiasSeed.ts`). Várias
+  ideias de Stories sem tipo correspondente na lista que o usuário deu (Quiz/
+  Enquete/Verdadeiro ou Falso/Antes e Depois/Outro) — "Caixinha de perguntas" e
+  "Caixinha Estratégica" — foram categorizadas como tipo **Outro**; decisão minha,
+  não pedido explícito, caso o usuário prefira recategorizar.
+- **Banco de Ideias: novas entradas do seed se mesclam com o que já está salvo**
+  (corrigido na Sessão 28, antes só semeava na primeira carga): `useIdeias.ts`
+  compara `IDEIAS_SEED` com o que já tem no `localStorage` por `secao + título` e
+  só adiciona o que ainda não existe, preservando id/status "usado" de tudo que já
+  estava salvo. Isso é necessário porque sem essa mesclagem, crescer
+  `IDEIAS_SEED` no código não apareceria pra quem já tinha aberto a página antes
+  (o seed antigo só rodava se o `localStorage` estivesse vazio) — útil já que esse
+  banco deve continuar crescendo com novas ideias em sessões futuras.
 - **Menu de contexto (botão direito) em posts e tarefas** (ver Sessão 27):
   `components/ContextMenu.tsx`, genérico, usado nos cards do Calendário Editorial
   (`PostCard.tsx`) e Tarefas (`TaskChip.tsx`) — clique direito abre Editar/Duplicar/
@@ -359,6 +382,113 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 29 — 2026-06-18
+
+**Contexto**: usuário usou o Banco de Ideias (Sessões 27/28) e pediu: "os cards de
+ideias não estão clicáveis. quero poder editar a ideia, em qual categoria ela se
+encaixa, botão pra usar e jogar pro calendário, etc. botão direito também
+funcionando para excluir etc".
+
+**1. Implementação**
+- `lib/useIdeias.ts`: troquei `alternarUsado` por dois genéricos —
+  `editarIdeia(id, camposParciais)` (update parcial qualquer, usado tanto pelo
+  toggle rápido de "Usado" no card quanto pelo modal) e `excluirIdeia(id)`. Mesmo
+  padrão de "helper raw genérico" já usado em posts/tarefas
+  (`aplicarCamposPost`/`aplicarCamposTarefa`).
+- `components/ideias/IdeiaCard.tsx`: card inteiro ficou clicável (`onClick` abre
+  o modal de edição) e ganhou `onContextMenu` — igual ao padrão de
+  `PostCard`/`TaskChip` (toggle "Usado" continua com `stopPropagation` pra não
+  abrir o modal ao clicar nele).
+- Novo `components/ideias/IdeiaModal.tsx`: título, seção (Stories/Posts) e tipo
+  (select dependente da seção — trocar a seção já reseta o tipo pro primeiro
+  válido daquela seção se o atual não existir lá), descrição, checkbox "Já usei
+  essa ideia". Rodapé: Excluir (esquerda) + "Enviar pro calendário" e Fechar
+  (direita). Resolve diretamente a pendência da Sessão 27/28 de que algumas
+  ideias foram categorizadas como "Outro" por falta de tipo melhor — agora o
+  usuário pode reclassificar pela própria UI, sem precisar me pedir.
+- `app/ideias/page.tsx`: estado de modal/menu de contexto (mesmo padrão das
+  páginas de posts/tarefas). Nova função `enviarParaCalendario(ideia)`: busca a
+  etiqueta "Stories" ou "Feed" (conforme `ideia.secao`) na tabela `etiquetas`,
+  insere um post novo (`titulo`=título da ideia, `data`=hoje, `canal`=instagram,
+  `tipo`="produto" se `ideia.tipo === "Produto"` senão "nao_produto",
+  `categoria`=tipo da ideia, `copy`=descrição da ideia), associa a etiqueta se
+  encontrou, marca a ideia como usada (`editarIdeia(id, {usado: true})`) e
+  navega pra `/` via `useRouter().push("/")`. Sem integração mais profunda (não
+  abre o modal do post automaticamente já em edição — o usuário pode clicar no
+  card recém-criado no calendário se quiser ajustar mais).
+
+**2. Bug real encontrado e corrigido durante o teste**
+Testando o menu de contexto no Banco de Ideias, o menu abria e fechava
+imediatamente — não acontecia isso em posts/tarefas. Investiguei com logs
+temporários (removidos depois) e descobri: `ContextMenu.tsx` tinha um listener de
+`contextmenu` em `window` pra fechar o menu caso o usuário abrisse outro em outro
+lugar — mas isso cria uma corrida: o próprio clique direito que abre o menu
+também é um evento `contextmenu`, e dependendo de como o navegador agenda esse
+evento em relação ao efeito React que registra o listener (mais visível sob
+automação via Playwright/CDP, onde mousedown/mouseup/contextmenu parecem ser
+despachados em ticks separados), o listener recém-registrado acaba capturando o
+próprio evento que originou a abertura, fechando o menu na hora. Removido o
+listener de `contextmenu` inteiramente — é redundante mesmo: abrir o menu em
+*outro* card já atualiza a posição/itens via state (mesma instância do
+componente, só trocam os props), não precisa de um listener global pra isso;
+fechar com clique-fora continua funcionando via o listener de `click` (que não
+tem esse problema, já que o clique que abre o menu é um evento `contextmenu`, não
+um `click`). Reexecutei a suíte de testes de menu de contexto da Sessão 27
+(posts/tarefas) depois da remoção pra confirmar que não regredeu nada — passou
+tudo igual.
+
+**3. Testes**
+- `npm run lint`/`npm run build` limpos.
+- Playwright: clicar no card abre o modal; editar título/tipo/seção e fechar
+  salva (inclusive trocando de seção, confirmando que o select de tipo
+  atualiza); menu de contexto com os 4 itens; excluir pelo menu remove a ideia.
+  Fluxo completo de "Enviar pro calendário": cria o post (confirmei que o `copy`
+  veio preenchido com a descrição, abrindo o modal do post depois), navega pra
+  `/`, ideia volta marcada como usada ao voltar pro Banco de Ideias. Limpei o
+  post de teste criado no Supabase (mesmo banco de produção, sem ambiente
+  separado) e confirmei via REST que não sobrou nada.
+
+**4. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
+
+### Sessão 28 — 2026-06-18
+
+**Contexto**: continuação direta da Sessão 27. Usuário pediu "adicione essas ideias
+de stories" e mandou 3 grupos novos (Caixinha Estratégica, Quiz, Enquetes — 14
+ideias de Stories no total, sem nenhuma de Posts dessa vez).
+
+**1. Problema identificado antes de implementar**
+Como o Banco de Ideias usa `localStorage` (decisão da Sessão 27, a pedido do
+usuário), só adicionar itens em `IDEIAS_SEED` no código **não apareceria** pra
+quem já tinha aberto a página `/ideias` antes — a lógica antiga só rodava o seed
+quando o `localStorage` estava completamente vazio. Como esse banco vai
+provavelmente continuar crescendo em sessões futuras (esse pedido já é prova
+disso), corrigi isso antes de só adicionar as ideias: `lib/useIdeias.ts` agora
+sempre compara `IDEIAS_SEED` com o que já está salvo (por `secao + título`) e
+mescla só o que falta, em vez de só semear quando vazio. Ideias já existentes
+(id, status "usado") não são tocadas.
+
+**2. Ideias adicionadas**
+`lib/ideiasSeed.ts`: 14 novas entradas de Stories — 5 "Caixinha Estratégica"
+(tipo **Outro**, mesmo critério da Sessão 27 pra "Caixinha de perguntas", já que
+a lista de tipos de Stories não tem uma categoria pra perguntas abertas), 5
+"Quiz" (tipo **Quiz**), 4 "Enquetes" (tipo **Enquete** — essa segunda rodada não
+veio com opções de resposta como a primeira, então `descricao` ficou vazia).
+Total do banco: 23 Stories + 15 Posts = 38 ideias.
+
+**3. Testes**
+- `npm run lint`/`npm run build` limpos.
+- Playwright: simulei via `page.evaluate` um "usuário antigo" (gravando no
+  `localStorage` só as 9 ideias originais de Stories da Sessão 27, com uma
+  marcada como `usado: true`) e recarreguei a página — confirmei que as 14 novas
+  apareceram mescladas, a contagem da aba foi pra 23, e a ideia antiga marcada
+  como usada continuou usada (não foi resetada pela mesclagem). Sem esse teste eu
+  não teria pego que a versão anterior do hook simplesmente ignorava o seed
+  inteiro quando já havia algo salvo.
+
+**4. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
 
 ### Sessão 27 — 2026-06-18
 

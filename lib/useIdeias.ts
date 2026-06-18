@@ -12,18 +12,27 @@ export function useIdeias() {
 
   useEffect(() => {
     const salvas = localStorage.getItem(CHAVE_LOCALSTORAGE);
-    if (salvas) {
-      setIdeias(JSON.parse(salvas) as Ideia[]);
-    } else {
-      const seed: Ideia[] = IDEIAS_SEED.map((ideia) => ({
-        ...ideia,
-        id: crypto.randomUUID(),
-        usado: false,
-        criado_em: new Date().toISOString(),
-      }));
-      setIdeias(seed);
-      localStorage.setItem(CHAVE_LOCALSTORAGE, JSON.stringify(seed));
+    const existentes: Ideia[] = salvas ? (JSON.parse(salvas) as Ideia[]) : [];
+
+    // Sempre mescla ideias do seed que ainda não existem (por seção + título) —
+    // assim, quando o seed cresce com novas ideias numa sessão futura, elas
+    // aparecem pra quem já tinha aberto a página antes (não fica preso ao que foi
+    // salvo da primeira vez), sem duplicar nem apagar ideias já marcadas/criadas.
+    const chavesExistentes = new Set(existentes.map((i) => `${i.secao}::${i.titulo}`));
+    const novasDoSeed: Ideia[] = IDEIAS_SEED.filter(
+      (ideia) => !chavesExistentes.has(`${ideia.secao}::${ideia.titulo}`)
+    ).map((ideia) => ({
+      ...ideia,
+      id: crypto.randomUUID(),
+      usado: false,
+      criado_em: new Date().toISOString(),
+    }));
+
+    const atualizadas = [...existentes, ...novasDoSeed];
+    if (novasDoSeed.length > 0 || !salvas) {
+      localStorage.setItem(CHAVE_LOCALSTORAGE, JSON.stringify(atualizadas));
     }
+    setIdeias(atualizadas);
     setCarregando(false);
   }, []);
 
@@ -44,10 +53,10 @@ export function useIdeias() {
     []
   );
 
-  const alternarUsado = useCallback(
-    (id: string) => {
+  const editarIdeia = useCallback(
+    (id: string, campos: Partial<Omit<Ideia, "id" | "criado_em">>) => {
       setIdeias((atual) => {
-        const atualizadas = atual.map((i) => (i.id === id ? { ...i, usado: !i.usado } : i));
+        const atualizadas = atual.map((i) => (i.id === id ? { ...i, ...campos } : i));
         localStorage.setItem(CHAVE_LOCALSTORAGE, JSON.stringify(atualizadas));
         return atualizadas;
       });
@@ -55,5 +64,13 @@ export function useIdeias() {
     []
   );
 
-  return { ideias, carregando, adicionarIdeia, alternarUsado };
+  const excluirIdeia = useCallback((id: string) => {
+    setIdeias((atual) => {
+      const atualizadas = atual.filter((i) => i.id !== id);
+      localStorage.setItem(CHAVE_LOCALSTORAGE, JSON.stringify(atualizadas));
+      return atualizadas;
+    });
+  }, []);
+
+  return { ideias, carregando, adicionarIdeia, editarIdeia, excluirIdeia };
 }

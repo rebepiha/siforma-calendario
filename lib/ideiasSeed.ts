@@ -68,6 +68,93 @@ export const IDEIAS_SEED: NovaIdeia[] = [
     titulo: "O que te faz escolher uma marca de ferragens?",
     descricao: "",
   },
+  // Stories — Caixinha Estratégica (sem tipo próprio na lista fornecida — usando "Outro")
+  {
+    secao: "stories",
+    tipo: "Outro",
+    titulo: "Qual desafio técnico você enfrenta com mais frequência?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Outro",
+    titulo: "Qual produto você gostaria de ver em funcionamento?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Outro",
+    titulo: "Existe algum sistema que você gostaria de conhecer melhor?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Outro",
+    titulo: "Qual tema técnico devemos abordar nos próximos conteúdos?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Outro",
+    titulo: "Que tipo de solução seus clientes mais pedem atualmente?",
+    descricao: "",
+  },
+  // Stories — Quiz
+  {
+    secao: "stories",
+    tipo: "Quiz",
+    titulo: "Qual sistema suporta portas de maiores dimensões?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Quiz",
+    titulo: "Qual dessas soluções permite ocultar completamente um ambiente?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Quiz",
+    titulo: "Qual característica mais influencia a durabilidade de um sistema deslizante?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Quiz",
+    titulo: "Você sabe quantos ciclos um sistema premium pode suportar?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Quiz",
+    titulo: "Qual ferragem é indicada para portas articuladas ocultas?",
+    descricao: "",
+  },
+  // Stories — Enquetes (segunda rodada, sem opções fornecidas)
+  {
+    secao: "stories",
+    tipo: "Enquete",
+    titulo: "O que mais influencia sua decisão na escolha de uma ferragem?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Enquete",
+    titulo: "Em seus projetos, qual é o principal desafio?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Enquete",
+    titulo: "Você já especificou portas invisíveis em algum projeto?",
+    descricao: "",
+  },
+  {
+    secao: "stories",
+    tipo: "Enquete",
+    titulo: "O que seus clientes mais valorizam?",
+    descricao: "",
+  },
   // Posts — Tendência (a maioria)
   {
     secao: "posts",
