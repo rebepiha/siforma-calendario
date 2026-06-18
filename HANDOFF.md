@@ -55,7 +55,10 @@
 
 - Nenhuma pendência crítica — o app está funcional e no ar, cobrindo os 3 requisitos
   (Calendário Editorial, Tarefas de Marketing, Metas e Progresso).
-- Tabelas `tarefas` e `metas` continuam vazias por design (a equipe deve popular).
+- Tabela `metas` continua vazia por design (a equipe deve popular). `tarefas` tem 2
+  linhas de teste ("teste"/"teste", responsável Victoria, sem descrição) criadas pela
+  própria usuária explorando o app ao vivo na Sessão 5 — não foram criadas por mim,
+  deixei como estavam; pode apagar quando quiser, não é dado real de produção.
 - Os tokens de GitHub e Vercel usados para configurar o pipeline inicial foram de uso
   único/curta duração e devem ter sido revogados ou expirado — se uma sessão futura
   precisar fazer push ou alterar env vars/redeploy e a credencial salva não funcionar
@@ -140,7 +143,7 @@
   canto superior esquerdo para quando ele for postado/finalizado". Interpretei como
   "remover etiquetas/pills do card e só mostrar no painel de detalhe" + adicionei um
   checkbox simples. Usuário respondeu que eu **não fiz o que pedi** e mandou um print
-  de refer��ncia (calendário de Junho/Julho de outra ferramenta) mostrando exatamente o
+  de referência (calendário de Junho/Julho de outra ferramenta) mostrando exatamente o
   layout esperado — bem mais específico do que eu tinha entendido do texto.
 - Layout do card, conforme a referência (`components/calendario/PostCard.tsx`,
   reescrito do zero):
