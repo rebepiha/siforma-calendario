@@ -54,7 +54,10 @@ export default function PostCard({
       style={style}
       {...listeners}
       {...attributes}
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       className={`relative cursor-pointer rounded-lg border border-white/10 bg-white/10 px-1.5 py-1 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md ${
         publicado ? "opacity-60" : ""
       } ${isDragging ? "opacity-50" : ""}`}

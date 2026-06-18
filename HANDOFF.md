@@ -65,6 +65,19 @@
   mais tela cheia), clique no card abre direto o modal de edição de sempre (não há mais
   conceito de "post selecionado" separado de "post em edição"). Ver Sessão 6 para a
   lista exata de arquivos revertidos/removidos e o que ficou só no banco (não na UI).
+- **Criar post: clicar em qualquer parte do quadrado do dia** (ver Sessão 10), não só num
+  botão "+ Novo post" que só aparecia no hover (removido). `DayCell.tsx` tem `onClick` no
+  container inteiro chamando `onNovoPost(dataStr)`; `PostCard.tsx` chama
+  `e.stopPropagation()` no próprio `onClick` pra clicar num post existente abrir a edição
+  dele em vez de também disparar a criação de um novo (o clique bolha do filho pro pai por
+  padrão no React/DOM, então sem o stopPropagation os dois disparariam juntos).
+- **Modal de post salva automaticamente ao fechar** (ver Sessão 10) — não existe mais
+  botão "Salvar" separado de "Cancelar"; fechar pelo ✕, clicando fora (backdrop) ou pelo
+  botão "Fechar" no rodapé chama a mesma função (`fecharSalvando` em
+  `components/calendario/PostModal.tsx`), que salva se o título não estiver vazio, ou só
+  fecha sem criar nada se estiver (evita posts vazios ao abrir "+ Adicionar post"/clicar
+  num dia e fechar sem digitar nada). Editar um campo e fechar sem clicar em nada mais já
+  persiste a mudança.
 - **Marcar concluído/publicado direto no card** (Sessão 8, estendido na Sessão 9): em
   Tarefas (`TaskChip.tsx` — vista Calendário e a caixa "Sem prazo definido" — e também
   `TaskCard.tsx` do board Kanban, desde a Sessão 9) e no Calendário Editorial
@@ -156,6 +169,61 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 10 — 2026-06-18
+
+**Contexto**: dois pedidos curtos sobre o Calendário Editorial: (1) clicar em qualquer
+lugar do quadrado do dia deveria criar um post novo, não só num botão pequeno que só
+aparece no hover; (2) salvar automaticamente ao sair da edição, sem precisar clicar em
+"Salvar".
+
+**1. Clicar em qualquer parte do dia cria post**
+- `components/calendario/DayCell.tsx`: `onClick={() => onNovoPost(dataStr)}` movido pro
+  container raiz do dia (antes só existia no botão "+ Novo post", que ficava
+  `invisible`/só aparecia com `group-hover`). Removi esse botão e a classe `group` (não
+  tinha mais nenhum outro consumidor de `group-hover`). Adicionei `cursor-pointer`,
+  `hover:bg-zinc-800/70` (só quando dentro do mês, pra não conflitar com o estilo
+  esmaecido dos dias de fora) e um `title` de tooltip explicando o clique.
+- `components/calendario/PostCard.tsx`: o `onClick` do card (que já existia, abre edição)
+  ganhou `e.stopPropagation()` — sem isso, clicar num post existente também disparava o
+  `onClick` do `DayCell` pai (bubbling padrão do DOM), abrindo "Novo post" por cima da
+  edição que devia abrir. O botão de status (checkbox) já tinha `stopPropagation` desde a
+  Sessão 8, não precisou mudar.
+- Testado que isso não interfere com o drag-and-drop existente (arrastar um post pra outro
+  dia não abre o modal de "novo post" no dia de destino — confirmado via Playwright,
+  simulando mouse down/move/up).
+
+**2. Autosave ao fechar o modal de post**
+- `components/calendario/PostModal.tsx`: nova função `fecharSalvando` — se
+  `valores.titulo.trim()` não for vazio, chama `salvar()` (que já existia e fecha o modal
+  via `onSalvar`/`setModalAberto(false)` no `app/page.tsx`); se estiver vazio, só chama
+  `onFechar()` sem salvar (evita criar posts vazios ao abrir "+ Adicionar post" ou clicar
+  num dia e desistir sem digitar nada). Os 3 pontos de fechamento (clique no backdrop, ✕
+  no canto, botão do rodapé) agora chamam `fecharSalvando` em vez de `onFechar` direto.
+- Removidos os botões separados "Cancelar" e "Salvar" do rodapé — sobrou um único botão
+  "Fechar" (mostra "Salvando..." e fica `disabled` enquanto `salvando` é true, mesma
+  variável de estado que já existia). Não há mais como "descartar" uma edição em um post
+  já existente fechando o modal — fechar sempre persiste o que estiver nos campos nesse
+  momento (intencional, é o comportamento pedido). Continua dando pra excluir o post
+  inteiro pelo botão "Excluir", que é uma ação separada.
+
+**3. Testes**
+- `npm run lint` e `npm run build` limpos.
+- Playwright/Chrome headless, fluxo completo: cliquei num dia vazio (dia 1) → abriu "Novo
+  post" → fechei sem digitar nada (clique no backdrop) → confirmei que não criou post
+  nenhum. Cliquei no dia de novo, digitei um título, fechei pelo ✕ (sem clicar em nenhum
+  botão de salvar) → confirmei que o post foi criado. Cliquei no post recém-criado →
+  confirmei que abriu "Editar post" (não "Novo post" por cima). Editei o título, fechei
+  clicando fora (backdrop) → confirmei que o título editado persistiu. Por fim abri de
+  novo e excluí pelo botão "Excluir" pra não deixar lixo de teste no banco. Também testei
+  arrastar "OPK Perfect Pivot" (post real) de um dia pro outro só pra confirmar que o
+  drag-and-drop não dispara o "novo post" indevidamente — **revertido depois** a data
+  desse post de volta pra 22/jun via REST API, já que o drag de teste realmente moveu o
+  dado real (drag funciona de verdade, não é só visual).
+
+**4. Pendente**
+- Nada novo. Mudanças ainda não commitadas — perguntar ao usuário antes de
+  commitar/push.
 
 ### Sessão 9 — 2026-06-18
 
