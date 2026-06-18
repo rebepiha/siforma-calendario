@@ -7,9 +7,9 @@ import { Tarefa } from "@/lib/types";
 import { corAvatar, inicialAvatar } from "@/lib/avatar";
 
 const COR_PRIORIDADE: Record<Tarefa["prioridade"], string> = {
-  baixa: "bg-green-500",
-  media: "bg-amber-500",
-  alta: "bg-red-500",
+  baixa: "border-green-500",
+  media: "border-amber-500",
+  alta: "border-red-500",
 };
 
 function IconeCheck() {
@@ -76,7 +76,9 @@ export default function TaskCard({
           {concluida ? (
             <IconeCheck />
           ) : (
-            <span className={`block h-2 w-2 rounded-full ${COR_PRIORIDADE[tarefa.prioridade]}`} />
+            <span
+              className={`block h-3 w-3 rounded-full border-2 bg-zinc-800 hover:bg-zinc-700 ${COR_PRIORIDADE[tarefa.prioridade]}`}
+            />
           )}
         </button>
         {tarefa.responsavel && (

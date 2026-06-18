@@ -88,6 +88,15 @@
   card/abrir o modal. Card inteiro fica com `opacity-60` quando concluído/publicado (em
   Tarefas já era assim desde a Sessão 8; faltava em `PostCard.tsx`, corrigido na Sessão 9
   depois que o usuário confirmou que esperava o mesmo efeito de transparência lá também).
+  **Aparência do círculo não marcado** (corrigido na Sessão 12): em Tarefas
+  (`TaskChip.tsx`/`TaskCard.tsx`) o círculo de prioridade era preenchido (`bg-*`), idêntico
+  ao indicador de prioridade que já existia antes de qualquer checkbox — visualmente
+  indistinguível de algo não clicável, por isso o usuário não tinha percebido que o
+  checkbox já funcionava (confirmei via bundle de produção que o código já estava lá
+  desde a Sessão 8/9, era só questão de aparência). Troquei pra um círculo vazio com
+  borda colorida (`border-2 border-*` em vez de `bg-*`), igual ao padrão que o
+  `PostCard.tsx` já usava — agora lê visualmente como um checkbox de verdade nos dois
+  lugares.
 - **Vista padrão de Tarefas de Marketing é Calendário** (ver Sessão 8), não mais Kanban —
   botão "Calendário" também vem primeiro na UI, "Kanban" depois.
 - **Tamanhos de fonte/card ajustados na Sessão 9**: `PostCard.tsx` (Calendário Editorial)
@@ -180,6 +189,48 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 12 — 2026-06-18
+
+**Contexto**: usuário reportou "as tarefas da Vitória continuam sem checkbox" depois da
+Sessão 8/9 terem implementado exatamente essa feature (e testado funcionando via
+Playwright em várias rodadas desde então).
+
+**1. Diagnóstico**
+- Baixei o HTML/JS da produção (`siforma-calendario.vercel.app/tarefas`) e busquei a
+  string `"Marcar como concluída"` (aria-label que só existe se o código do checkbox
+  estiver no bundle) — encontrei no chunk JS, confirmando que o deploy estava correto e
+  a funcionalidade existia em produção. Então tirei um screenshot da produção real e
+  comparei com o Calendário Editorial: o "checkbox" de tarefa era só uma bolinha
+  preenchida da cor de prioridade — exatamente igual ao indicador de prioridade que
+  já existia antes de qualquer um dos meus trabalhos nesse projeto (não-clicável,
+  decorativo). Ou seja, o recurso **funcionava** (clicar de fato marcava
+  concluído/movia de coluna), mas **não parecia clicável** — nada na aparência mudou em
+  relação ao indicador antigo, então o usuário nunca percebeu que podia clicar ali. No
+  Calendário Editorial isso não aconteceu porque o círculo não marcado já tinha uma
+  borda visível (`border-2 border-zinc-500`), lendo como checkbox de verdade.
+
+**2. Correção**
+- `components/tarefas/TaskChip.tsx` e `TaskCard.tsx`: troquei `COR_PRIORIDADE` de
+  classes `bg-*` (preenchimento sólido) pra `border-*` (cor só na borda), e o `<span>`
+  do círculo não marcado virou `h-3 w-3 rounded-full border-2 bg-zinc-800
+  hover:bg-zinc-700 ${COR_PRIORIDADE[...]}` — um círculo vazio com contorno colorido
+  (cor de prioridade preservada, agora na borda em vez do preenchimento) e leve
+  destaque ao passar o mouse. Visualmente passa a se parecer com um checkbox de
+  verdade, igual ao padrão do `PostCard.tsx`.
+
+**3. Testes**
+- `npm run lint` e `npm run build` limpos.
+- Playwright/Chrome headless: screenshot antes/depois confirmando a mudança visual nas
+  duas vistas (Calendário e Kanban); cliquei no botão de uma tarefa real pra confirmar
+  que o toggle ainda funciona (vira check verde + tachado), revertido depois.
+
+**4. Pendente**
+- Nada novo. Mudanças ainda não commitadas — perguntar antes de commitar/push.
+- Lição pra sessões futuras: ao adicionar um elemento interativo que reaproveita o
+  espaço/cor de um indicador puramente visual que já existia, vale conferir se a
+  aparência também comunica "isso é clicável agora" — funcionar não é suficiente se
+  nada muda visualmente em relação ao estado anterior não-interativo.
 
 ### Sessão 11 — 2026-06-18
 
