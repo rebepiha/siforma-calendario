@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Canal, CHECKLIST_PADRAO, Etiqueta, NovoPost, Post, StatusPost, TipoPost } from "@/lib/types";
+import { Canal, Etiqueta, NovoPost, Post, StatusPost, TipoPost } from "@/lib/types";
 import { LABEL_CANAL, LABEL_STATUS, LABEL_TIPO } from "@/lib/postStyles";
 import { corTextoContraste } from "@/lib/etiquetaCores";
 import EtiquetaPicker from "./EtiquetaPicker";
@@ -18,8 +18,6 @@ function valoresIniciais(dataPadrao: string): NovoPost {
     status: "pendente",
     copy: "",
     observacoes: "",
-    responsavel: null,
-    checklist: CHECKLIST_PADRAO,
   };
 }
 
@@ -57,8 +55,6 @@ export default function PostModal({
           status: post.status,
           copy: post.copy ?? "",
           observacoes: post.observacoes ?? "",
-          responsavel: post.responsavel,
-          checklist: post.checklist,
         }
       : valoresIniciais(dataPadrao)
   );

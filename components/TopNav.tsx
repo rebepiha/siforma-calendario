@@ -15,7 +15,7 @@ export default function TopNav() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-700 bg-zinc-800">
-      <div className="flex w-full flex-wrap items-center gap-4 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-2.5">
           <Image
             src="/siforma-logo-dark.png"

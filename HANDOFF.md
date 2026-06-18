@@ -32,19 +32,15 @@
   (nome + cor) e `post_etiquetas` (relação N:N), gerenciável dentro do modal de editar
   post (`components/calendario/EtiquetaPicker.tsx`). Equipe pode criar, renomear,
   recolorir e excluir etiquetas livremente; cada post pode ter várias.
-- **Calendário Editorial redesenhado** (ver Sessão 4): layout em 3 colunas —
-  `components/calendario/SidebarFiltros.tsx` (visão Mensal/Semanal/Lista + filtros
-  multi-seleção de canal/status/etiqueta), calendário no centro, e
-  `components/calendario/PostDetailPanel.tsx` fixo à direita (mostra detalhe do post
-  selecionado: status, responsável, checklist de produção, etiquetas, categoria,
-  observações — edição de campos como título/data/copy continua no modal de sempre,
-  aberto pelo lápis). `components/calendario/EstatisticasCards.tsx` mostra contagens do
-  período visível. `components/calendario/CampanhaBanner.tsx` mostra banners de
-  campanha/evento (ex: Formobile) com data de início/fim **explícitas e editáveis**
-  (tabela `campanhas`, não inferidas dos posts — ver Pendências). Posts agora têm
-  `responsavel` (texto livre) e `checklist` (jsonb, 6 itens fixos por post, marcáveis no
-  painel de detalhe). **Arquivos anexados ao post (upload/download) ainda não foram
-  implementados** — ficou pendente, ver abaixo.
+- **Calendário Editorial — layout simples (revertido na Sessão 6)**: o redesign em 3
+  colunas (sidebar + calendário + painel de detalhe) feito na Sessão 4 e o redesign de
+  card da Sessão 5 foram **revertidos a pedido do usuário**, que mandou um print
+  mostrando o visual antigo e pediu pra voltar exatamente a ele. Layout atual: filtros
+  em dropdown único-seleção (`components/calendario/Filtros.tsx` — canal/tipo/etiqueta),
+  grade do mês em coluna única ocupando a largura central (`max-w-7xl` centralizado, não
+  mais tela cheia), clique no card abre direto o modal de edição de sempre (não há mais
+  conceito de "post selecionado" separado de "post em edição"). Ver Sessão 6 para a
+  lista exata de arquivos revertidos/removidos e o que ficou só no banco (não na UI).
 - **Sem autenticação**: acesso por link aberto. RLS habilitado nas 3 tabelas mas com
   política `using (true) with check (true)` (qualquer um com o link lê/escreve).
 - **Ambiente local**: máquina não tinha Node/npm/Homebrew — Node foi instalado via `nvm`
@@ -67,15 +63,13 @@
   do nome/email reais do usuário — não corrigido ainda, não é bloqueante.
 - Canal `linkedin` existe no schema mas ainda não tem nenhum post de exemplo usando-o
   (nem era pedido) — só fica disponível para quando a equipe quiser usar.
-- **PostCard atual** (ver Sessão 5, substitui a descrição de cores por canal das
-  Sessões 2–4): card com fundo translúcido (`bg-white/10` + `backdrop-blur-sm`) e uma
-  barra colorida na borda esquerda — cor vem da **primeira etiqueta do post**
-  (`post.etiqueta_ids[0]`), com fallback pra cor do canal (`CORES_CANAL[canal].dot`) se
-  o post não tiver etiqueta nenhuma. Não mostra mais o nome do canal nem todas as
-  etiquetas no card (só a principal, com ícone) — informação completa só aparece no
-  painel de detalhe ao clicar. Checkbox no canto superior esquerdo marca
-  `status='publicado'` direto no card (sem abrir nada); quando marcado, a tag do
-  rodapé do card muda pra "Publicado DD/MM" em verde em vez de mostrar tipo/categoria.
+- **PostCard atual** (voltou ao estilo da Sessão 3 depois do revert da Sessão 6): fundo
+  translúcido (`bg-white/10` + `backdrop-blur-sm`, efeito da Sessão 4) mantido, mas sem
+  checkbox e sem avatar de responsável. Mostra: barrinhas curtas coloridas por etiqueta
+  (uma por etiqueta do post, todas, não só a principal), nome do canal em texto colorido
+  (`CORES_CANAL[canal].text`), título, categoria (se houver) e badges "NOVO"/"✓ vídeo já
+  feito". Não tem mais checkbox de publicado nem indicação de status no card — status só
+  é editável dentro do modal (campo `<select>`).
 - Tema escuro foi aplicado convertendo classes Tailwind (não há `dark:` variants nem
   toggle claro/escuro — é hardcoded escuro). Se um dia quiserem voltar ao tema claro ou
   oferecer os dois, vai precisar reintroduzir as classes claras como variante, não é
@@ -87,19 +81,20 @@
 - A paleta de cores oferecida ao criar/editar uma etiqueta é fixa (12 cores, ver
   `lib/etiquetaCores.ts`, `PALETA_ETIQUETAS`) — não é um color picker livre (RGB/hex
   manual). Se pedirem mais variedade de cores, é só adicionar hex novos nesse array.
-- **Arquivos anexados ao post (pendente)**: o painel de detalhe (ver Sessão 4) ainda não
-  tem a seção de arquivos (upload/download de vídeo, capa, etc. — vista no mockup que o
-  usuário mandou). Precisa de um bucket no Supabase Storage (configuração manual no
-  painel, igual às migrations SQL) antes de implementar. Usuário decidiu adiar essa
-  parte para uma sessão futura.
-- O painel de detalhe (`PostDetailPanel.tsx`) não tem um jeito de "fechar"/desselecionar
-  o post (só troca ao clicar em outro post, ou fica vazio se o post selecionado for
-  excluído). Não pedido explicitamente, mas pode ser uma melhoria pequena no futuro.
-- Nos cards do calendário mensal/semanal, quando o post tem responsável (mostra avatar)
-  E o tipo tem nome longo, a etiqueta de tipo no rodapé do card pode truncar (ex:
-  "Produto" → "Pro...") por falta de espaço — cosmético, não afeta dados.
-- O banner de campanha some quando o período visível (mês/semana) não tem overlap com
-  nenhuma campanha cadastrada — isso é esperado, não é bug.
+- **Arquivos anexados ao post**: nunca foi implementado (precisaria de um bucket no
+  Supabase Storage, configuração manual). Já era pendente antes da Sessão 4 ter
+  desenhado um lugar pra isso (painel de detalhe); como esse painel foi removido na
+  Sessão 6, não há mais nem um lugar na UI planejado pra essa seção — se for retomado,
+  precisa decidir de novo onde mostrar (provavelmente dentro do próprio modal de edição,
+  já que não há mais painel fixo).
+- **`responsavel` e `checklist` dos posts**: colunas continuam existindo no banco
+  (migration 0004) e a tabela `campanhas` também (migration 0005) — só não tem mais
+  nenhuma tela que leia ou escreva esses dados desde o revert da Sessão 6 (não fazem
+  parte do tipo `Post` em `lib/types.ts` atualmente). Os dados que já existiam (ex:
+  campanha "Formobile" com data 30/jun–3/jul) não foram apagados, só ficaram
+  inacessíveis pela UI. Se uma sessão futura quiser essas funcionalidades de volta,
+  reintroduzir os campos no tipo e desenhar onde exibi-los (não recriar
+  necessariamente o layout de 3 colunas da Sessão 4 — perguntar ao usuário antes).
 
 ## Como autenticar (se precisar fazer push/deploy futuro)
 
@@ -116,6 +111,67 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 6 — 2026-06-17
+
+**Contexto**: usuário pediu pra continuar o projeto, mandou um print do calendário
+(visão Julho 2026) e disse "quero que volte o layout para como estava antes". O print
+mostrava o app **sem** sidebar de filtros, sem cards de estatística, sem banner de
+campanha e sem painel de detalhe à direita — só os 3 dropdowns de filtro (canal/tipo/
+etiqueta) e a grade do mês ocupando a tela. Isso correspondia exatamente ao estado do
+app no commit `00bac35` (fim da Sessão 3 / antes do redesign grande da Sessão 4).
+
+**1. Confirmação de escopo**
+- Antes de reverter, perguntei explicitamente se era pra reverter tudo (perdendo da UI
+  o checklist de produção, campo responsável e banner de campanha editável, que foram
+  introduzidos junto com aquele layout na Sessão 4) ou só o visual, mantendo essas
+  funcionalidades em algum lugar adaptado. Usuário confirmou: reverter tudo mesmo, igual
+  ao print.
+
+**2. O que foi feito**
+- Restaurei via `git checkout 00bac35 -- <arquivo>` (não reescrevi manualmente, usei o
+  conteúdo real do commit anterior ao redesign) os arquivos: `app/layout.tsx` (largura
+  voltou a `max-w-7xl` centralizado, não mais tela cheia), `app/page.tsx` (filtros
+  voltam a ser valor único em vez de array multi-seleção, navegação só por mês — sem
+  visão Semanal/Lista —, clique no post abre o modal de edição direto em vez de só
+  popular um painel lateral), `components/TopNav.tsx` (mesma reversão de largura),
+  `components/calendario/CalendarGrid.tsx`, `DayCell.tsx`, `PostCard.tsx` (volta ao
+  estilo da Sessão 3: barrinhas por etiqueta + nome do canal, sem checkbox/avatar),
+  `PostModal.tsx`, `lib/postStyles.ts` (removi `CORES_TIPO`/`CORES_STATUS`/campo `dot`
+  de `CORES_CANAL`, que só existiam pros componentes novos), `lib/types.ts` (removi
+  `ChecklistItem`/`CHECKLIST_PADRAO`/`Campanha`/`NovaCampanha` e os campos
+  `responsavel`/`checklist` de `Post` — `etiqueta_ids`/`Etiqueta` continuam, já
+  existiam antes da Sessão 4). Restaurei também `components/calendario/Filtros.tsx`
+  (tinha sido apagado na Sessão 4).
+- Apaguei (não revertido, removido de verdade — ficaram sem nenhum uso depois do
+  revert do `app/page.tsx`): `CampanhaBanner.tsx`, `EstatisticasCards.tsx`,
+  `PostDetailPanel.tsx`, `PostListView.tsx`, `PostWeekGrid.tsx`, `SidebarFiltros.tsx`.
+- **Não toquei**: nada da aba Tarefas de Marketing (`app/tarefas/page.tsx`,
+  `components/tarefas/TaskChip.tsx`, `TaskCalendarDayCell.tsx`) — o drag-and-drop
+  implementado ali na Sessão 5 é independente desse layout e o usuário não pediu pra
+  reverter aquilo. Também não toquei nas migrations SQL (`0001`/`0004`/`0005`) nem no
+  banco — as colunas `responsavel`/`checklist` e a tabela `campanhas` continuam
+  existindo com os dados que já tinham (ver bullet novo em "Pendências"), só a UI parou
+  de usá-las. Confirmei por `grep` antes de remover/reverter que nenhum desses símbolos
+  (`CORES_TIPO`, `CORES_STATUS`, `.dot`, `responsavel`, `checklist`, `Campanha`) era
+  referenciado fora dos arquivos do Calendário Editorial que estavam sendo revertidos.
+
+**3. Testes**
+- `npm run lint` e `npm run build` limpos depois do revert.
+- Subi o dev server e tirei screenshot via Playwright/Chrome headless: confirmei
+  visualmente que o layout ficou idêntico ao print do usuário (dropdowns + grade única,
+  cards com barrinha de etiqueta + nome do canal). Cliquei num post real
+  ("SI Porta Invisível Slim") e confirmei que abre o modal de edição direto, com os
+  campos certos (sem campo de responsável/checklist, que não existem mais nesse modal);
+  fechei sem salvar, nenhum dado foi alterado. Matei o processo do dev server e apaguei
+  os screenshots temporários ao final.
+
+**4. Pendente**
+- Nada novo além do que já estava (arquivos anexados ao post). Ver bullet atualizado em
+  "Pendências" sobre `responsavel`/`checklist`/`campanhas` continuarem no banco, só
+  inacessíveis pela UI agora.
+- Ainda não commitei essas mudanças — fica a critério da próxima sessão (ou do usuário
+  direto) decidir quando commitar/dar push.
 
 ### Sessão 5 — 2026-06-18
 
