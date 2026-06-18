@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { Post } from "@/lib/types";
-import { LABEL_CANAL } from "@/lib/postStyles";
 
 function nomeBaseProduto(titulo: string): string {
   return titulo.replace(/^(stories|feed)\s*[-:]?\s*/i, "").trim();
@@ -19,6 +18,7 @@ export default function PaginaBiblioteca() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [busca, setBusca] = useState("");
+  const [maisRecentesPrimeiro, setMaisRecentesPrimeiro] = useState(true);
 
   useEffect(() => {
     async function carregar() {
@@ -27,6 +27,7 @@ export default function PaginaBiblioteca() {
         .from("posts")
         .select("*")
         .eq("status", "publicado")
+        .eq("canal", "instagram")
         .order("data", { ascending: false });
       setPosts((data as Post[]) ?? []);
       setCarregando(false);
@@ -41,6 +42,9 @@ export default function PaginaBiblioteca() {
   }, [posts, busca]);
 
   const { produtos, outros } = useMemo(() => {
+    const ordenarPorData = (a: Post, b: Post) =>
+      maisRecentesPrimeiro ? b.data.localeCompare(a.data) : a.data.localeCompare(b.data);
+
     const postsDeProduto = postsFiltrados.filter(
       (p) => p.tipo === "produto" || p.tipo === "lancamento"
     );
@@ -60,21 +64,35 @@ export default function PaginaBiblioteca() {
       }
     }
 
-    const produtos = Array.from(mapa.values()).sort((a, b) => a.nome.localeCompare(b.nome));
-    return { produtos, outros: outrosPosts };
-  }, [postsFiltrados]);
+    const produtos = Array.from(mapa.values());
+    produtos.forEach((grupo) => grupo.posts.sort(ordenarPorData));
+    produtos.sort((a, b) => ordenarPorData(a.posts[0], b.posts[0]));
+
+    const outros = [...outrosPosts].sort(ordenarPorData);
+    return { produtos, outros };
+  }, [postsFiltrados, maisRecentesPrimeiro]);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold text-zinc-100">Biblioteca</h1>
-        <input
-          type="text"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar produto ou conteúdo..."
-          className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-500"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar produto ou conteúdo..."
+            className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-500"
+          />
+          <select
+            value={maisRecentesPrimeiro ? "recentes" : "antigos"}
+            onChange={(e) => setMaisRecentesPrimeiro(e.target.value === "recentes")}
+            className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300"
+          >
+            <option value="recentes">Postado há menos tempo</option>
+            <option value="antigos">Postado há mais tempo</option>
+          </select>
+        </div>
       </div>
 
       {carregando ? (
@@ -101,18 +119,11 @@ export default function PaginaBiblioteca() {
                       </span>
                     </div>
                     <ul className="flex flex-col gap-1">
-                      {[...grupo.posts]
-                        .sort((a, b) => b.data.localeCompare(a.data))
-                        .map((post) => (
-                          <li
-                            key={post.id}
-                            className="flex items-center gap-1.5 text-xs text-zinc-400"
-                          >
-                            <span>{format(parseISO(post.data), "dd/MM/yyyy")}</span>
-                            <span>·</span>
-                            <span>{LABEL_CANAL[post.canal]}</span>
-                          </li>
-                        ))}
+                      {grupo.posts.map((post) => (
+                        <li key={post.id} className="text-xs text-zinc-400">
+                          {format(parseISO(post.data), "dd/MM/yyyy")}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 ))}
@@ -128,20 +139,18 @@ export default function PaginaBiblioteca() {
               <p className="text-sm text-zinc-600">Nenhum conteúdo encontrado.</p>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {[...outros]
-                  .sort((a, b) => b.data.localeCompare(a.data))
-                  .map((post) => (
-                    <div
-                      key={post.id}
-                      className="flex flex-col gap-1 rounded-md border border-zinc-700 bg-zinc-800 p-3"
-                    >
-                      <p className="text-sm font-semibold text-zinc-100">{post.titulo}</p>
-                      <p className="text-xs text-zinc-400">
-                        {format(parseISO(post.data), "dd/MM/yyyy")} · {LABEL_CANAL[post.canal]}
-                        {post.categoria ? ` · ${post.categoria}` : ""}
-                      </p>
-                    </div>
-                  ))}
+                {outros.map((post) => (
+                  <div
+                    key={post.id}
+                    className="flex flex-col gap-1 rounded-md border border-zinc-700 bg-zinc-800 p-3"
+                  >
+                    <p className="text-sm font-semibold text-zinc-100">{post.titulo}</p>
+                    <p className="text-xs text-zinc-400">
+                      {format(parseISO(post.data), "dd/MM/yyyy")}
+                      {post.categoria ? ` · ${post.categoria}` : ""}
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
           </section>

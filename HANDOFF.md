@@ -20,19 +20,26 @@
   sessão). Se no início de uma sessão `git fetch` mostrar commits em `origin/main` que não
   fazem sentido com o que está documentado aqui, **pare e avise o usuário antes de
   push/pull** — não dá pra saber se é trabalho real perdido ou outra sessão concorrente.
-- **Biblioteca** (ver Sessão 30): 5ª aba no `TopNav`, rota `/biblioteca`. **Não é
-  uma tabela nova** — busca direto de `posts` no Supabase com
+- **Biblioteca** (ver Sessões 30 e 31): 5ª aba no `TopNav`, rota `/biblioteca`.
+  **Não é uma tabela nova** — busca direto de `posts` no Supabase com
   `status = 'publicado'`, sem cadastro manual (decisão tomada perguntando ao
-  usuário, diferente do Banco de Ideias que é `localStorage`). Duas seções:
-  "Produtos já postados" (posts com `tipo` `produto` ou `lancamento`, agrupados
-  pelo título — `nomeBaseProduto()` em `app/biblioteca/page.tsx` remove um
-  prefixo `Stories`/`Feed` do início do título antes de agrupar, pra não separar
+  usuário, diferente do Banco de Ideias que é `localStorage`). **Restrita a
+  `canal = 'instagram'`** (Sessão 31, a pedido do usuário — filtro fixo direto
+  na query Supabase, não é um `<select>` de canal; LinkedIn/YouTube nunca
+  aparecem aqui, mesmo que tenham posts publicados). Duas seções: "Produtos já
+  postados" (posts com `tipo` `produto` ou `lancamento`, agrupados pelo título —
+  `nomeBaseProduto()` em `app/biblioteca/page.tsx` remove um prefixo
+  `Stories`/`Feed` do início do título antes de agrupar, pra não separar
   "Stories - X" de "Feed: X" como produtos diferentes; funciona só por
   correspondência exata do nome resultante, sem fuzzy matching) e "Outros
-  conteúdos publicados" (tipo `nao_produto`/`evento`, lista plana por data). Só
-  busca por título, sem outros filtros — não pedido, fácil adicionar depois se
-  fizer falta. Puramente leitura (clicar num post da Biblioteca não abre nada —
-  pra editar, é preciso ir no Calendário Editorial).
+  conteúdos publicados" (tipo `nao_produto`/`evento`, lista plana). Busca por
+  título, e um `<select>` de ordem ("Postado há menos tempo"/"Postado há mais
+  tempo", Sessão 31) que ordena tanto os posts dentro de cada produto quanto os
+  PRÓPRIOS grupos de produto entre si (pelo post mais relevante de cada grupo —
+  o mais recente quando a ordem é "menos tempo", o mais antigo quando é "mais
+  tempo") e a lista de "outros". Sem filtro de tipo/etiqueta — não pedido.
+  Puramente leitura (clicar num post da Biblioteca não abre nada — pra editar, é
+  preciso ir no Calendário Editorial).
 - **Banco de Ideias: cards clicáveis, edição completa, exclusão e "Enviar pro
   calendário"** (ver Sessão 29): clicar num card abre `IdeiaModal.tsx` (título,
   seção, tipo — o select de tipo atualiza junto se a seção mudar —, descrição,
@@ -395,6 +402,54 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 31 — 2026-06-18
+
+**Contexto**: ajuste rápido na Biblioteca (Sessão 30) — usuário pediu "quero a
+biblioteca apenas com instagram, tire linkedin e youtube" e "quero também que eu
+possa selecionar visualizar em ordem de postado há mais tempo ou postado há menos
+tempo".
+
+**1. Restringir a Instagram**
+- `app/biblioteca/page.tsx`: adicionado `.eq("canal", "instagram")` na query
+  Supabase (era só `.eq("status", "publicado")`) — filtro fixo, não é uma opção
+  de UI. Removi também a exibição do canal nos cards (`LABEL_CANAL`) já que
+  agora é sempre Instagram, mostrar seria redundante — cards agora só têm
+  data (+ categoria nos "outros").
+
+**2. Ordem de exibição**
+- Novo estado `maisRecentesPrimeiro` (default `true`, igual ao comportamento
+  anterior) com um `<select>` ao lado da busca: "Postado há menos tempo"
+  (mais recentes primeiro) / "Postado há mais tempo" (mais antigos primeiro) —
+  usei a redação exata que o usuário pediu, não inventei outro texto.
+  `ordenarPorData` aplicada tanto na lista de posts de cada grupo de produto
+  quanto na ordem dos PRÓPRIOS grupos entre si (usando o post mais relevante
+  do grupo, já ordenado, como referência — `grupo.posts[0]`) e na lista de
+  "Outros conteúdos publicados". Antes a ordem dos grupos de produto era
+  alfabética; decidi trocar pra cronológica também, já que o pedido era sobre
+  "ordem de postado" da página como um todo, não só dentro de cada produto —
+  não confirmei essa interpretação com o usuário, vale revisar se ele esperava
+  que os produtos continuassem em ordem alfabética.
+- Removidos os `.sort()` fixos que existiam na renderização (sempre
+  decrescente) — a ordenação agora vem só do `useMemo`, que já aplica a
+  direção escolhida; sem isso a UI ignoraria o `<select>`.
+
+**3. Testes**
+- `npm run lint`/`npm run build` limpos.
+- Inseri 3 posts sintéticos via REST (2 Instagram com datas bem distantes —
+  01/01 e 01/06 — e 1 LinkedIn) pra confirmar via Playwright: o post do
+  LinkedIn não aparece em nenhuma seção; a ordem padrão mostra o mais recente
+  primeiro; trocar o `<select>` pra "mais tempo" inverte (mais antigo primeiro,
+  confirmado também visualmente por screenshot incluindo produtos reais já
+  publicados misturados). Limpei os posts de teste via `DELETE` na REST API
+  depois.
+
+**4. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
+- Confirmar com o usuário se a ordem dos GRUPOS de produto (não só dos posts
+  dentro de cada um) deveria mesmo virar cronológica, ou se ele esperava manter
+  alfabética pros produtos e só cronológica dentro de cada um/na lista de
+  "outros".
 
 ### Sessão 30 — 2026-06-18
 
