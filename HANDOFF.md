@@ -20,7 +20,7 @@
   sessão). Se no início de uma sessão `git fetch` mostrar commits em `origin/main` que não
   fazem sentido com o que está documentado aqui, **pare e avise o usuário antes de
   push/pull** — não dá pra saber se é trabalho real perdido ou outra sessão concorrente.
-- **Biblioteca** (ver Sessões 30 e 31): 5ª aba no `TopNav`, rota `/biblioteca`.
+- **Biblioteca** (ver Sessões 30, 31 e 32): 5ª aba no `TopNav`, rota `/biblioteca`.
   **Não é uma tabela nova** — busca direto de `posts` no Supabase com
   `status = 'publicado'`, sem cadastro manual (decisão tomada perguntando ao
   usuário, diferente do Banco de Ideias que é `localStorage`). **Restrita a
@@ -33,13 +33,16 @@
   "Stories - X" de "Feed: X" como produtos diferentes; funciona só por
   correspondência exata do nome resultante, sem fuzzy matching) e "Outros
   conteúdos publicados" (tipo `nao_produto`/`evento`, lista plana). Busca por
-  título, e um `<select>` de ordem ("Postado há menos tempo"/"Postado há mais
-  tempo", Sessão 31) que ordena tanto os posts dentro de cada produto quanto os
-  PRÓPRIOS grupos de produto entre si (pelo post mais relevante de cada grupo —
-  o mais recente quando a ordem é "menos tempo", o mais antigo quando é "mais
-  tempo") e a lista de "outros". Sem filtro de tipo/etiqueta — não pedido.
-  Puramente leitura (clicar num post da Biblioteca não abre nada — pra editar, é
-  preciso ir no Calendário Editorial).
+  título (no header, ao lado do `<h1>`). `<select>` de ordem ("Postado há menos
+  tempo"/"Postado há mais tempo", Sessão 31) que ordena tanto os posts dentro de
+  cada produto quanto os PRÓPRIOS grupos de produto entre si (pelo post mais
+  relevante de cada grupo — o mais recente quando a ordem é "menos tempo", o
+  mais antigo quando é "mais tempo") e a lista de "outros" — **fica ao lado do
+  título "Produtos já postados" (Sessão 32, reposicionado a pedido do usuário —
+  antes estava no header ao lado da busca)**, mesmo controlando as duas seções.
+  Sem filtro de tipo/etiqueta — não pedido. Puramente leitura (clicar num post
+  da Biblioteca não abre nada — pra editar, é preciso ir no Calendário
+  Editorial).
 - **Banco de Ideias: cards clicáveis, edição completa, exclusão e "Enviar pro
   calendário"** (ver Sessão 29): clicar num card abre `IdeiaModal.tsx` (título,
   seção, tipo — o select de tipo atualiza junto se a seção mudar —, descrição,
@@ -402,6 +405,29 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 32 — 2026-06-18
+
+**Contexto**: ajuste pontual na Biblioteca (Sessão 31) — usuário pediu "quero
+que o filtro que fizemos agora esteja do lado de Produtos postado".
+
+**1. Mudança**
+- `app/biblioteca/page.tsx`: o `<select>` de ordem ("Postado há menos
+  tempo"/"Postado há mais tempo") saiu do header (ao lado da busca) e passou a
+  ficar ao lado do `<h2>` "Produtos já postados (N)", dentro da seção de
+  produtos. Não mudei o comportamento — continua controlando a ordem das duas
+  seções (produtos e "outros"), só a posição visual mudou. Se o usuário queria
+  que o filtro passasse a controlar *só* a seção de produtos (e "outros"
+  ficasse com ordem fixa), não foi isso que entendi do pedido — fácil separar
+  depois se for o caso.
+
+**2. Testes**
+- `npm run lint`/`npm run build` limpos.
+- Confirmado visualmente por screenshot que o `<select>` aparece ao lado de
+  "Produtos já postados", alinhado à direita do `<h2>`.
+
+**3. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
 
 ### Sessão 31 — 2026-06-18
 

@@ -76,23 +76,13 @@ export default function PaginaBiblioteca() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold text-zinc-100">Biblioteca</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="text"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar produto ou conteúdo..."
-            className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-500"
-          />
-          <select
-            value={maisRecentesPrimeiro ? "recentes" : "antigos"}
-            onChange={(e) => setMaisRecentesPrimeiro(e.target.value === "recentes")}
-            className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300"
-          >
-            <option value="recentes">Postado há menos tempo</option>
-            <option value="antigos">Postado há mais tempo</option>
-          </select>
-        </div>
+        <input
+          type="text"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar produto ou conteúdo..."
+          className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-500"
+        />
       </div>
 
       {carregando ? (
@@ -100,9 +90,19 @@ export default function PaginaBiblioteca() {
       ) : (
         <>
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold text-zinc-400">
-              Produtos já postados ({produtos.length})
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-zinc-400">
+                Produtos já postados ({produtos.length})
+              </h2>
+              <select
+                value={maisRecentesPrimeiro ? "recentes" : "antigos"}
+                onChange={(e) => setMaisRecentesPrimeiro(e.target.value === "recentes")}
+                className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300"
+              >
+                <option value="recentes">Postado há menos tempo</option>
+                <option value="antigos">Postado há mais tempo</option>
+              </select>
+            </div>
             {produtos.length === 0 ? (
               <p className="text-sm text-zinc-600">Nenhum produto encontrado.</p>
             ) : (
