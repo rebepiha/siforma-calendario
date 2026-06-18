@@ -56,20 +56,17 @@
   cada post. Não é uma regra hardcoded no código — é só convenção de uso que o usuário
   pediu pra manter ao criar/editar etiquetas e posts futuros; nada impede recolorir de
   novo pelo picker se quiserem.
-- **Card mostra "Instagram - Stories"/"Instagram - Feed" no topo** (Sessão 14, cor
-  ajustada na Sessão 15): `PostCard.tsx` procura nas etiquetas do post
-  (`etiquetasDoPost`) uma chamada exatamente "Stories" ou "Feed" e, se achar, mostra
-  `"{canal} - {nome da etiqueta}"` em vez de só o nome do canal (post sem essa etiqueta
-  continua mostrando só "Instagram"/"LinkedIn"/"YouTube"). Isso é resolvido
-  dinamicamente pelo nome real da etiqueta (não hardcoded "Story"/"Feed" como string
-  fixa) — se a equipe renomear a etiqueta "Stories" pelo picker, o texto do card
-  acompanha. **Cor do texto** (revisado na Sessão 15): quando o post tem etiqueta de
-  formato, o texto usa a cor real dessa etiqueta via `style={{ color: etiquetaFormato.cor }}`
-  (laranja pra Stories, amarelo pra Feed — sempre em sincronia com a cor da etiqueta,
-  mesmo se recolorida no picker); só quando o post **não** tem etiqueta Stories/Feed é
-  que cai no fallback `CORES_CANAL[canal].text` (`lib/postStyles.ts`), que pro Instagram
-  é rosa (`text-pink-400`, trocado de laranja na Sessão 14 pra não conflitar com a cor da
-  etiqueta Stories).
+- **Formato (Stories/Feed) aparece no título do card, não mais no nome do canal**
+  (Sessões 14–15 revertidas/substituídas na Sessão 19): o usuário achou o card poluído
+  com "Instagram - Stories"/"Instagram - Feed" coloridos (laranja/amarelo) competindo
+  com a barrinha de etiqueta. Simplificado: o label do canal em `PostCard.tsx` voltou a
+  ser sempre só `LABEL_CANAL[post.canal]` na cor fixa de `CORES_CANAL` (`text-pink-400`
+  pro Instagram, sem variar por formato). O formato passou a aparecer como prefixo do
+  **título** — `"Stories- "` ou `"Feed: "` — só quando o post tem a etiqueta
+  correspondente *e* o título ainda não começa com essa palavra (regex
+  `/^(stories|feed)\b/i`, pra não duplicar em posts que a equipe já escreveu manualmente
+  como "Stories - xyz"). É só uma transformação de exibição (`prefixoFormato` calculado
+  em `PostCard.tsx`) — o `post.titulo` salvo no banco não é alterado.
 - **Tarefa recorrente "Programar posts do fim de semana"** (ver Sessão 17): existe uma
   linha em `tarefas` pra cada sexta-feira de 19/jun a 18/set/2026 (14 no total, mesmo
   responsável Victoria/prioridade média/coluna a_fazer da que já existia em 19/jun) — não
@@ -101,7 +98,15 @@
   do projeto) pra todas as 91 linhas dessa tarefa, garantindo que sempre ordene primeiro
   independente de quando as outras tarefas do mesmo dia foram criadas. Validado
   visualmente em dias que já tinham outras tarefas (22/jun, 26/jun, 28/jun) antes de
-  considerar resolvido.
+  considerar resolvido. **Restrita a dias de semana na Sessão 19**: usuário pediu pra
+  essa tarefa só entrar de segunda a sexta — apaguei as 26 linhas que tinham caído em
+  sábado/domingo dentro da janela de 3 meses (sobraram 65 de 91).
+- **Bolinha de prioridade sem cor em Tarefas** (ver Sessão 19): `TaskChip.tsx` não tinge
+  mais o círculo não-marcado pela cor de prioridade (`COR_PRIORIDADE` removido) — agora é
+  sempre um círculo neutro `border-zinc-500`, igual ao padrão do `PostCard.tsx`. Pedido
+  do usuário pra reduzir poluição visual; a prioridade da tarefa continua existindo no
+  banco (`prioridade`) e editável no modal, só não tem mais indicação visual de cor no
+  card.
 - **Calendário mostra dias de outros meses** (ver Sessão 7): a grade volta a preencher a
   primeira/última semana com dias do mês anterior/seguinte (revertendo a decisão da
   Sessão 3 de escondê-los) — mas agora aparecem esmaecidos (`opacity-60`, fundo
@@ -255,6 +260,51 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 19 — 2026-06-18
+
+**Contexto**: usuário mandou print do Calendário Editorial dizendo que estava "muito
+poluído visualmente" (cards com barrinha de etiqueta + "Instagram - Stories/Feed"
+colorido competindo) e pediu 3 ajustes em sequência: (1) simplificar o card —
+"Instagram" sempre rosa, formato (Stories/Feed) move pro início do título; (2) a tarefa
+"Atendimento nas redes sociais" (Sessão 18) só deveria valer de segunda a sexta, não fim
+de semana; (3) tirar a cor laranja da bolinha de prioridade nas Tarefas, deixar neutra.
+
+**1. Card do Calendário Editorial simplificado**
+- `components/calendario/PostCard.tsx`: removida a lógica da Sessão 14/15 que mudava a
+  cor do label do canal e acrescentava "- Stories"/"- Feed" nele. O label volta a ser só
+  `LABEL_CANAL[post.canal]` na cor fixa (`CORES_CANAL`, rosa pro Instagram).
+- Em troca, o formato agora aparece como prefixo do título: `prefixoFormato` é
+  `"Stories- "` ou `"Feed: "` (separadores diferentes por formato, conforme pedido
+  literal do usuário) quando o post tem a etiqueta correspondente. Pra evitar duplicar
+  em posts que a equipe já escreve manualmente com prefixo (ex: "Stories - Ajustes
+  finais..."), só adiciona o prefixo se o título **ainda não começar** com
+  "stories"/"feed" (`/^(stories|feed)\b/i`, case-insensitive). Notei (não corrigi, é
+  dado e não bug meu) que alguns posts com título "Reels: ..." têm etiqueta "Feed" em
+  vez de "Reels" anexada — aparecem como "Feed: Reels: ..." na tela; é inconsistência de
+  tagueamento de dado já existente, não introduzida por esta mudança.
+
+**2. Tarefa "Atendimento nas redes sociais" só dias de semana**
+- Calculei as 26 datas de sábado/domingo dentro da janela de 3 meses (18/jun–18/set) e
+  apaguei via REST API as linhas dessa tarefa nesses dias (`DELETE` filtrando por
+  `titulo` + `prazo IN (...)`). Sobraram 65 das 91 originais. Validado visualmente que
+  sábado/domingo ficaram sem essa tarefa (ex: 27/jun vazio, 28/jun só com "Backstage
+  Formóbile", sem duplicata).
+
+**3. Bolinha de prioridade neutra em Tarefas**
+- `components/tarefas/TaskChip.tsx`: removido `COR_PRIORIDADE` (mapa de cor por
+  prioridade) — o círculo não-marcado agora é só `border-zinc-500`, sem variar de cor.
+  Não toquei no campo `prioridade` em si (continua no banco/modal), só a indicação
+  visual no card.
+
+**4. Testes**
+- `npm run lint` e `npm run build` limpos.
+- Playwright/Chrome headless: confirmei visualmente o card simplificado (título com
+  prefixo, canal sempre rosa), a ausência da tarefa em sábado/domingo numa semana de
+  teste, e a bolinha neutra (sem laranja) nos cards de tarefa.
+
+**5. Pendente**
+- Nada novo. Mudanças ainda não commitadas — perguntar antes de commitar/push.
 
 ### Sessão 18 — 2026-06-18
 

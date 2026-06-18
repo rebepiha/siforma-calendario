@@ -6,12 +6,6 @@ import { isBefore, parseISO, startOfToday } from "date-fns";
 import { Tarefa } from "@/lib/types";
 import { corAvatar, inicialAvatar } from "@/lib/avatar";
 
-const COR_PRIORIDADE: Record<Tarefa["prioridade"], string> = {
-  baixa: "border-green-500",
-  media: "border-amber-500",
-  alta: "border-red-500",
-};
-
 function IconeCheck() {
   return (
     <svg
@@ -81,9 +75,7 @@ export default function TaskChip({
           {concluida ? (
             <IconeCheck />
           ) : (
-            <span
-              className={`block h-2.5 w-2.5 rounded-full border-2 bg-zinc-800 hover:bg-zinc-700 ${COR_PRIORIDADE[tarefa.prioridade]}`}
-            />
+            <span className="block h-2.5 w-2.5 rounded-full border-2 border-zinc-500 bg-zinc-800 hover:bg-zinc-700" />
           )}
         </button>
         <p
