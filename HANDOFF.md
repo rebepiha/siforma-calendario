@@ -35,6 +35,13 @@
   brandbook. Logo: `public/siforma-logo.png` (fundo claro, não usado atualmente) e
   `public/siforma-logo-dark.png` (fundo escuro, em uso no `TopNav` — cópia de
   `ASSINATURAS PNG/PNG - SEM TAGLINE/SIFORMA SEM  (6).png`).
+- **Layout ocupa a largura inteira da página** (ver Sessão 24): o `max-w-7xl` que
+  limitava `<main>` (`app/layout.tsx`) e o conteúdo do header (`TopNav.tsx`) foi
+  removido — ambos agora são `w-full`, só com o padding lateral (`px-4 sm:px-6`) de
+  antes. Em telas largas o calendário/header se estendem até a borda em vez de ficar
+  centralizado com faixas escuras vazias nas laterais. Não há mais nenhum `max-w-7xl`
+  no projeto fora dos modais (que continuam com `max-w-sm`/`max-w-md` de propósito,
+  por serem caixas de diálogo, não a página inteira).
 - **Header mais claro/destacado** (ver Sessão 21): `TopNav.tsx` foi de `bg-zinc-800`
   pra `bg-zinc-700` (e borda `border-zinc-700`→`border-zinc-600`) — usuário achou o
   header original pouco destacado do fundo da página. Textos secundários ajustados pra
@@ -275,6 +282,50 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 24 — 2026-06-18
+
+**Contexto**: usuário mandou um print do Calendário Editorial (Julho 2026) e pediu
+"complete a página, coloque o conteúdo ocupando a página inteira" — em telas largas o
+conteúdo ficava centralizado num `max-w-7xl`, deixando faixas escuras vazias nas
+laterais.
+
+**1. Mudança**
+- `app/layout.tsx`: `<main>` de `mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6`
+  para `w-full flex-1 px-4 py-6 sm:px-6` (removido `mx-auto` e `max-w-7xl`).
+- `components/TopNav.tsx`: a `<div>` interna do header de
+  `mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3 sm:px-6` para
+  `flex w-full flex-wrap items-center gap-4 px-4 py-3 sm:px-6` (mesmo motivo —
+  sem isso o header ficaria mais estreito que o conteúdo abaixo dele, destoando).
+- Não havia nenhum outro `max-w` dentro do fluxo de página (grade do calendário,
+  Tarefas, Metas) limitando a largura — bastou esses dois arquivos. Os `max-w-sm`/
+  `max-w-md` que sobram no projeto são todos de modais (`PostModal.tsx`,
+  `TaskModal.tsx`, `GoalModal.tsx`, `EtiquetaPicker.tsx`), intencionalmente
+  estreitos por serem caixas de diálogo — não toquei neles.
+
+**2. Testes**
+- `npm run lint` e `npm run build` limpos.
+- Sem Playwright instalado no projeto desta vez (sessões anteriores tinham usado mas
+  não ficou como devDependency) — instalei via `npx playwright install chromium` numa
+  pasta temporária (`/tmp/pwtest`) só para validar visualmente, não alterou nada no
+  repositório do projeto. Screenshots em viewport 1920×1080 confirmaram que
+  Calendário Editorial, Tarefas de Marketing e Metas e Progresso todos se estendem
+  até a borda da tela; viewport 768×1024 (tablet) confirmou que o layout responsivo
+  continua funcionando (header quebra em 2 linhas como antes, grade do calendário não
+  estoura). `console --errors` (via listener de console do Playwright) não retornou
+  nenhum erro.
+
+**3. Commit e push**
+- Usuário confirmou ("sim") explicitamente antes de comitar — segui a convenção do
+  repo de só comitar/dar push com confirmação direta.
+- `git fetch` antes de comitar não mostrou divergência com `origin/main` (local e
+  remoto no mesmo commit `4e33463`), então não havia risco de sessão paralela (ver
+  alerta no topo deste arquivo, Sessão 8) — segui normalmente.
+- Commit `983023e` ("Remover largura máxima do layout para ocupar a página inteira"),
+  push direto pra `main`. Vercel deve redeployar automaticamente.
+
+**4. Pendente**
+- Nada. Mudança já commitada e enviada (`git push` concluído nesta sessão).
 
 ### Sessão 23 — 2026-06-18
 
