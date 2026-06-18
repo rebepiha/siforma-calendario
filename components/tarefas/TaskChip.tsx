@@ -68,7 +68,7 @@ export default function TaskChip({
         atrasada ? "border-red-500/40" : "border-zinc-700"
       } ${concluida ? "opacity-60" : ""} ${isDragging ? "opacity-50" : ""}`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-2">
         <button
           type="button"
           onClick={(e) => {
@@ -87,7 +87,7 @@ export default function TaskChip({
           )}
         </button>
         <p
-          className={`truncate text-sm font-medium text-zinc-200 ${
+          className={`line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-5 text-zinc-200 ${
             concluida ? "line-through" : ""
           }`}
         >

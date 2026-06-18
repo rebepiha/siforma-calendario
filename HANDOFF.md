@@ -47,6 +47,18 @@
   cada post. Não é uma regra hardcoded no código — é só convenção de uso que o usuário
   pediu pra manter ao criar/editar etiquetas e posts futuros; nada impede recolorir de
   novo pelo picker se quiserem.
+- **Card mostra "Instagram - Stories"/"Instagram - Feed" no topo** (ver Sessão 14):
+  `PostCard.tsx` procura nas etiquetas do post (`etiquetasDoPost`) uma chamada
+  exatamente "Stories" ou "Feed" e, se achar, mostra `"{canal} - {nome da etiqueta}"` em
+  vez de só o nome do canal (ex: post sem essa etiqueta continua mostrando só
+  "Instagram"/"LinkedIn"/"YouTube"). Isso é resolvido dinamicamente pelo nome real da
+  etiqueta (não hardcoded "Story"/"Feed" como string fixa), então se a equipe renomear a
+  etiqueta "Stories" pra outra coisa pelo picker, o texto do card acompanha. Também
+  trocada a cor do texto do canal Instagram de laranja para **rosa**
+  (`lib/postStyles.ts`, `CORES_CANAL.instagram.text` → `text-pink-400`) — pedido
+  explícito do usuário pra não confundir com a cor laranja já usada pela etiqueta
+  "Stories" (a barrinha de etiqueta continua laranja/amarela normalmente, só o texto
+  "Instagram - ..." mudou de cor).
 - **Calendário mostra dias de outros meses** (ver Sessão 7): a grade volta a preencher a
   primeira/última semana com dias do mês anterior/seguinte (revertendo a decisão da
   Sessão 3 de escondê-los) — mas agora aparecem esmaecidos (`opacity-60`, fundo
@@ -97,8 +109,19 @@
   borda colorida (`border-2 border-*` em vez de `bg-*`), igual ao padrão que o
   `PostCard.tsx` já usava — agora lê visualmente como um checkbox de verdade nos dois
   lugares.
-- **Vista padrão de Tarefas de Marketing é Calendário** (ver Sessão 8), não mais Kanban —
-  botão "Calendário" também vem primeiro na UI, "Kanban" depois.
+- **Tarefas de Marketing não tem mais Kanban** (ver Sessão 13) — só existe a vista
+  Calendário agora; o toggle Calendário/Kanban (introduzido na Sessão 8) foi removido a
+  pedido do usuário, junto com os componentes que só serviam a ela
+  (`KanbanColumn.tsx`/`TaskCard.tsx`, apagados — não são mais referenciados em lugar
+  nenhum). `lib/types.ts` (`ColunaTarefa`/`COLUNAS_TAREFA`) continua existindo porque o
+  campo `coluna` da tarefa ainda é usado internamente (o checkbox de concluir alterna
+  entre `a_fazer`/`concluido`) e o `TaskModal.tsx` ainda tem um `<select>` manual de
+  Coluna — só não há mais um quadro visual Kanban pra arrastar entre colunas.
+- **Cards de tarefa permitem 2 linhas de título** (ver Sessão 13): `TaskChip.tsx`
+  (Tarefas, vista Calendário) trocou `truncate` (1 linha, corta com "...") por
+  `line-clamp-2` + `min-h-[2.5rem]` no título — títulos longos quebram em até 2 linhas em
+  vez de cortar na primeira, e todo card reserva a mesma altura (2 linhas) independente do
+  tamanho do título, pra manter os cards visualmente uniformes dentro de cada dia.
 - **Tamanhos de fonte/card ajustados na Sessão 9**: `PostCard.tsx` (Calendário Editorial)
   ficou mais compacto (título `text-sm`→`text-xs`, textos secundários `11px`/`10px`→`10px`/
   `9px`, menos padding/gap) pra caber mais posts visíveis por dia sem precisar do scroll
@@ -189,6 +212,83 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 14 — 2026-06-18
+
+**Contexto**: continuação direta da Sessão 13, mesma conversa. Usuário pediu pro
+Calendário Editorial: mostrar o formato (Feed ou Story) ao lado de "Instagram" no topo
+do card (ex: "Instagram - Stories"), manter a etiqueta laranja pra Stories e amarela pra
+Feed (já era assim desde a Sessão 7, sem mudança necessária), e escrever essa
+identificação "Instagram - Formato" em rosa em vez de laranja.
+
+**1. Implementação**
+- `components/calendario/PostCard.tsx`: nova variável `etiquetaFormato` — busca em
+  `etiquetasDoPost` (etiquetas já resolvidas do post) uma com `nome === "Stories"` ou
+  `nome === "Feed"`. Se achar, o label do canal passa a mostrar `` `${LABEL_CANAL[canal]} - ${etiquetaFormato.nome}` ``
+  em vez de só o nome do canal; se o post não tiver nem Stories nem Feed (ex: só Reels,
+  Carrossel, ou nenhuma etiqueta), mostra só o canal como antes.
+- `lib/postStyles.ts`: `CORES_CANAL.instagram.text` de `text-orange-400` para
+  `text-pink-400` — só o Instagram mudou (LinkedIn continua azul, YouTube continua
+  vermelho), pra não conflitar visualmente com a cor laranja da etiqueta "Stories".
+
+**2. Testes**
+- `npm run lint` e `npm run build` limpos.
+- Playwright/Chrome headless: confirmei visualmente que posts com etiqueta "Stories"
+  mostram "Instagram - Stories" em rosa com a barrinha de etiqueta laranja, posts com
+  "Feed" mostram "Instagram - Feed" em rosa com barrinha amarela, e posts sem nenhuma
+  das duas (ex: o post de teste "LinkedIn / Post") continuam mostrando só o nome do
+  canal, sem sufixo.
+
+**3. Pendente**
+- Nada novo. Mudanças desta sessão e da Sessão 13 (cards de 2 linhas + remoção do
+  Kanban) ainda não commitadas — perguntar ao usuário antes de commitar/push.
+
+### Sessão 13 — 2026-06-18
+
+**Contexto**: dois pedidos rápidos sobre Tarefas de Marketing: (1) segunda a sexta devem
+ter o mesmo tamanho e os cards podem ter 2 linhas de texto; (2) tirar a opção Kanban e
+deixar só Calendário.
+
+**1. Cards com 2 linhas de título, tamanho uniforme**
+- As colunas de segunda a sexta já eram do mesmo tamanho entre si desde a Sessão 11
+  (`1.4fr` cada, só sábado/domingo são menores) — confirmei visualmente que esse ponto já
+  estava correto. O problema real era a altura inconsistente dos *cards*: título usava
+  `truncate` (corta em 1 linha com "..."), então um card com título curto e outro com
+  título longo (cortado) acabavam com a mesma altura "às custas" de esconder texto, mas
+  qualquer card que tivesse uma segunda linha de conteúdo (ex: avatar de responsável)
+  ficava maior que os outros.
+- `components/tarefas/TaskChip.tsx`: título trocou `truncate` por `line-clamp-2` (permite
+  quebrar em até 2 linhas, corta com "..." só se passar disso) e ganhou `min-h-[2.5rem]`
+  (altura de 2 linhas a `leading-5`) — agora todo card reserva esse espaço, com título
+  curto ou longo, então ficam visualmente do mesmo tamanho. Também troquei
+  `items-center` por `items-start` na linha do checkbox+título, pra o círculo do checkbox
+  alinhar com a primeira linha do texto em vez de centralizar no bloco de 2 linhas.
+
+**2. Remoção do Kanban**
+- `app/tarefas/page.tsx`: removido o estado `visualizacao`/tipo `Visualizacao`, os 2
+  botões de toggle, a função `abrirNovaTarefa(coluna)` (só usada pelo Kanban) e
+  `aoFinalizarArraste` (handler de drag do Kanban). O bloco de navegação de semana +
+  filtro de responsável, que antes só aparecia se `visualizacao === "calendario"`, agora
+  aparece sempre (é a única vista). `moverTarefa` continua existindo — não é mais
+  chamado pelo drag do Kanban, mas o `alternarConcluida` (checkbox) depende dele.
+- Apaguei `components/tarefas/KanbanColumn.tsx` e `components/tarefas/TaskCard.tsx`
+  (confirmei via `grep` que não tinham mais nenhuma referência em lugar nenhum do
+  projeto antes de apagar).
+- `lib/types.ts` (`ColunaTarefa`, `COLUNAS_TAREFA`) **não** foi removido — o campo
+  `coluna` da tarefa continua existindo no banco e sendo usado (checkbox alterna
+  `a_fazer`↔`concluido`; `TaskModal.tsx` ainda tem um `<select>` manual de Coluna pra
+  quem quiser usar "Em andamento"/"Em revisão" mesmo sem quadro visual).
+
+**3. Testes**
+- `npm run lint` e `npm run build` limpos.
+- Playwright/Chrome headless: confirmei que o toggle Kanban desapareceu da UI (só sobrou
+  o título "Tarefas de Marketing" + navegação de semana + filtro). Criei uma tarefa de
+  teste com título bem longo numa segunda-feira vazia e confirmei visualmente que quebrou
+  em 2 linhas com altura de card consistente com os outros cards da grade; apaguei a
+  tarefa de teste depois.
+
+**4. Pendente**
+- Nada novo. Mudanças ainda não commitadas nesta sessão.
 
 ### Sessão 12 — 2026-06-18
 

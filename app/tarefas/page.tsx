@@ -12,13 +12,10 @@ import {
 import { addWeeks, endOfWeek, format, startOfWeek, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
-import { ColunaTarefa, COLUNAS_TAREFA, NovaTarefa, Tarefa } from "@/lib/types";
-import KanbanColumn from "@/components/tarefas/KanbanColumn";
+import { ColunaTarefa, NovaTarefa, Tarefa } from "@/lib/types";
 import TaskCalendarGrid from "@/components/tarefas/TaskCalendarGrid";
 import TaskChip from "@/components/tarefas/TaskChip";
 import TaskModal from "@/components/tarefas/TaskModal";
-
-type Visualizacao = "kanban" | "calendario";
 
 export default function PaginaTarefas() {
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
@@ -32,7 +29,6 @@ export default function PaginaTarefas() {
     undefined
   );
 
-  const [visualizacao, setVisualizacao] = useState<Visualizacao>("calendario");
   const [semanaAtual, setSemanaAtual] = useState(() => new Date());
   const [filtroResponsavel, setFiltroResponsavel] = useState("Victoria");
 
@@ -80,13 +76,6 @@ export default function PaginaTarefas() {
     () => tarefasDoResponsavel.filter((t) => !t.prazo),
     [tarefasDoResponsavel]
   );
-
-  function abrirNovaTarefa(coluna: ColunaTarefa) {
-    setTarefaSelecionada(null);
-    setColunaParaNovaTarefa(coluna);
-    setPrazoParaNovaTarefa(undefined);
-    setModalAberto(true);
-  }
 
   function abrirNovaTarefaNoDia(data: string) {
     setTarefaSelecionada(null);
@@ -170,17 +159,6 @@ export default function PaginaTarefas() {
     { locale: ptBR }
   )}`;
 
-  function aoFinalizarArraste(evento: DragEndEvent) {
-    const { active, over } = evento;
-    if (!over) return;
-    const tarefaId = String(active.id);
-    const novaColuna = String(over.id) as ColunaTarefa;
-    const tarefa = tarefas.find((t) => t.id === tarefaId);
-    if (tarefa && tarefa.coluna !== novaColuna) {
-      moverTarefa(tarefaId, novaColuna);
-    }
-  }
-
   const { setNodeRef: setSemPrazoRef, isOver: semPrazoIsOver } = useDroppable({
     id: "sem-prazo",
   });
@@ -199,67 +177,41 @@ export default function PaginaTarefas() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-lg font-semibold text-zinc-100">Tarefas de Marketing</h1>
-          <div className="flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-900 p-1">
-            <button
-              onClick={() => setVisualizacao("calendario")}
-              className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                visualizacao === "calendario"
-                  ? "bg-oliva text-white"
-                  : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-              }`}
-            >
-              Calendário
-            </button>
-            <button
-              onClick={() => setVisualizacao("kanban")}
-              className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                visualizacao === "kanban"
-                  ? "bg-oliva text-white"
-                  : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-              }`}
-            >
-              Kanban
-            </button>
-          </div>
-        </div>
+        <h1 className="text-lg font-semibold text-zinc-100">Tarefas de Marketing</h1>
 
-        {visualizacao === "calendario" && (
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setSemanaAtual((s) => subWeeks(s, 1))}
-                className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
-                aria-label="Semana anterior"
-              >
-                ←
-              </button>
-              <span className="min-w-[170px] text-center text-sm font-semibold text-zinc-100">
-                {rotuloSemana}
-              </span>
-              <button
-                onClick={() => setSemanaAtual((s) => addWeeks(s, 1))}
-                className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
-                aria-label="Próxima semana"
-              >
-                →
-              </button>
-            </div>
-            <select
-              value={filtroResponsavel}
-              onChange={(e) => setFiltroResponsavel(e.target.value)}
-              className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300"
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSemanaAtual((s) => subWeeks(s, 1))}
+              className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
+              aria-label="Semana anterior"
             >
-              <option value="todos">Todos os responsáveis</option>
-              {responsaveisConhecidos.map((nome) => (
-                <option key={nome} value={nome}>
-                  {nome}
-                </option>
-              ))}
-            </select>
+              ←
+            </button>
+            <span className="min-w-[170px] text-center text-sm font-semibold text-zinc-100">
+              {rotuloSemana}
+            </span>
+            <button
+              onClick={() => setSemanaAtual((s) => addWeeks(s, 1))}
+              className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
+              aria-label="Próxima semana"
+            >
+              →
+            </button>
           </div>
-        )}
+          <select
+            value={filtroResponsavel}
+            onChange={(e) => setFiltroResponsavel(e.target.value)}
+            className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300"
+          >
+            <option value="todos">Todos os responsáveis</option>
+            {responsaveisConhecidos.map((nome) => (
+              <option key={nome} value={nome}>
+                {nome}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {erro && (
@@ -270,22 +222,6 @@ export default function PaginaTarefas() {
 
       {carregando ? (
         <p className="py-12 text-center text-sm text-zinc-600">Carregando...</p>
-      ) : visualizacao === "kanban" ? (
-        <DndContext sensors={sensors} onDragEnd={aoFinalizarArraste}>
-          <div className="flex flex-col gap-3 overflow-x-auto pb-2 sm:flex-row">
-            {COLUNAS_TAREFA.map((coluna) => (
-              <KanbanColumn
-                key={coluna.id}
-                coluna={coluna.id}
-                titulo={coluna.titulo}
-                tarefas={tarefas.filter((t) => t.coluna === coluna.id)}
-                onClickTarefa={abrirEdicaoTarefa}
-                onNovaTarefa={abrirNovaTarefa}
-                onToggleConcluida={alternarConcluida}
-              />
-            ))}
-          </div>
-        </DndContext>
       ) : (
         <DndContext sensors={sensors} onDragEnd={aoFinalizarArrasteCalendario}>
           <div className="flex flex-col gap-3">

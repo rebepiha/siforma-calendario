@@ -41,6 +41,9 @@ export default function PostCard({
   const etiquetasDoPost = post.etiqueta_ids
     .map((id) => etiquetas.find((e) => e.id === id))
     .filter((e): e is Etiqueta => !!e);
+  const etiquetaFormato = etiquetasDoPost.find(
+    (e) => e.nome === "Stories" || e.nome === "Feed"
+  );
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: post.id });
 
@@ -99,6 +102,7 @@ export default function PostCard({
         </button>
         <span className={`text-[10px] font-medium ${corCanal.text}`}>
           {LABEL_CANAL[post.canal]}
+          {etiquetaFormato ? ` - ${etiquetaFormato.nome}` : ""}
         </span>
       </div>
 

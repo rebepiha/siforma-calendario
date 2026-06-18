@@ -1,7 +1,7 @@
 import { Canal, StatusPost, TipoPost } from "./types";
 
 export const CORES_CANAL: Record<Canal, { text: string }> = {
-  instagram: { text: "text-orange-400" },
+  instagram: { text: "text-pink-400" },
   linkedin: { text: "text-blue-400" },
   youtube: { text: "text-red-400" },
 };
