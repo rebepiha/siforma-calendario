@@ -66,7 +66,7 @@ export default function PostCard({
       } ${isDragging ? "opacity-50" : ""}`}
     >
       {post.novo_produto && (
-        <span className="absolute -top-2 -right-2 rounded-full bg-badge-novo px-1 py-0.5 text-[9px] font-bold text-white shadow">
+        <span className="absolute -top-1.5 -right-1.5 rounded-full border border-zinc-600 bg-zinc-900 px-1 py-0.5 text-[8px] font-medium text-zinc-400">
           NOVO
         </span>
       )}
@@ -100,7 +100,10 @@ export default function PostCard({
             <span className="block h-2.5 w-2.5 rounded-full border-2 border-zinc-500" />
           )}
         </button>
-        <span className={`text-[10px] font-medium ${corCanal.text}`}>
+        <span
+          className={`text-[10px] font-medium ${etiquetaFormato ? "" : corCanal.text}`}
+          style={etiquetaFormato ? { color: etiquetaFormato.cor } : undefined}
+        >
           {LABEL_CANAL[post.canal]}
           {etiquetaFormato ? ` - ${etiquetaFormato.nome}` : ""}
         </span>

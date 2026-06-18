@@ -47,18 +47,20 @@
   cada post. Não é uma regra hardcoded no código — é só convenção de uso que o usuário
   pediu pra manter ao criar/editar etiquetas e posts futuros; nada impede recolorir de
   novo pelo picker se quiserem.
-- **Card mostra "Instagram - Stories"/"Instagram - Feed" no topo** (ver Sessão 14):
-  `PostCard.tsx` procura nas etiquetas do post (`etiquetasDoPost`) uma chamada
-  exatamente "Stories" ou "Feed" e, se achar, mostra `"{canal} - {nome da etiqueta}"` em
-  vez de só o nome do canal (ex: post sem essa etiqueta continua mostrando só
-  "Instagram"/"LinkedIn"/"YouTube"). Isso é resolvido dinamicamente pelo nome real da
-  etiqueta (não hardcoded "Story"/"Feed" como string fixa), então se a equipe renomear a
-  etiqueta "Stories" pra outra coisa pelo picker, o texto do card acompanha. Também
-  trocada a cor do texto do canal Instagram de laranja para **rosa**
-  (`lib/postStyles.ts`, `CORES_CANAL.instagram.text` → `text-pink-400`) — pedido
-  explícito do usuário pra não confundir com a cor laranja já usada pela etiqueta
-  "Stories" (a barrinha de etiqueta continua laranja/amarela normalmente, só o texto
-  "Instagram - ..." mudou de cor).
+- **Card mostra "Instagram - Stories"/"Instagram - Feed" no topo** (Sessão 14, cor
+  ajustada na Sessão 15): `PostCard.tsx` procura nas etiquetas do post
+  (`etiquetasDoPost`) uma chamada exatamente "Stories" ou "Feed" e, se achar, mostra
+  `"{canal} - {nome da etiqueta}"` em vez de só o nome do canal (post sem essa etiqueta
+  continua mostrando só "Instagram"/"LinkedIn"/"YouTube"). Isso é resolvido
+  dinamicamente pelo nome real da etiqueta (não hardcoded "Story"/"Feed" como string
+  fixa) — se a equipe renomear a etiqueta "Stories" pelo picker, o texto do card
+  acompanha. **Cor do texto** (revisado na Sessão 15): quando o post tem etiqueta de
+  formato, o texto usa a cor real dessa etiqueta via `style={{ color: etiquetaFormato.cor }}`
+  (laranja pra Stories, amarelo pra Feed — sempre em sincronia com a cor da etiqueta,
+  mesmo se recolorida no picker); só quando o post **não** tem etiqueta Stories/Feed é
+  que cai no fallback `CORES_CANAL[canal].text` (`lib/postStyles.ts`), que pro Instagram
+  é rosa (`text-pink-400`, trocado de laranja na Sessão 14 pra não conflitar com a cor da
+  etiqueta Stories).
 - **Calendário mostra dias de outros meses** (ver Sessão 7): a grade volta a preencher a
   primeira/última semana com dias do mês anterior/seguinte (revertendo a decisão da
   Sessão 3 de escondê-los) — mas agora aparecem esmaecidos (`opacity-60`, fundo
@@ -212,6 +214,52 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 15 — 2026-06-18
+
+**Contexto**: continuação direta da Sessão 14, mesma conversa, vários pedidos curtos em
+sequência: (1) tag "NOVO" mais discreta e sem rosa; (2) cor do "Instagram - Formato"
+deveria seguir a cor real da etiqueta (amarelo p/ Feed, laranja p/ Story) em vez de
+sempre rosa; (3) diminuir a fonte das Tarefas de Marketing seguindo o padrão do
+Calendário Editorial.
+
+**1. Tag "NOVO" mais discreta**
+- `components/calendario/PostCard.tsx`: trocado o badge `bg-badge-novo` (rosa
+  `#d4537e`, pill sólido, texto branco em negrito, sombra) por um badge bem mais leve —
+  fundo `bg-zinc-900`, borda fina `border border-zinc-600`, texto `text-zinc-400`
+  `text-[8px]` `font-medium`, sem sombra. Como nada mais usava a classe `bg-badge-novo`,
+  removi a variável `--color-badge-novo` de `app/globals.css` (`--color-badge-video`
+  continua, é de outro badge ainda em uso).
+
+**2. Cor do formato segue a etiqueta real**
+- `components/calendario/PostCard.tsx`: o `<span>` do "Instagram - Formato" agora usa
+  `style={{ color: etiquetaFormato.cor }}` quando existe uma etiqueta Stories/Feed no
+  post (cor inline, igual ao padrão já usado nas barrinhas de etiqueta), em vez do rosa
+  fixo da Sessão 14. O rosa (`CORES_CANAL.instagram.text`) só aparece agora como
+  fallback, quando o post não tem etiqueta de formato nenhuma.
+
+**3. Fonte das Tarefas reduzida (padrão do Calendário Editorial)**
+- `components/tarefas/TaskChip.tsx`: título `text-sm font-medium` → `text-xs
+  font-semibold text-zinc-100` (mesmo padrão do título do `PostCard.tsx`), `leading-5`→
+  `leading-4` e `min-h-[2.5rem]`→`min-h-[2rem]` (recalculado pra 2 linhas de
+  `leading-4`, mantendo o efeito de altura uniforme da Sessão 13). Avatar de
+  responsável `h-4 w-4 text-[9px]` → `h-3.5 w-3.5 text-[8px]`, texto do responsável
+  `text-[11px]` → `text-[10px]`. Padding do card `px-2.5 py-1.5` → `px-1.5 py-1` (igual
+  ao `PostCard.tsx`). Ícone de check e círculo de prioridade também encolheram
+  (`h-4 w-4`/`h-3 w-3` → `h-3 w-3`/`h-2.5 w-2.5`).
+
+**4. Testes**
+- `npm run lint` e `npm run build` limpos a cada mudança.
+- Playwright/Chrome headless: confirmei visualmente que "Instagram - Stories" aparece
+  em laranja e "Instagram - Feed" em amarelo (cores idênticas às barrinhas de etiqueta),
+  que o "LinkedIn" sem etiqueta de formato continua na cor de fallback (azul, sem
+  mudança), que os cards de Tarefas ficaram visivelmente mais compactos/uniformes, e
+  criei um post de teste com "Produto novo" marcado pra confirmar visualmente a nova
+  tag "NOVO" discreta (cinza, borda fina) — removido depois de confirmar.
+
+**5. Pendente**
+- Nada novo. Mudanças desta sessão ainda não commitadas — perguntar antes de
+  commitar/push.
 
 ### Sessão 14 — 2026-06-18
 

@@ -17,7 +17,7 @@ function IconeCheck() {
     <svg
       viewBox="0 0 20 20"
       fill="none"
-      className="h-4 w-4 shrink-0 text-green-500"
+      className="h-3 w-3 shrink-0 text-green-500"
       aria-label="Concluída"
     >
       <circle cx="10" cy="10" r="9" fill="currentColor" fillOpacity="0.15" />
@@ -64,11 +64,11 @@ export default function TaskChip({
         e.stopPropagation();
         onClick();
       }}
-      className={`flex w-full cursor-pointer flex-col gap-1 rounded-md border bg-zinc-800 px-2.5 py-1.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+      className={`flex w-full cursor-pointer flex-col gap-1 rounded-md border bg-zinc-800 px-1.5 py-1 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
         atrasada ? "border-red-500/40" : "border-zinc-700"
       } ${concluida ? "opacity-60" : ""} ${isDragging ? "opacity-50" : ""}`}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-1">
         <button
           type="button"
           onClick={(e) => {
@@ -82,12 +82,12 @@ export default function TaskChip({
             <IconeCheck />
           ) : (
             <span
-              className={`block h-3 w-3 rounded-full border-2 bg-zinc-800 hover:bg-zinc-700 ${COR_PRIORIDADE[tarefa.prioridade]}`}
+              className={`block h-2.5 w-2.5 rounded-full border-2 bg-zinc-800 hover:bg-zinc-700 ${COR_PRIORIDADE[tarefa.prioridade]}`}
             />
           )}
         </button>
         <p
-          className={`line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-5 text-zinc-200 ${
+          className={`line-clamp-2 min-h-[2rem] text-xs font-semibold leading-4 text-zinc-100 ${
             concluida ? "line-through" : ""
           }`}
         >
@@ -95,9 +95,9 @@ export default function TaskChip({
         </p>
       </div>
       {mostrarResponsavel && tarefa.responsavel && (
-        <span className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+        <span className="flex items-center gap-1 text-[10px] text-zinc-500">
           <span
-            className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white"
+            className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[8px] font-semibold text-white"
             style={{ backgroundColor: corAvatar(tarefa.responsavel) }}
           >
             {inicialAvatar(tarefa.responsavel)}
