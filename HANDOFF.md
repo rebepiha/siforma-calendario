@@ -32,6 +32,22 @@
   (nome + cor) e `post_etiquetas` (relação N:N), gerenciável dentro do modal de editar
   post (`components/calendario/EtiquetaPicker.tsx`). Equipe pode criar, renomear,
   recolorir e excluir etiquetas livremente; cada post pode ter várias.
+- **Convenção de cor por etiqueta** (ver Sessão 7): a pedido do usuário, "Stories" é
+  laranja (`#f97316`), "Feed" é amarelo (`#eab308`) e existe uma etiqueta "Formobile"
+  verde (`#22c55e`) usada pra marcar todos os posts relacionados ao evento/campanha
+  Formobile (27/jun–3/jul), além da etiqueta de formato (Stories/Feed/Reels/etc.) de
+  cada post. Não é uma regra hardcoded no código — é só convenção de uso que o usuário
+  pediu pra manter ao criar/editar etiquetas e posts futuros; nada impede recolorir de
+  novo pelo picker se quiserem.
+- **Calendário mostra dias de outros meses** (ver Sessão 7): a grade volta a preencher a
+  primeira/última semana com dias do mês anterior/seguinte (revertendo a decisão da
+  Sessão 3 de escondê-los) — mas agora aparecem esmaecidos (`opacity-60`, fundo
+  `bg-zinc-900/60`, número em `text-zinc-600`) com os posts reais daquela data, em vez de
+  vazios. Todo `DayCell` (dentro ou fora do mês) agora tem altura fixa (`h-[130px]
+  sm:h-[150px]`, antes era `min-h` e crescia com a quantidade de posts) — usuário pediu
+  "quadrados do mesmo tamanho". Dias muito cheios (3+ posts, ex: 30/jun na semana do
+  Formobile) mostram scroll interno dentro do próprio quadrado em vez de esticar a
+  célula — confirmado com o usuário que esse comportamento é aceitável (ver Sessão 7).
 - **Calendário Editorial — layout simples (revertido na Sessão 6)**: o redesign em 3
   colunas (sidebar + calendário + painel de detalhe) feito na Sessão 4 e o redesign de
   card da Sessão 5 foram **revertidos a pedido do usuário**, que mandou um print
@@ -111,6 +127,87 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 7 — 2026-06-18
+
+**Contexto**: dois pedidos na mesma conversa. (1) Usuário mandou print de um board estilo
+Trello com cards de conteúdo da semana do Formobile, cada um com 2 barrinhas de cor no
+topo (verde + laranja/amarelo), pedindo pra "copiar" esse padrão de etiquetas/cores e
+incorporar o conteúdo dos cards nas datas certas. (2) Pediu pra mostrar os dias de outros
+meses na grade do calendário (esmaecidos) e deixar os quadrados de dia todos do mesmo
+tamanho.
+
+**1. Etiquetas Formobile/Story/Feed e conteúdo novo**
+- Antes de escrever no banco, consultei o estado real (etiquetas existentes, posts já
+  cadastrados nas datas da imagem) e apresentei um plano completo pro usuário confirmar —
+  havia ambiguidade real: 2 das 5 datas da imagem (27/jun e 29/jun) já tinham posts
+  existentes com título parecido mas não idêntico ("Contagem regressiva" / "É amanhã!
+  Estaremos te esperando"), e não estava claro se era pra renomear esses posts pro texto
+  exato da imagem ou só adicionar etiquetas mantendo o título atual. Perguntei e o
+  usuário confirmou: renomear pro texto exato da imagem.
+- Executado via REST API do Supabase (`curl` + anon key, mesma técnica de sessões
+  anteriores):
+  - Recolori etiqueta "Stories" pra laranja (`#f97316`) e "Feed" pra amarelo (`#eab308`)
+    (ambas já existiam desde a Sessão 3, só trocou a cor).
+  - Criei etiqueta nova "Formobile" verde (`#22c55e`).
+  - Aplicada a etiqueta "Formobile" em todos os 9 posts da semana do evento (os 6 que já
+    tinham `categoria = "Formobile"` mais os 3 novos abaixo).
+  - Renomeei "Contagem regressiva" (27/jun) → "Contagem Regressiva - Formobile" (mantendo
+    a etiqueta Feed que já tinha) e "É amanhã! Estaremos te esperando" (29/jun) →
+    "Stories - Ajustes finais + É AMANHÃ!" (troquei a etiqueta de Feed pra Stories, já
+    que o novo título deixa claro que é conteúdo de Stories, não Feed).
+  - Inseri 3 posts novos (nenhum existia nessas combinações de data/conteúdo antes):
+    27/jun "Stories - 'adicione ao calendário' evento formobile", 28/jun "Stories -
+    Backstage Cobertura", 30/jun "Stories - Cobertura ao vivo" — todos canal Instagram,
+    tipo evento, categoria "Formobile", etiquetas Formobile+Stories.
+  - **Edição concorrente notada durante a sessão**: ao verificar visualmente depois (item
+    2 abaixo), vi posts em 1–5 de julho que não existiam na minha consulta inicial desta
+    sessão e que eu não criei ("Cobertura ao vivo" em 1/2/3 de julho, "Agradecimento" em
+    5/jul) — e também que 2 posts que eu tinha consultado antes ("Carrossel: fotos do
+    stand" 1/jul, id `a5d68e17`; "Reels: representantes" 2/jul, id `54e95ea3`) mudaram de
+    título nesse meio tempo ("Lançamentos da Formobile" e "Reels: Depoimentos"). Os 4
+    posts novos já vieram com as etiquetas "Formobile"+"Stories" aplicadas — as mesmas
+    que criei/recolori nesta sessão. Conclusão: o usuário (ou a equipe) estava editando o
+    calendário ao vivo em paralelo, reaproveitando a convenção de etiquetas que acabei de
+    criar — não é inconsistência nem bug meu (a tag por `post_id` que eu já tinha
+    aplicado nos 2 posts renomeados continua válida, já que não depende do título).
+    Nenhuma ação necessária, só registrar que isso pode acontecer (banco compartilhado
+    entre produção ao vivo e qualquer sessão de agente trabalhando ao mesmo tempo).
+- Também notei (sem tocar) um post de teste "Post" / canal LinkedIn em 18/jun
+  (`id 0bbb53e5...`) que não fui eu quem criou — provavelmente o usuário testando o app
+  ao vivo, mesmo padrão de sessões anteriores. Deixei como está.
+
+**2. Grade do calendário: dias de outros meses + quadrados uniformes**
+- `components/calendario/CalendarGrid.tsx`: removida a ramificação que renderizava uma
+  `<div>` vazia pra dias fora do mês atual — agora todo dia da grade (dentro ou fora do
+  mês) passa por `DayCell`, com uma prop nova `foraDoMes` (`!isSameMonth(dia, mesAtual)`).
+  Como `posts` já carrega TODOS os posts da tabela (sem filtro de data — ver
+  `app/page.tsx`), não precisou mudar a busca de dados, só parar de escondê-los.
+- `components/calendario/DayCell.tsx`: trocou `noMesAtual`/empty-div da Sessão 3 por
+  `foraDoMes: boolean` — quando true, fundo `bg-zinc-900/60`, número do dia em
+  `text-zinc-600` (em vez de `text-zinc-300`), e a célula inteira com `opacity-60`
+  (exceto quando `isOver` de um drag-and-drop, pra não prejudicar o feedback visual de
+  soltar um post ali). Mesma ideia/CSS que existia antes da Sessão 3 remover
+  (`git show 3635835^:components/calendario/DayCell.tsx`), só que agora os posts daquele
+  dia continuam aparecendo (a versão antiga já fazia isso, só o nome da prop mudou).
+- Mesmo arquivo: trocado `min-h-[110px] sm:min-h-[130px]` (que crescia com a quantidade
+  de posts do dia) por `h-[130px] sm:h-[150px]` fixo, com a lista de posts dentro em
+  `overflow-y-auto` — pedido explícito do usuário ("quadrados do mesmo tamanho").
+  Consequência: dias com muitos posts (o máximo hoje é 3, só 30/jun) mostram scroll
+  interno em vez de esticar a célula. Perguntei explicitamente se esse trade-off era
+  aceitável (alternativas seriam aumentar a altura fixa ou um link "+N mais" estilo
+  Google Calendar) — usuário confirmou que scroll interno está bom.
+
+**3. Testes**
+- `npm run lint` e `npm run build` limpos depois de cada mudança.
+- Validado visualmente com Playwright/Chrome headless: confirmei que os posts da semana
+  do Formobile aparecem com as etiquetas/cores certas, que dias de julho aparecem
+  esmaecidos na grade de junho preenchendo a última semana, e que os quadrados de dia
+  ficaram visualmente uniformes (incluindo o scroll interno nos dias cheios).
+
+**4. Pendente**
+- Nada ficou pendente desta sessão. Mudanças de código (CalendarGrid/DayCell) ainda não
+  foram commitadas — ver se o usuário quer commit/push agora ou depois.
 
 ### Sessão 6 — 2026-06-17
 

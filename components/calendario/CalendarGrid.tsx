@@ -49,14 +49,6 @@ export default function CalendarGrid({
       </div>
       <div className="grid grid-cols-7">
         {dias.map((dia) => {
-          if (!isSameMonth(dia, mesAtual)) {
-            return (
-              <div
-                key={format(dia, "yyyy-MM-dd")}
-                className="min-h-[110px] border border-zinc-700 bg-zinc-900/40 sm:min-h-[130px]"
-              />
-            );
-          }
           const dataStr = format(dia, "yyyy-MM-dd");
           const postsDoDia = posts.filter((p) => p.data === dataStr);
           return (
@@ -64,6 +56,7 @@ export default function CalendarGrid({
               key={dataStr}
               dataStr={dataStr}
               numeroDia={dia.getDate()}
+              foraDoMes={!isSameMonth(dia, mesAtual)}
               ehHoje={isSameDay(dia, hoje)}
               posts={postsDoDia}
               etiquetas={etiquetas}
