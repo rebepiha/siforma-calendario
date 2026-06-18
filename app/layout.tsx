@@ -22,7 +22,7 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${mulish.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <TopNav />
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+        <main className="w-full flex-1 px-4 py-6 sm:px-6">
           {children}
         </main>
       </body>
