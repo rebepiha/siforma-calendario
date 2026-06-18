@@ -84,6 +84,24 @@
   depois, não conteúdo real. Mesma observação: inserção pontual via API, não é uma
   regra/cron rodando — não vai continuar gerando novos posts automaticamente além de
   18/set.
+- **Tarefa "Atendimento nas redes sociais" como primeiro card do dia (próx. 3 meses)**
+  (ver Sessão 18): inserida pra todo dia de 18/jun a 18/set/2026, exceto 18/jun e 19/jun
+  (que já tinham uma tarefa quase idêntica, "Atendimento redes sociais", criada pela
+  equipe). Como a vista Calendário de Tarefas ordena por `criado_em` (não por `prazo`
+  nem pela coluna `ordem`, que existe na tabela mas não é usada pelo código — ver
+  Sessão 8), garantir "primeiro card do dia" exigiu setar `criado_em` artificialmente
+  antes de qualquer outra tarefa real daquele dia, não só inserir a linha. **Erro
+  cometido e corrigido na hora**: a primeira tentativa setou `criado_em` como
+  `"{prazo}T00:00:01"` (meia-noite do dia do prazo) — parecia razoável, mas como tarefas
+  reais são todas criadas "hoje" (18/jun) independente de pra qual dia futuro são, uma
+  tarefa com prazo em julho/agosto/setembro acabava com `criado_em` cronologicamente
+  *depois* das tarefas reais (criadas hoje), não antes — resultado: aparecia por
+  último, não primeiro. Corrigido com um `UPDATE` em massa setando `criado_em` pra um
+  valor sentinela bem no passado (`2026-01-01T00:00:00Z`, antes de qualquer tarefa real
+  do projeto) pra todas as 91 linhas dessa tarefa, garantindo que sempre ordene primeiro
+  independente de quando as outras tarefas do mesmo dia foram criadas. Validado
+  visualmente em dias que já tinham outras tarefas (22/jun, 26/jun, 28/jun) antes de
+  considerar resolvido.
 - **Calendário mostra dias de outros meses** (ver Sessão 7): a grade volta a preencher a
   primeira/última semana com dias do mês anterior/seguinte (revertendo a decisão da
   Sessão 3 de escondê-los) — mas agora aparecem esmaecidos (`opacity-60`, fundo
@@ -237,6 +255,57 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 18 — 2026-06-18
+
+**Contexto**: continuação direta da Sessão 17. Usuário pediu pra criar o card
+"Atendimento nas redes sociais" como **primeiro card do dia**, todo dia, pelos próximos
+3 meses também (mesmo padrão de preenchimento em massa das duas sessões anteriores).
+
+**1. Levantamento antes de escrever**
+- Já existia uma tarefa quase idêntica "Atendimento redes sociais" (sem "nas") em 18/jun
+  e 19/jun, criada pela equipe — usei como template de campos (responsável Victoria,
+  prioridade média, coluna a_fazer) mas não dupliquei esses 2 dias, só criei a partir de
+  20/jun. Calculei o intervalo de 18/jun a 18/set (mesma janela de 3 meses das sessões
+  anteriores) → 91 dias a preencher.
+
+**2. Garantir "primeiro card do dia"**
+- A vista Calendário de Tarefas ordena os cards pela ordem em que `carregarTarefas`
+  busca os dados (`order("criado_em", { ascending: true })` em `app/tarefas/page.tsx`)
+  — não existe ordenação manual nem uso da coluna `ordem` (que está na tabela desde a
+  sessão de trabalho paralelo descartada na Sessão 8, mas nunca foi conectada a nenhuma
+  lógica de exibição). Pra essa tarefa aparecer primeiro em dias que já têm outras
+  tarefas, foi preciso inserir com um `criado_em` mais antigo que o das tarefas já
+  existentes naquele dia, não bastava só criar a linha.
+- **Errei na primeira tentativa**: setei `criado_em` como meia-noite do próprio `prazo`
+  (ex: prazo 26/jun → `criado_em = 2026-06-26T00:00:01`). Parecia razoável mas estava
+  errado — tarefas reais (ex: "Programar posts do fim de semana", "Ver resultados do
+  patrocinado") foram todas *criadas* hoje (18/jun), só têm *prazo* no futuro. Meia-noite
+  de um dia futuro é cronologicamente *depois* de "hoje às 14h", então minhas tarefas
+  ordenavam por último, não primeiro — percebi isso só depois de inserir as 91 linhas e
+  conferir visualmente no app (22/jun e 26/jun mostravam a tarefa nova no final).
+- **Corrigido** com um único `UPDATE` em massa (`titulo=eq.Atendimento nas redes
+  sociais`) setando `criado_em` pra `2026-01-01T00:00:00+00:00` (sentinela no passado,
+  antes de qualquer `criado_em` real do projeto) em todas as 91 linhas de uma vez —
+  mais simples que teria sido recalcular um valor por linha, e funciona porque o que
+  importa é só estar *antes* das outras tarefas do mesmo dia, não ter uma data
+  realista.
+
+**3. Testes**
+- Validei visualmente via Playwright/Chrome headless, antes e depois da correção: dias
+  vazios (20/jun, 21/jun) trivialmente mostravam a tarefa nova como única; dias com
+  outras tarefas (22/jun "Fechar reserva restaurante", 26/jun "Ver resultados do
+  patrocinado" + "Programar posts do fim de semana", 28/jun "Backstage Formóbile")
+  mostravam a tarefa nova por último antes da correção e primeiro depois. 18/jun e
+  19/jun confirmados intocados (só a tarefa original "Atendimento redes sociais", sem
+  duplicata).
+
+**4. Pendente**
+- Nada novo. Nenhuma mudança de código nesta sessão (só dados) — `HANDOFF.md` é a única
+  mudança de arquivo; perguntar ao usuário se quer commit/push só da documentação.
+- Mesma observação das sessões anteriores: isso não é uma recorrência automática, é
+  inserção pontual. Passado 18/set, será necessário gerar mais linhas manualmente se
+  pedirem continuidade.
 
 ### Sessão 17 — 2026-06-18
 
