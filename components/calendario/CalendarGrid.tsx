@@ -52,7 +52,9 @@ export default function CalendarGrid({
       <div className="grid grid-cols-7">
         {dias.map((dia) => {
           const dataStr = format(dia, "yyyy-MM-dd");
-          const postsDoDia = posts.filter((p) => p.data === dataStr);
+          const postsDoDia = posts
+            .filter((p) => p.data === dataStr)
+            .sort((a, b) => a.ordem - b.ordem);
           return (
             <DayCell
               key={dataStr}

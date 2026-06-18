@@ -8,11 +8,12 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { addMonths, format, subMonths } from "date-fns";
+import { addMonths, format, isSameMonth, parseISO, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
 import { Etiqueta, NovoPost, Post } from "@/lib/types";
 import { useUndoStack } from "@/lib/useUndoStack";
+import { mesmosValores } from "@/lib/mesmosValores";
 import CalendarGrid from "@/components/calendario/CalendarGrid";
 import PostModal from "@/components/calendario/PostModal";
 import Filtros, { FiltrosState } from "@/components/calendario/Filtros";
@@ -27,6 +28,7 @@ export default function PaginaCalendario() {
     canal: "todos",
     tipo: "todos",
     etiqueta: "todos",
+    busca: "",
   });
   const [modalAberto, setModalAberto] = useState(false);
   const [postSelecionado, setPostSelecionado] = useState<Post | null>(null);
@@ -83,9 +85,20 @@ export default function PaginaCalendario() {
       if (filtros.tipo !== "todos" && post.tipo !== filtros.tipo) return false;
       if (filtros.etiqueta !== "todos" && !post.etiqueta_ids.includes(filtros.etiqueta))
         return false;
+      if (
+        filtros.busca.trim() &&
+        !post.titulo.toLowerCase().includes(filtros.busca.trim().toLowerCase())
+      )
+        return false;
       return true;
     });
   }, [posts, filtros]);
+
+  const resumoMes = useMemo(() => {
+    const doMes = posts.filter((p) => isSameMonth(parseISO(p.data), mesAtual));
+    const publicados = doMes.filter((p) => p.status === "publicado").length;
+    return { total: doMes.length, publicados };
+  }, [posts, mesAtual]);
 
   function abrirNovoPost(data: string) {
     setPostSelecionado(null);
@@ -139,14 +152,42 @@ export default function PaginaCalendario() {
   }
 
   async function aplicarRestauracaoPost(post: Post) {
-    const { error } = await supabase.from("posts").insert({ id: post.id, ...paraNovoPost(post) });
+    const { error } = await supabase
+      .from("posts")
+      .insert({ id: post.id, ordem: post.ordem, ...paraNovoPost(post) });
     if (error) return;
     await sincronizarEtiquetasPost(post.id, post.etiqueta_ids);
     setPosts((atual) => [...atual, post]);
   }
 
+  async function aplicarPosicoesPost(posicoes: { id: string; data: string; ordem: number }[]) {
+    setPosts((atual) => {
+      const porId = new Map(posicoes.map((p) => [p.id, p]));
+      return atual.map((p) => {
+        const pos = porId.get(p.id);
+        return pos ? { ...p, data: pos.data, ordem: pos.ordem } : p;
+      });
+    });
+    await Promise.all(
+      posicoes.map((p) =>
+        supabase.from("posts").update({ data: p.data, ordem: p.ordem }).eq("id", p.id)
+      )
+    );
+  }
+
   async function salvarPost(id: string | null, valores: NovoPost, etiquetaIds: string[]) {
     const postAnterior = id ? posts.find((p) => p.id === id) ?? null : null;
+
+    if (postAnterior) {
+      const etiquetasIguais =
+        [...postAnterior.etiqueta_ids].sort().join() === [...etiquetaIds].sort().join();
+      const camposIguais = mesmosValores(paraNovoPost(postAnterior), valores);
+      if (camposIguais && etiquetasIguais) {
+        setModalAberto(false);
+        return;
+      }
+    }
+
     let postSalvo: Post | null = null;
     if (id) {
       const { data, error } = await supabase
@@ -196,6 +237,23 @@ export default function PaginaCalendario() {
     setModalAberto(false);
   }
 
+  async function duplicarPost(post: Post) {
+    const { data, error } = await supabase
+      .from("posts")
+      .insert(paraNovoPost(post))
+      .select()
+      .single();
+    if (error || !data) return;
+    const postDuplicado = {
+      ...(data as Omit<Post, "etiqueta_ids">),
+      etiqueta_ids: post.etiqueta_ids,
+    };
+    await sincronizarEtiquetasPost(postDuplicado.id, post.etiqueta_ids);
+    setPosts((atual) => [...atual, postDuplicado]);
+    registrarAcao(() => aplicarExclusaoPost(postDuplicado.id));
+    setPostSelecionado(postDuplicado);
+  }
+
   async function criarEtiqueta(nome: string, cor: string): Promise<Etiqueta> {
     const { data, error } = await supabase
       .from("etiquetas")
@@ -239,21 +297,48 @@ export default function PaginaCalendario() {
     registrarAcao(() => aplicarCamposPost(post.id, { status: statusAnterior }));
   }
 
-  async function moverPost(postId: string, novaData: string) {
-    await aplicarCamposPost(postId, { data: novaData });
+  function ordenarGrupoPosts(lista: Post[]) {
+    return [...lista].sort((a, b) => a.ordem - b.ordem);
   }
 
   function aoFinalizarArraste(evento: DragEndEvent) {
     const { active, over } = evento;
     if (!over) return;
     const postId = String(active.id);
-    const novaData = String(over.id);
+    const overId = String(over.id);
+    if (postId === overId) return;
+
     const post = posts.find((p) => p.id === postId);
-    if (post && post.data !== novaData) {
-      const dataAnterior = post.data;
-      moverPost(postId, novaData);
-      registrarAcao(() => aplicarCamposPost(postId, { data: dataAnterior }));
-    }
+    if (!post) return;
+
+    // soltar em cima de outro post: vai pro dia desse post, na posição dele.
+    // soltar no quadrado vazio de um dia: vai pro fim daquele dia.
+    const postAlvo = posts.find((p) => p.id === overId);
+    const novaData = postAlvo ? postAlvo.data : overId;
+
+    const outrosDoDestino = ordenarGrupoPosts(
+      posts.filter((p) => p.id !== postId && p.data === novaData)
+    );
+    const indice = postAlvo
+      ? Math.max(0, outrosDoDestino.findIndex((p) => p.id === postAlvo.id))
+      : outrosDoDestino.length;
+    const novaOrdemDoDestino = [
+      ...outrosDoDestino.slice(0, indice),
+      post,
+      ...outrosDoDestino.slice(indice),
+    ];
+
+    const grupoAtual = ordenarGrupoPosts(posts.filter((p) => p.data === post.data));
+    const semMudanca =
+      post.data === novaData &&
+      grupoAtual.map((p) => p.id).join() === novaOrdemDoDestino.map((p) => p.id).join();
+    if (semMudanca) return;
+
+    const antes = novaOrdemDoDestino.map((p) => ({ id: p.id, data: p.data, ordem: p.ordem }));
+    const depois = novaOrdemDoDestino.map((p, i) => ({ id: p.id, data: novaData, ordem: i }));
+
+    aplicarPosicoesPost(depois);
+    registrarAcao(() => aplicarPosicoesPost(antes));
   }
 
   return (
@@ -277,6 +362,17 @@ export default function PaginaCalendario() {
           >
             →
           </button>
+          {!isSameMonth(mesAtual, new Date()) && (
+            <button
+              onClick={() => setMesAtual(new Date())}
+              className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
+            >
+              Hoje
+            </button>
+          )}
+          <span className="text-sm text-zinc-500">
+            {resumoMes.publicados} de {resumoMes.total} publicados
+          </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -313,12 +409,14 @@ export default function PaginaCalendario() {
 
       {modalAberto && (
         <PostModal
+          key={postSelecionado?.id ?? "novo"}
           post={postSelecionado}
           dataPadrao={dataParaNovoPost}
           etiquetas={etiquetas}
           onFechar={() => setModalAberto(false)}
           onSalvar={salvarPost}
           onExcluir={excluirPost}
+          onDuplicar={duplicarPost}
           onCriarEtiqueta={criarEtiqueta}
           onEditarEtiqueta={editarEtiqueta}
           onExcluirEtiqueta={excluirEtiqueta}

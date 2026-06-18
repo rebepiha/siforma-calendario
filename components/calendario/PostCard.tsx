@@ -1,6 +1,6 @@
 "use client";
 
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Etiqueta, Post } from "@/lib/types";
 import { CORES_CANAL, LABEL_CANAL } from "@/lib/postStyles";
@@ -51,8 +51,13 @@ export default function PostCard({
         ? "Stories- "
         : "Feed: "
       : "";
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
+  const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } =
     useDraggable({ id: post.id });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: post.id });
+  const setRefs = (node: HTMLElement | null) => {
+    setDragRef(node);
+    setDropRef(node);
+  };
 
   const style = transform
     ? { transform: CSS.Translate.toString(transform), zIndex: 50 }
@@ -60,7 +65,7 @@ export default function PostCard({
 
   return (
     <div
-      ref={setNodeRef}
+      ref={setRefs}
       style={style}
       {...listeners}
       {...attributes}
@@ -70,7 +75,7 @@ export default function PostCard({
       }}
       className={`relative cursor-pointer rounded-lg border border-white/10 bg-white/10 px-1.5 py-1 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md ${
         publicado ? "opacity-60" : ""
-      } ${isDragging ? "opacity-50" : ""}`}
+      } ${isDragging ? "opacity-50" : ""} ${isOver ? "ring-2 ring-oliva" : ""}`}
     >
       {post.novo_produto && (
         <span className="absolute -top-1.5 -right-1.5 rounded-full border border-zinc-600 bg-zinc-900 px-1 py-0.5 text-[8px] font-medium text-zinc-400">

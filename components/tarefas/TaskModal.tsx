@@ -26,6 +26,7 @@ export default function TaskModal({
   onFechar,
   onSalvar,
   onExcluir,
+  onDuplicar,
 }: {
   tarefa: Tarefa | null;
   colunaPadrao: ColunaTarefa;
@@ -34,6 +35,7 @@ export default function TaskModal({
   onFechar: () => void;
   onSalvar: (id: string | null, valores: NovaTarefa) => Promise<void>;
   onExcluir: (id: string) => Promise<void>;
+  onDuplicar: (tarefa: Tarefa) => void;
 }) {
   const [valores, setValores] = useState<NovaTarefa>(
     tarefa
@@ -184,12 +186,20 @@ export default function TaskModal({
 
         <div className="flex items-center justify-between gap-2 border-t border-zinc-700 px-5 py-4">
           {tarefa ? (
-            <button
-              onClick={() => onExcluir(tarefa.id)}
-              className="rounded-md px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
-            >
-              Excluir
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onExcluir(tarefa.id)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
+              >
+                Excluir
+              </button>
+              <button
+                onClick={() => onDuplicar(tarefa)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-900"
+              >
+                Duplicar
+              </button>
+            </div>
           ) : (
             <span />
           )}

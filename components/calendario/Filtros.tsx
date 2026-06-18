@@ -7,6 +7,7 @@ export interface FiltrosState {
   canal: Canal | "todos";
   tipo: TipoPost | "todos";
   etiqueta: string | "todos";
+  busca: string;
 }
 
 export default function Filtros({
@@ -20,6 +21,14 @@ export default function Filtros({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <input
+        type="text"
+        value={filtros.busca}
+        onChange={(e) => onChange({ ...filtros, busca: e.target.value })}
+        placeholder="Buscar por título..."
+        className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-500"
+      />
+
       <select
         value={filtros.canal}
         onChange={(e) =>

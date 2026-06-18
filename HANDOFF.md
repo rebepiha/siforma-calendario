@@ -27,15 +27,55 @@
   aberto (pra não capturar o Ctrl+Z nativo de um campo de texto). **Não cobre**
   criar/editar/excluir etiqueta nem nada em Metas e Progresso — só os cards de post e
   tarefa, que foi o que o usuário pediu.
-- **Tarefas: arrastar para reordenar dentro do mesmo dia** (ver Sessão 25), além de
-  mover entre dias (já existia). Usa a coluna `ordem` (inteiro) da tabela `tarefas` —
-  essa coluna **já existia no banco em produção mas não estava em nenhuma migration
-  do repo** (alguém deve ter rodado um `alter table` direto no SQL Editor do Supabase
-  em algum momento não documentado); adicionei `ordem: number` ao tipo `Tarefa` em
-  `lib/types.ts` mas **não criei uma migration nova pra ela** já que a coluna já existe
-  na prática — se reconstruir o banco do zero algum dia a partir só das migrations em
-  `supabase/migrations/`, vai faltar essa coluna (precisa de
-  `alter table tarefas add column ordem integer not null default 0;`).
+- **Tarefas e posts: arrastar para reordenar dentro do mesmo dia** (Tarefas na Sessão
+  25, Posts no Calendário Editorial na Sessão 26), além de mover entre dias (já
+  existia nos dois). Usa a coluna `ordem` (inteiro, default 0) nas duas tabelas — em
+  `tarefas` essa coluna **já existia em produção sem estar em nenhuma migration do
+  repo** (alguém rodou um `alter table` direto no SQL Editor em algum momento não
+  documentado); em `posts` a coluna não existia em lugar nenhum. A migration
+  `supabase/migrations/0006_ordem_posts.sql` (Sessão 26) cria as duas de forma
+  idempotente (`add column if not exists`) — **usuário já rodou esse SQL manualmente
+  no SQL Editor do Supabase antes de eu implementar o código que depende dela**, então
+  o schema do repo e o de produção estão alinhados agora. Posts não têm `criado_em`
+  (não existe essa coluna na tabela), então o desempate de ordenação pra posts é só
+  `sort by ordem` confiando em **sort estável do JS** (garantido pelo spec desde
+  ES2019) pra preservar a ordem de chegada quando `ordem` está empatado em 0 — não
+  precisei de uma segunda chave de desempate como em tarefas (`criado_em`).
+- **Fechar um modal sem editar nada não salva mais** (correção na Sessão 26, bug
+  pré-existente desde antes do Ctrl+Z): `salvarPost`/`salvarTarefa` agora comparam os
+  valores do formulário com os valores anteriores (`lib/mesmosValores.ts`) e saem sem
+  fazer UPDATE/registrar undo se nada mudou. Antes disso, abrir um post/tarefa só pra
+  olhar e fechar (sem editar nada) já disparava um UPDATE idêntico no Supabase e
+  empilhava uma ação de "desfazer" inútil — o que ficou visível quando "Duplicar"
+  (Sessão 26) seguido de Fechar exigia **dois** Ctrl+Z em vez de um pra desfazer (o
+  primeiro desfazia esse update fantasma, não a duplicação).
+- **Duplicar post/tarefa** (ver Sessão 26): botão "Duplicar" no rodapé do modal de
+  edição (`PostModal.tsx`/`TaskModal.tsx`, ao lado de "Excluir", só aparece editando
+  um existente — não em "Novo"). Cria uma cópia idêntica (incluindo etiquetas, no
+  caso de post) e troca o modal pra editar a cópia **sem fechar o modal** — usa
+  `key={post?.id ?? "novo"}` no `<PostModal>`/`<TaskModal>` pra forçar o React a
+  remontar o componente e reinicializar o formulário com os dados da cópia (mudar só
+  a prop `post`/`tarefa` não bastaria, já que o `useState` inicial do form só lê a
+  prop no primeiro mount). Integrado ao undo — duplicar empilha "excluir a cópia".
+- **Buscar por título** (ver Sessão 26): campo de texto no Calendário Editorial
+  (dentro de `Filtros.tsx`, novo campo `busca` em `FiltrosState`) e em Tarefas (input
+  direto em `app/tarefas/page.tsx`, estado `buscaTitulo`). Filtra por substring
+  case-insensitive no título, combinando com os filtros existentes (canal/tipo/
+  etiqueta no Calendário; responsável em Tarefas).
+- **Resumo do mês** (ver Sessão 26): `app/page.tsx` mostra "X de Y publicados"
+  (`resumoMes`, contagem sobre `posts` do mês exibido, não afetada pelos filtros de
+  canal/tipo/etiqueta/busca — sempre reflete o mês inteiro) ao lado do título do mês.
+- **Botão "Hoje"** (ver Sessão 26): aparece ao lado das setas de navegação do
+  Calendário Editorial só quando `mesAtual` não é o mês corrente (`isSameMonth`),
+  pra voltar direto sem precisar clicar várias vezes em "←"/"→".
+- **Anexar arquivos a um post: avaliado e propositalmente não implementado ainda**
+  (ver Sessão 26) — precisa de um bucket no Supabase Storage, e confirmei que a
+  anon key do app não tem permissão de criar bucket via API (RLS bloqueia,
+  `403 new row violates row-level security policy`). Usuário escolheu deixar pra
+  depois quando perguntei (é a mais trabalhosa das 6 funcionalidades sugeridas nessa
+  sessão). Se retomar: dá pra criar o bucket + políticas via SQL Editor (inserir em
+  `storage.buckets`, políticas em `storage.objects`), sem precisar do painel — não
+  precisa necessariamente do token de Management API.
 - **Link de produção**: https://siforma-calendario.vercel.app
 - **Repositório**: https://github.com/rebepiha/siforma-calendario (público, branch `main`)
 - **Supabase**: projeto com URL `https://ayfbzhyykcqrkfpscgkv.supabase.co` (ref `ayfbzhyykcqrkfpscgkv`)
@@ -298,6 +338,109 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 26 — 2026-06-18
+
+**Contexto**: usuário perguntou "o que mais eu posso adicionar de funcionalidades?".
+Sugeri 6 ideias concretas baseadas em lacunas reais do código/HANDOFF (não uma lista
+genérica): reordenar posts dentro do dia (paridade com tarefas, Sessão 25), duplicar
+post/tarefa, anexar arquivos (pendência antiga), botão "Hoje", buscar por título,
+resumo do mês. Usuário respondeu "todas".
+
+**1. Plano e sequenciamento**
+Usei `TaskCreate`/`TaskUpdate` pra acompanhar as 6. Verifiquei de antemão que 2 das 6
+tinham dependência externa: reordenar posts precisa de uma coluna `ordem` nova em
+`posts` (não existe, confirmado via `GET /rest/v1/posts?limit=1`); anexar arquivos
+precisa de um bucket no Storage (confirmei que a anon key não cria bucket —
+`POST /storage/v1/bucket` retornou 403 RLS). As outras 4 não tinham dependência de
+schema, então implementei essas primeiro.
+
+**2. Botão "Hoje", resumo do mês, buscar por título**
+- `app/page.tsx`: botão "Hoje" ao lado das setas de mês, só renderiza se
+  `!isSameMonth(mesAtual, new Date())`. `resumoMes` (useMemo) conta posts do mês
+  exibido com `status === "publicado"` vs total, mostrado como "X de Y publicados" —
+  não usa `postsFiltrados`, sempre reflete o mês inteiro independente dos filtros.
+- `components/calendario/Filtros.tsx`: novo campo `busca: string` em `FiltrosState`
+  e um `<input>` de texto; `postsFiltrados` em `app/page.tsx` ganhou mais uma
+  condição (substring case-insensitive no título).
+- `app/tarefas/page.tsx`: campo de busca solto (`buscaTitulo`, sem componente
+  dedicado, já que essa página não tem um `Filtros.tsx` próprio) somado à lógica de
+  `tarefasDoResponsavel`.
+- Testado com Playwright: resumo aparece, busca por um termo inexistente zera a
+  lista de cards visíveis, botão Hoje aparece/desaparece corretamente ao navegar.
+
+**3. Duplicar post/tarefa — e um bug real que isso revelou**
+- `PostModal.tsx`/`TaskModal.tsx`: nova prop `onDuplicar`, botão "Duplicar" ao lado
+  de "Excluir" (só quando editando um existente). `app/page.tsx`/`app/tarefas/page.tsx`:
+  `duplicarPost`/`duplicarTarefa` inserem uma cópia (incluindo etiquetas no caso de
+  post), e troca `postSelecionado`/`tarefaSelecionada` pra cópia **sem fechar o
+  modal** — adicionei `key={post?.id ?? "novo"}` no `<PostModal>`/`<TaskModal>`
+  porque só troca a prop não bastaria (o `useState` inicial do formulário só lê a
+  prop no primeiro mount; sem a `key`, o modal continuaria mostrando os dados do
+  post original depois de duplicar).
+- **Bug descoberto durante o teste**: testei "duplicar → Fechar → Ctrl+Z" esperando
+  que a duplicata desaparecesse, mas ela continuava lá depois de um Ctrl+Z (precisava
+  de dois). Investigando: `fecharSalvando()` no modal chama `onSalvar` sempre que o
+  título não está vazio, **mesmo que nada tenha sido editado** — então fechar o modal
+  da cópia (sem mudar nada) disparava um UPDATE idêntico e empilhava uma ação de
+  desfazer "fantasma" por baixo da ação real (excluir a duplicata). Esse bug já
+  existia desde a Sessão 25 (Ctrl+Z), só não tinha sido notado porque os testes
+  anteriores sempre faziam exatamente uma ação antes de testar o undo. Corrigido na
+  raiz: novo `lib/mesmosValores.ts` (comparação shallow de objeto), usado em
+  `salvarPost`/`salvarTarefa` pra sair sem UPDATE nem registrar undo se os valores
+  (e, no caso de post, as etiquetas) forem idênticos aos anteriores. Reexecutei toda
+  a bateria de testes de undo da Sessão 25 depois da correção pra garantir que não
+  quebrou nada — todos passaram.
+- Testado com Playwright (criar → duplicar → confirmar 2 cópias → Ctrl+Z → confirmar
+  1 → excluir a remanescente), nas duas páginas. Um teste anterior tinha deixado
+  duplicatas de teste no banco por causa do bug acima antes da correção — limpei via
+  `DELETE` direto na REST API antes de re-testar.
+
+**4. Reordenar posts dentro do dia (Calendário Editorial)**
+- Perguntei ao usuário (AskUserQuestion) se queria que eu preparasse o SQL da coluna
+  `ordem` agora ou deixasse pra depois — escolheu preparar agora. Criei
+  `supabase/migrations/0006_ordem_posts.sql` (idempotente, `add column if not
+  exists`) cobrindo **as duas tabelas**: `posts.ordem` (não existia em lugar nenhum)
+  e `tarefas.ordem` (já existia em produção desde antes, mas nunca tinha entrado
+  numa migration do repo — Sessão 25 deixou isso como pendência, resolvido aqui).
+  Dei o SQL pro usuário colar no SQL Editor; ele confirmou que rodou; verifiquei via
+  `GET /rest/v1/posts?select=id,titulo,ordem` que a coluna apareceu antes de
+  escrever qualquer código que dependesse dela (pra não arriscar quebrar produção
+  com uma coluna inexistente).
+- Implementação espelha exatamente o que foi feito em Tarefas na Sessão 25:
+  `lib/types.ts` (`ordem: number` em `Post`, excluído de `NovoPost`),
+  `PostCard.tsx` ganhou `useDroppable` além do `useDraggable` já existente (refs
+  combinados via `setRefs`, destaque visual `ring-2 ring-oliva` quando `isOver`),
+  `CalendarGrid.tsx` ordena cada dia por `ordem`, `aoFinalizarArraste` em
+  `app/page.tsx` reescrito pro fluxo unificado (soltar sobre outro post reordena/move
+  pra posição dele; soltar no quadrado vazio do dia vai pro fim), novo
+  `aplicarPosicoesPost` (raw, sem registrar undo) usado tanto pela ação real quanto
+  pelo undo registrado com o snapshot "antes".
+- **Diferença notada em relação a Tarefas**: a tabela `posts` não tem coluna
+  `criado_em` (não existe no schema desde a migration 0001), então não tinha uma
+  segunda chave de desempate disponível como `tarefas` tem. Em vez de adicionar uma,
+  usei só `sort by ordem` — como `Array.prototype.sort` é estável desde ES2019 (e
+  todos os browsers/Node modernos respeitam isso), posts com `ordem` empatado em 0
+  (o caso de todo post que ainda não foi arrastado) mantêm a ordem de chegada do
+  array já carregado, sem reordenar nada visualmente no primeiro deploy dessa
+  feature — só passam a ter uma ordem explícita depois que alguém arrasta.
+- Testado com Playwright: criar 2 posts no mesmo dia, arrastar um sobre o outro
+  (reordena), Ctrl+Z (volta), e um teste de regressão arrastando entre dias
+  diferentes (continua funcionando, com undo). Confirmei via REST que não sobrou
+  nenhum post de teste no banco depois.
+
+**5. Testes (resumo geral da sessão)**
+- `npm run lint`/`npm run build` limpos depois de cada mudança.
+- Sem Playwright como devDependency — reinstalado via `npx playwright install
+  chromium` em `/tmp/pwtest` (fora do repo) pra cada bateria de teste contra o
+  `npm run dev` local, sempre limpando os dados de teste no Supabase de produção no
+  final (não existe ambiente separado) e confirmando via REST que não sobrou nada.
+
+**6. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
+- Anexar arquivos a um post: deixado pra uma sessão futura, a pedido do usuário (ver
+  bullet em "Estado atual" com o caminho sugerido — bucket + políticas via SQL
+  Editor, sem precisar de token de Management API).
 
 ### Sessão 25 — 2026-06-18
 

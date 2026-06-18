@@ -28,6 +28,7 @@ export default function PostModal({
   onFechar,
   onSalvar,
   onExcluir,
+  onDuplicar,
   onCriarEtiqueta,
   onEditarEtiqueta,
   onExcluirEtiqueta,
@@ -38,6 +39,7 @@ export default function PostModal({
   onFechar: () => void;
   onSalvar: (id: string | null, valores: NovoPost, etiquetaIds: string[]) => Promise<void>;
   onExcluir: (id: string) => Promise<void>;
+  onDuplicar: (post: Post) => void;
   onCriarEtiqueta: (nome: string, cor: string) => Promise<Etiqueta>;
   onEditarEtiqueta: (id: string, nome: string, cor: string) => Promise<void>;
   onExcluirEtiqueta: (id: string) => Promise<void>;
@@ -289,12 +291,20 @@ export default function PostModal({
 
         <div className="flex items-center justify-between gap-2 border-t border-zinc-700 px-5 py-4">
           {post ? (
-            <button
-              onClick={() => onExcluir(post.id)}
-              className="rounded-md px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
-            >
-              Excluir
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onExcluir(post.id)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
+              >
+                Excluir
+              </button>
+              <button
+                onClick={() => onDuplicar(post)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-900"
+              >
+                Duplicar
+              </button>
+            </div>
           ) : (
             <span />
           )}

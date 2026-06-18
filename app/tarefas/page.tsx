@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
 import { ColunaTarefa, NovaTarefa, Tarefa } from "@/lib/types";
 import { useUndoStack } from "@/lib/useUndoStack";
+import { mesmosValores } from "@/lib/mesmosValores";
 import TaskCalendarGrid from "@/components/tarefas/TaskCalendarGrid";
 import TaskChip from "@/components/tarefas/TaskChip";
 import TaskModal from "@/components/tarefas/TaskModal";
@@ -32,6 +33,7 @@ export default function PaginaTarefas() {
 
   const [semanaAtual, setSemanaAtual] = useState(() => new Date());
   const [filtroResponsavel, setFiltroResponsavel] = useState("Victoria");
+  const [buscaTitulo, setBuscaTitulo] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
@@ -67,9 +69,13 @@ export default function PaginaTarefas() {
   }, [tarefas]);
 
   const tarefasDoResponsavel = useMemo(() => {
-    if (filtroResponsavel === "todos") return tarefas;
-    return tarefas.filter((t) => t.responsavel === filtroResponsavel);
-  }, [tarefas, filtroResponsavel]);
+    const busca = buscaTitulo.trim().toLowerCase();
+    return tarefas.filter((t) => {
+      if (filtroResponsavel !== "todos" && t.responsavel !== filtroResponsavel) return false;
+      if (busca && !t.titulo.toLowerCase().includes(busca)) return false;
+      return true;
+    });
+  }, [tarefas, filtroResponsavel, buscaTitulo]);
 
   const tarefasComPrazo = useMemo(
     () => tarefasDoResponsavel.filter((t) => !!t.prazo),
@@ -142,6 +148,12 @@ export default function PaginaTarefas() {
 
   async function salvarTarefa(id: string | null, valores: NovaTarefa) {
     const tarefaAnterior = id ? tarefas.find((t) => t.id === id) ?? null : null;
+
+    if (tarefaAnterior && mesmosValores(paraNovaTarefa(tarefaAnterior), valores)) {
+      setModalAberto(false);
+      return;
+    }
+
     if (id) {
       const { data, error } = await supabase
         .from("tarefas")
@@ -168,6 +180,19 @@ export default function PaginaTarefas() {
       }
     }
     setModalAberto(false);
+  }
+
+  async function duplicarTarefa(tarefa: Tarefa) {
+    const { data, error } = await supabase
+      .from("tarefas")
+      .insert(paraNovaTarefa(tarefa))
+      .select()
+      .single();
+    if (error || !data) return;
+    const tarefaDuplicada = data as Tarefa;
+    setTarefas((atual) => [...atual, tarefaDuplicada]);
+    registrarAcao(() => aplicarExclusaoTarefa(tarefaDuplicada.id));
+    setTarefaSelecionada(tarefaDuplicada);
   }
 
   async function excluirTarefa(id: string) {
@@ -285,6 +310,13 @@ export default function PaginaTarefas() {
               </option>
             ))}
           </select>
+          <input
+            type="text"
+            value={buscaTitulo}
+            onChange={(e) => setBuscaTitulo(e.target.value)}
+            placeholder="Buscar por título..."
+            className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-500"
+          />
         </div>
       </div>
 
@@ -337,6 +369,7 @@ export default function PaginaTarefas() {
 
       {modalAberto && (
         <TaskModal
+          key={tarefaSelecionada?.id ?? "nova"}
           tarefa={tarefaSelecionada}
           colunaPadrao={colunaParaNovaTarefa}
           prazoPadrao={prazoParaNovaTarefa}
@@ -344,6 +377,7 @@ export default function PaginaTarefas() {
           onFechar={() => setModalAberto(false)}
           onSalvar={salvarTarefa}
           onExcluir={excluirTarefa}
+          onDuplicar={duplicarTarefa}
         />
       )}
     </div>
