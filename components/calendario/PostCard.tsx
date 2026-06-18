@@ -45,7 +45,6 @@ export default function PostCard({
     (e) => e.nome === "Stories" || e.nome === "Feed"
   );
   const tituloJaTemFormato = /^(stories|feed)\b/i.test(post.titulo);
-  const semConteudo = ["stories", "feed"].includes(post.titulo.trim().toLowerCase());
   const prefixoFormato =
     etiquetaFormato && !tituloJaTemFormato
       ? etiquetaFormato.nome === "Stories"
@@ -79,7 +78,7 @@ export default function PostCard({
         </span>
       )}
 
-      {etiquetasDoPost.length > 0 && !semConteudo && (
+      {etiquetasDoPost.length > 0 && (
         <div className="mb-1 flex flex-wrap gap-1">
           {etiquetasDoPost.map((et) => (
             <span

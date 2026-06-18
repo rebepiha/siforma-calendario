@@ -40,14 +40,12 @@
   header original pouco destacado do fundo da página. Textos secundários ajustados pra
   manter contraste no fundo mais claro: subtítulo "Calendário de Marketing"
   `text-zinc-600`→`text-zinc-300`, abas inativas `text-zinc-400`→`text-zinc-200`.
-- **Cards "Stories"/"Feed" vazios não mostram etiqueta colorida** (ver Sessão 21): os
-  posts placeholder criados em massa na Sessão 17 (título exatamente "Stories" ou
-  "Feed", sem conteúdo real ainda) deixaram de mostrar a barrinha de cor da etiqueta de
-  formato no topo do card (`PostCard.tsx`, variável `semConteudo` — título, sem espaços
-  nas pontas e em minúsculas, igual a "stories" ou "feed"). Posts com conteúdo real
-  (qualquer outro título, mesmo que comece com "Stories"/"Feed", ex: "Stories - Backstage
-  Cobertura") continuam mostrando a barrinha normalmente — a checagem é por
-  correspondência exata do título inteiro, não por prefixo.
+- **Cards "Stories"/"Feed" vazios mostram a etiqueta colorida normalmente** (Sessão 21
+  tentou esconder essa barrinha nos posts placeholder sem conteúdo real, mas o usuário
+  corrigiu na Sessão 23: não era isso que tinha pedido — a barrinha devia continuar
+  aparecendo em todos os posts, vazios ou não. Revertido: `PostCard.tsx` não tem mais a
+  variável `semConteudo`, a barrinha de etiqueta volta a renderizar sempre que o post
+  tem etiquetas, sem exceção).
 - **Favicon** (ver Sessão 16): `app/favicon.ico` (multi-resolução 16/32/48/64) e
   `app/icon.png` (512×512) são o ícone de calendário (fundo verde-oliva no topo, corpo
   branco, grade preta) que o usuário forneceu como PNG com fundo branco — removi o fundo
@@ -277,6 +275,32 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 23 — 2026-06-18
+
+**Contexto**: usuário apontou um erro meu — "não era pra tirar a etiqueta colorida de
+cima, e sim a cor rosa do texto Instagram". Reli o histórico: o pedido da Sessão 21
+("tire as etiquetas coloridas dos cards de stories que não tem conteúdo") eu tinha
+interpretado e implementado literalmente (esconder a barrinha só nos posts placeholder
+vazios), mas o usuário considerou isso errado — o que ele queria mesmo, nessa direção
+de simplificação, era só a cor do texto "Instagram" (resolvido depois, Sessões 20 e 22),
+não a remoção da barrinha de etiqueta dos cards vazios.
+
+**1. Revert**
+- `components/calendario/PostCard.tsx`: removida a variável `semConteudo` e a condição
+  `!semConteudo` que escondia a `<div>` das barrinhas de etiqueta. A barrinha volta a
+  aparecer em todo post que tem etiquetas, inclusive os placeholders "Stories"/"Feed"
+  vazios da Sessão 17 — exatamente como era antes da Sessão 21.
+- Não toquei na cor do texto "Instagram" (`lib/postStyles.ts`), que já está neutra
+  (`text-zinc-400`) desde a Sessão 22 e continua correta.
+
+**2. Testes**
+- `npm run lint` e `npm run build` limpos. Confirmei visualmente que todo card "Stories"
+  (vazio ou não) voltou a mostrar a barrinha laranja, e que "Instagram" continua
+  neutro. Usuário confirmou ("sim") que ficou certo antes de eu seguir pro commit.
+
+**3. Pendente**
+- Nada novo. Mudança ainda não commitada — perguntar antes de commitar/push.
 
 ### Sessão 22 — 2026-06-18
 
