@@ -60,8 +60,10 @@
   (Sessões 14–15 revertidas/substituídas na Sessão 19): o usuário achou o card poluído
   com "Instagram - Stories"/"Instagram - Feed" coloridos (laranja/amarelo) competindo
   com a barrinha de etiqueta. Simplificado: o label do canal em `PostCard.tsx` voltou a
-  ser sempre só `LABEL_CANAL[post.canal]` na cor fixa de `CORES_CANAL` (`text-pink-400`
-  pro Instagram, sem variar por formato). O formato passou a aparecer como prefixo do
+  ser sempre só `LABEL_CANAL[post.canal]` na cor fixa de `CORES_CANAL` (Instagram em rosa
+  — `text-pink-300/80`, suavizado na Sessão 20 a partir do `text-pink-400` original da
+  Sessão 14, que o usuário achou ainda chamativo demais mesmo depois da simplificação).
+  O formato passou a aparecer como prefixo do
   **título** — `"Stories- "` ou `"Feed: "` — só quando o post tem a etiqueta
   correspondente *e* o título ainda não começa com essa palavra (regex
   `/^(stories|feed)\b/i`, pra não duplicar em posts que a equipe já escreveu manualmente
@@ -260,6 +262,25 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 20 — 2026-06-18
+
+**Contexto**: continuação direta da Sessão 19. Usuário achou o rosa do Instagram
+(`text-pink-400`) ainda muito chamativo mesmo depois de simplificar o card, pediu um
+rosa "mais neutro".
+
+**1. Ajuste de cor**
+- `lib/postStyles.ts`: `CORES_CANAL.instagram.text` de `text-pink-400` para
+  `text-pink-300/80` (tom mais claro/suave do Tailwind, com 80% de opacidade) — fica
+  visivelmente mais discreto contra o fundo escuro, sem perder a identificação de cor
+  por canal.
+
+**2. Testes**
+- `npm run lint` e `npm run build` limpos. Confirmado visualmente via Playwright/Chrome
+  headless antes de considerar pronto.
+
+**3. Pendente**
+- Nada novo. Mudança ainda não commitada — perguntar antes de commitar/push.
 
 ### Sessão 19 — 2026-06-18
 
