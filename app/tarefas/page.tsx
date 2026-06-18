@@ -32,7 +32,7 @@ export default function PaginaTarefas() {
     undefined
   );
 
-  const [visualizacao, setVisualizacao] = useState<Visualizacao>("kanban");
+  const [visualizacao, setVisualizacao] = useState<Visualizacao>("calendario");
   const [semanaAtual, setSemanaAtual] = useState(() => new Date());
   const [filtroResponsavel, setFiltroResponsavel] = useState("Victoria");
 
@@ -145,6 +145,10 @@ export default function PaginaTarefas() {
     }
   }
 
+  function alternarConcluida(tarefa: Tarefa) {
+    moverTarefa(tarefa.id, tarefa.coluna === "concluido" ? "a_fazer" : "concluido");
+  }
+
   async function moverPrazoTarefa(tarefaId: string, novoPrazo: string | null) {
     setTarefas((atual) =>
       atual.map((t) => (t.id === tarefaId ? { ...t, prazo: novoPrazo } : t))
@@ -199,16 +203,6 @@ export default function PaginaTarefas() {
           <h1 className="text-lg font-semibold text-zinc-100">Tarefas de Marketing</h1>
           <div className="flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-900 p-1">
             <button
-              onClick={() => setVisualizacao("kanban")}
-              className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                visualizacao === "kanban"
-                  ? "bg-oliva text-white"
-                  : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-              }`}
-            >
-              Kanban
-            </button>
-            <button
               onClick={() => setVisualizacao("calendario")}
               className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
                 visualizacao === "calendario"
@@ -217,6 +211,16 @@ export default function PaginaTarefas() {
               }`}
             >
               Calendário
+            </button>
+            <button
+              onClick={() => setVisualizacao("kanban")}
+              className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                visualizacao === "kanban"
+                  ? "bg-oliva text-white"
+                  : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+              }`}
+            >
+              Kanban
             </button>
           </div>
         </div>
@@ -299,6 +303,7 @@ export default function PaginaTarefas() {
                         tarefa={tarefa}
                         mostrarResponsavel={filtroResponsavel === "todos"}
                         onClick={() => abrirEdicaoTarefa(tarefa)}
+                        onToggleConcluida={() => alternarConcluida(tarefa)}
                       />
                     </div>
                   ))}
@@ -313,6 +318,7 @@ export default function PaginaTarefas() {
               mostrarResponsavel={filtroResponsavel === "todos"}
               onClickTarefa={abrirEdicaoTarefa}
               onNovaTarefa={abrirNovaTarefaNoDia}
+              onToggleConcluida={alternarConcluida}
             />
           </div>
         </DndContext>

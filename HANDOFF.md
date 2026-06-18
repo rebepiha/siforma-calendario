@@ -12,6 +12,14 @@
 
 ## Estado atual (resumo rápido)
 
+- **⚠️ Risco conhecido: sessões paralelas no mesmo repositório** (ver Sessão 8). Já
+  aconteceu de duas sessões de agente trabalharem nesse projeto ao mesmo tempo (provavelmente
+  o usuário com duas janelas/dispositivos abertos) e ambas commitarem/pusharem pro mesmo
+  `main`, gerando 13 commits divergentes que tiveram que ser descartados via
+  `git push --force` (a pedido do usuário, que não soube confirmar a origem da outra
+  sessão). Se no início de uma sessão `git fetch` mostrar commits em `origin/main` que não
+  fazem sentido com o que está documentado aqui, **pare e avise o usuário antes de
+  push/pull** — não dá pra saber se é trabalho real perdido ou outra sessão concorrente.
 - **Link de produção**: https://siforma-calendario.vercel.app
 - **Repositório**: https://github.com/rebepiha/siforma-calendario (público, branch `main`)
 - **Supabase**: projeto com URL `https://ayfbzhyykcqrkfpscgkv.supabase.co` (ref `ayfbzhyykcqrkfpscgkv`)
@@ -57,6 +65,16 @@
   mais tela cheia), clique no card abre direto o modal de edição de sempre (não há mais
   conceito de "post selecionado" separado de "post em edição"). Ver Sessão 6 para a
   lista exata de arquivos revertidos/removidos e o que ficou só no banco (não na UI).
+- **Marcar concluído/publicado direto no card** (ver Sessão 8): em Tarefas (`TaskChip.tsx`,
+  vista Calendário e a caixa "Sem prazo definido") e no Calendário Editorial
+  (`PostCard.tsx`), tem um botão pequeno no canto esquerdo do card (ponto de prioridade ou
+  círculo vazio) que alterna o status sem abrir o card — em tarefas, alterna entre a coluna
+  atual e `concluido` (some pra `a_fazer` se desmarcado); em posts, alterna `status` entre
+  `publicado` e `pendente`. Usa `e.stopPropagation()` pra não disparar o clique do
+  card/abrir o modal. TaskCard.tsx (board Kanban) **não** ganhou esse botão — só a vista
+  Calendário de tarefas e o Calendário Editorial, conforme pedido.
+- **Vista padrão de Tarefas de Marketing é Calendário** (ver Sessão 8), não mais Kanban —
+  botão "Calendário" também vem primeiro na UI, "Kanban" depois.
 - **Sem autenticação**: acesso por link aberto. RLS habilitado nas 3 tabelas mas com
   política `using (true) with check (true)` (qualquer um com o link lê/escreve).
 - **Ambiente local**: máquina não tinha Node/npm/Homebrew — Node foi instalado via `nvm`
@@ -127,6 +145,85 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 8 — 2026-06-18
+
+**Contexto**: usuário pediu pra commitar/dar push no que tinha sido feito na Sessão 7, e
+junto pediu duas coisas novas: (1) em Tarefas de Marketing, abrir a vista Calendário por
+padrão (antes era Kanban); (2) poder marcar uma tarefa/post como concluído/publicado
+clicando direto num botão no canto esquerdo do card, sem precisar abrir o card — mandou
+print de referência de um card de tarefa com um ícone de check verde.
+
+**1. Incidente: 13 commits paralelos descobertos no `git push`**
+- Ao tentar `git push`, o push foi rejeitado — `origin/main` tinha commits que não existiam
+  localmente. Investiguei com `git fetch` + `git log main..origin/main --stat`: 13 commits
+  entre 17/06 23:51 e 18/06 01:56 (exatamente a janela desta conversa), de outra sessão
+  (provavelmente o usuário com outro dispositivo/janela do Claude Code aberta no mesmo
+  projeto — ele não soube confirmar a origem). Tinham até uma entrada de HANDOFF própria
+  pra uma "Sessão 7" diferente da minha (mesmo número, conteúdo diferente).
+- Categorizei os 13 commits pro usuário antes de qualquer ação: ~7 conflitavam diretamente
+  com o revert da Sessão 6 (transformavam a edição de post num painel lateral animado com
+  `framer-motion`/"motion", calendário "deslizando", larguras teladas — o oposto do que a
+  Sessão 6 tinha revertido a pedido do usuário), ~3 eram só da aba Tarefas e não conflitavam
+  (drag-to-reorder com migration `0006_ordem_tarefas.sql`, criar tarefa ao clicar no dia,
+  redesign do board de tarefas), e 1 era só a entrada de HANDOFF duplicada.
+- Usuário decidiu: descartar todo o trabalho paralelo, sem querer investigar a origem.
+  Executei `git push --force origin main`, sobrescrevendo `origin/main` pra ficar igual ao
+  meu local (`3494e74`) — os 13 commits saíram do GitHub (continuam existindo localmente
+  em qualquer sessão/clone que ainda os tenha, só não estão mais no remoto).
+- **Resíduo no banco que não foi desfeito** (decisão consciente, mesmo padrão de sobras
+  anteriores): a outra sessão já tinha rodado a migration `0006_ordem_tarefas.sql` contra o
+  Supabase de produção antes do force-push — a tabela `tarefas` ficou com uma coluna
+  `ordem` que o código atual (sem essa migration) não lê nem escreve. Inofensivo (coluna
+  extra ignorada), só documentando pra não confundir uma sessão futura que for inspecionar
+  o schema. Também notei uma tarefa real "Programar posts do fim de semana" (responsável
+  Victoria, prazo 18/jun) criada por aquela sessão — não apaguei, é conteúdo real.
+- **Risco registrado em "Estado atual" pra todas as sessões futuras**: ver bullet novo no
+  topo deste arquivo. Se `git fetch` mostrar divergência inesperada, parar e perguntar
+  antes de decidir sozinho.
+
+**2. Tarefas de Marketing: Calendário como vista padrão**
+- `app/tarefas/page.tsx`: `useState<Visualizacao>("kanban")` → `useState<Visualizacao>("calendario")`.
+  Também troquei a ordem dos dois botões do toggle (Calendário primeiro, Kanban depois),
+  já que o pedido foi "abrir primeiro calendário depois kanban".
+
+**3. Marcar concluído/publicado direto no card**
+- `components/tarefas/TaskChip.tsx`: o elemento raiz era um `<button>` (clique em qualquer
+  parte abria o modal de edição) — trocado pra `<div onClick=...>` porque agora precisa de
+  um botão *dentro* dele (não pode ter `<button>` dentro de `<button>`, HTML inválido). O
+  pontinho de prioridade (ou o ícone de check verde quando já concluída) virou um
+  `<button>` próprio com `onClick` que chama `e.stopPropagation()` antes de
+  `onToggleConcluida()`, pra não abrir o modal. `onToggleConcluida` é uma prop nova,
+  passada por `TaskCalendarDayCell.tsx` → `TaskCalendarGrid.tsx` → `app/tarefas/page.tsx`
+  (e também direto onde `TaskChip` é usado na caixa "Sem prazo definido"). A função em
+  `app/tarefas/page.tsx` (`alternarConcluida`) só reaproveita o `moverTarefa` que já
+  existia: se a tarefa já está em `concluido`, volta pra `a_fazer`; senão, vai pra
+  `concluido`. **Decisão**: não dá pra "lembrar" a coluna anterior (não é rastreada), então
+  desmarcar sempre volta pra `a_fazer`, não pra onde estava antes (ex: "Em andamento").
+  Não toquei em `TaskCard.tsx` (cards do board Kanban) — o pedido foi especificamente pro
+  card de tarefa (que bate com a vista Calendário, que é a referência do print) e pro
+  Calendário Editorial; no Kanban a coluna já mostra o status, então não pareceu necessário
+  e não foi pedido.
+- `components/calendario/PostCard.tsx`: mesma ideia — adicionei um `<button>` com a mesma
+  estrutura de ícone (círculo vazio / check verde) antes do nome do canal, que chama uma
+  prop nova `onToggleStatus` (alterna `status` entre `publicado` e `pendente`, mesma lógica
+  de "não lembra o status anterior"). Like o `TaskChip`, usei `e.stopPropagation()` pra não
+  abrir o modal de edição do post. Prop passada por `DayCell.tsx` → `CalendarGrid.tsx` →
+  `app/page.tsx` (`alternarStatusPublicado`, nova função, mesmo padrão do `moverPost` já
+  existente).
+
+**4. Testes**
+- `npm run lint` e `npm run build` limpos.
+- Testado via Playwright/Chrome headless: clicar no botão do card de tarefa "teste" (vista
+  Calendário) marcou como concluída (check verde, tachado, sem abrir modal — confirmei
+  contando ocorrências de "Editar tarefa" na página, zero) e revertido depois. Trocar pra
+  Kanban confirma que a tarefa voltou pra coluna "A Fazer" (5 tarefas), nada ficou
+  inconsistente. No Calendário Editorial, clicar no botão do post de teste "LinkedIn /
+  Post" (18/jun) marcou como publicado sem abrir o modal de edição, revertido depois.
+
+**5. Pendente**
+- Nada novo desta sessão. Mudanças já commitadas e enviadas ao GitHub (ver "Estado atual"
+  sobre o force-push).
 
 ### Sessão 7 — 2026-06-18
 

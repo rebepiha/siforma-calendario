@@ -21,12 +21,14 @@ export default function CalendarGrid({
   etiquetas,
   onClickPost,
   onNovoPost,
+  onToggleStatus,
 }: {
   mesAtual: Date;
   posts: Post[];
   etiquetas: Etiqueta[];
   onClickPost: (post: Post) => void;
   onNovoPost: (data: string) => void;
+  onToggleStatus: (post: Post) => void;
 }) {
   const inicioGrade = startOfWeek(startOfMonth(mesAtual), { weekStartsOn: 1 });
   const fimGrade = endOfWeek(endOfMonth(mesAtual), { weekStartsOn: 1 });
@@ -62,6 +64,7 @@ export default function CalendarGrid({
               etiquetas={etiquetas}
               onClickPost={onClickPost}
               onNovoPost={onNovoPost}
+              onToggleStatus={onToggleStatus}
             />
           );
         })}

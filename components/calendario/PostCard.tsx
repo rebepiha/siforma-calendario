@@ -5,15 +5,38 @@ import { CSS } from "@dnd-kit/utilities";
 import { Etiqueta, Post } from "@/lib/types";
 import { CORES_CANAL, LABEL_CANAL } from "@/lib/postStyles";
 
+function IconeCheck() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-3.5 w-3.5 shrink-0 text-green-500"
+      aria-label="Publicado"
+    >
+      <circle cx="10" cy="10" r="9" fill="currentColor" fillOpacity="0.15" />
+      <path
+        d="M6.5 10.2l2.2 2.2 4.8-4.8"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function PostCard({
   post,
   etiquetas,
   onClick,
+  onToggleStatus,
 }: {
   post: Post;
   etiquetas: Etiqueta[];
   onClick: () => void;
+  onToggleStatus: () => void;
 }) {
+  const publicado = post.status === "publicado";
   const corCanal = CORES_CANAL[post.canal];
   const etiquetasDoPost = post.etiqueta_ids
     .map((id) => etiquetas.find((e) => e.id === id))
@@ -55,9 +78,26 @@ export default function PostCard({
         </div>
       )}
 
-      <span className={`text-[11px] font-medium ${corCanal.text}`}>
-        {LABEL_CANAL[post.canal]}
-      </span>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleStatus();
+          }}
+          className="-m-1 shrink-0 rounded-full p-1"
+          aria-label={publicado ? "Marcar como não publicado" : "Marcar como publicado"}
+        >
+          {publicado ? (
+            <IconeCheck />
+          ) : (
+            <span className="block h-3 w-3 rounded-full border-2 border-zinc-500" />
+          )}
+        </button>
+        <span className={`text-[11px] font-medium ${corCanal.text}`}>
+          {LABEL_CANAL[post.canal]}
+        </span>
+      </div>
 
       <p className="text-sm font-semibold leading-snug text-zinc-100">{post.titulo}</p>
 

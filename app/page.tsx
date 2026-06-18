@@ -173,6 +173,20 @@ export default function PaginaCalendario() {
     }
   }
 
+  async function alternarStatusPublicado(post: Post) {
+    const novoStatus: Post["status"] = post.status === "publicado" ? "pendente" : "publicado";
+    setPosts((atual) =>
+      atual.map((p) => (p.id === post.id ? { ...p, status: novoStatus } : p))
+    );
+    const { error } = await supabase
+      .from("posts")
+      .update({ status: novoStatus })
+      .eq("id", post.id);
+    if (error) {
+      carregarPosts();
+    }
+  }
+
   async function moverPost(postId: string, novaData: string) {
     setPosts((atual) =>
       atual.map((p) => (p.id === postId ? { ...p, data: novaData } : p))
@@ -247,6 +261,7 @@ export default function PaginaCalendario() {
             etiquetas={etiquetas}
             onClickPost={abrirEdicaoPost}
             onNovoPost={abrirNovoPost}
+            onToggleStatus={alternarStatusPublicado}
           />
         </DndContext>
       )}

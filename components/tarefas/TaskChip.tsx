@@ -36,10 +36,12 @@ export default function TaskChip({
   tarefa,
   mostrarResponsavel,
   onClick,
+  onToggleConcluida,
 }: {
   tarefa: Tarefa;
   mostrarResponsavel: boolean;
   onClick: () => void;
+  onToggleConcluida: () => void;
 }) {
   const concluida = tarefa.coluna === "concluido";
   const atrasada =
@@ -53,22 +55,32 @@ export default function TaskChip({
     : undefined;
 
   return (
-    <button
+    <div
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`flex w-full flex-col gap-0.5 rounded-md border bg-zinc-800 px-2 py-1 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+      className={`flex w-full cursor-pointer flex-col gap-0.5 rounded-md border bg-zinc-800 px-2 py-1 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
         atrasada ? "border-red-500/40" : "border-zinc-700"
       } ${concluida ? "opacity-60" : ""} ${isDragging ? "opacity-50" : ""}`}
     >
       <div className="flex items-center gap-1.5">
-        {concluida ? (
-          <IconeCheck />
-        ) : (
-          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${COR_PRIORIDADE[tarefa.prioridade]}`} />
-        )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleConcluida();
+          }}
+          className="-m-1 shrink-0 rounded-full p-1"
+          aria-label={concluida ? "Marcar como não concluída" : "Marcar como concluída"}
+        >
+          {concluida ? (
+            <IconeCheck />
+          ) : (
+            <span className={`block h-1.5 w-1.5 rounded-full ${COR_PRIORIDADE[tarefa.prioridade]}`} />
+          )}
+        </button>
         <p
           className={`truncate text-xs font-medium text-zinc-200 ${
             concluida ? "line-through" : ""
@@ -88,6 +100,6 @@ export default function TaskChip({
           <span className="truncate">{tarefa.responsavel}</span>
         </span>
       )}
-    </button>
+    </div>
   );
 }

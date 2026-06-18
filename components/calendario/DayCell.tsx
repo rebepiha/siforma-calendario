@@ -13,6 +13,7 @@ export default function DayCell({
   etiquetas,
   onClickPost,
   onNovoPost,
+  onToggleStatus,
 }: {
   dataStr: string;
   numeroDia: number;
@@ -22,6 +23,7 @@ export default function DayCell({
   etiquetas: Etiqueta[];
   onClickPost: (post: Post) => void;
   onNovoPost: (data: string) => void;
+  onToggleStatus: (post: Post) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: dataStr });
 
@@ -60,6 +62,7 @@ export default function DayCell({
             post={post}
             etiquetas={etiquetas}
             onClick={() => onClickPost(post)}
+            onToggleStatus={() => onToggleStatus(post)}
           />
         ))}
       </div>

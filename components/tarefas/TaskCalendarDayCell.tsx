@@ -14,6 +14,7 @@ export default function TaskCalendarDayCell({
   mostrarResponsavel,
   onClickTarefa,
   onNovaTarefa,
+  onToggleConcluida,
 }: {
   dataStr: string;
   nomeDiaSemana: string;
@@ -24,6 +25,7 @@ export default function TaskCalendarDayCell({
   mostrarResponsavel: boolean;
   onClickTarefa: (tarefa: Tarefa) => void;
   onNovaTarefa: (data: string) => void;
+  onToggleConcluida: (tarefa: Tarefa) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: dataStr });
 
@@ -69,6 +71,7 @@ export default function TaskCalendarDayCell({
             tarefa={tarefa}
             mostrarResponsavel={mostrarResponsavel}
             onClick={() => onClickTarefa(tarefa)}
+            onToggleConcluida={() => onToggleConcluida(tarefa)}
           />
         ))}
       </div>

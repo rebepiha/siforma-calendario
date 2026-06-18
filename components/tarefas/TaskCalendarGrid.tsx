@@ -11,12 +11,14 @@ export default function TaskCalendarGrid({
   mostrarResponsavel,
   onClickTarefa,
   onNovaTarefa,
+  onToggleConcluida,
 }: {
   semanaAtual: Date;
   tarefas: Tarefa[];
   mostrarResponsavel: boolean;
   onClickTarefa: (tarefa: Tarefa) => void;
   onNovaTarefa: (data: string) => void;
+  onToggleConcluida: (tarefa: Tarefa) => void;
 }) {
   const inicio = startOfWeek(semanaAtual, { weekStartsOn: 1 });
   const dias = Array.from({ length: 7 }, (_, i) => addDays(inicio, i));
@@ -41,6 +43,7 @@ export default function TaskCalendarGrid({
               mostrarResponsavel={mostrarResponsavel}
               onClickTarefa={onClickTarefa}
               onNovaTarefa={onNovaTarefa}
+              onToggleConcluida={onToggleConcluida}
             />
           );
         })}
