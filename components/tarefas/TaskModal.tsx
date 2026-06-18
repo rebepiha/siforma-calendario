@@ -75,16 +75,24 @@ export default function TaskModal({
     }
   }
 
+  async function fecharSalvando() {
+    if (valores.titulo.trim()) {
+      await salvar();
+    } else {
+      onFechar();
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="absolute inset-0" onClick={onFechar} />
+      <div className="absolute inset-0" onClick={fecharSalvando} />
       <div className="relative flex max-h-[90vh] w-full max-w-md flex-col overflow-y-auto rounded-xl bg-zinc-800 shadow-2xl">
         <div className="flex items-center justify-between border-b border-zinc-700 px-5 py-4">
           <h2 className="text-base font-semibold text-zinc-100">
             {tarefa ? "Editar tarefa" : "Nova tarefa"}
           </h2>
           <button
-            onClick={onFechar}
+            onClick={fecharSalvando}
             className="rounded p-1 text-zinc-600 hover:bg-zinc-900 hover:text-zinc-300"
           >
             ✕
@@ -185,21 +193,13 @@ export default function TaskModal({
           ) : (
             <span />
           )}
-          <div className="flex gap-2">
-            <button
-              onClick={onFechar}
-              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-900"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={salvar}
-              disabled={salvando || !valores.titulo.trim()}
-              className="rounded-md bg-oliva px-4 py-2 text-sm font-medium text-white hover:bg-oliva-forte disabled:opacity-50"
-            >
-              {salvando ? "Salvando..." : "Salvar"}
-            </button>
-          </div>
+          <button
+            onClick={fecharSalvando}
+            disabled={salvando}
+            className="rounded-md bg-oliva px-4 py-2 text-sm font-medium text-white hover:bg-oliva-forte disabled:opacity-50"
+          >
+            {salvando ? "Salvando..." : "Fechar"}
+          </button>
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@ export default function TaskCalendarGrid({
 
   return (
     <div className="overflow-hidden rounded-xl shadow-sm">
-      <div className="grid grid-cols-7">
+      <div className="grid grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1.4fr_0.5fr_0.5fr]">
         {dias.map((dia) => {
           const dataStr = format(dia, "yyyy-MM-dd");
           const tarefasDoDia = tarefas.filter((t) => t.prazo === dataStr);

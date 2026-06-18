@@ -60,7 +60,10 @@ export default function TaskChip({
       style={style}
       {...listeners}
       {...attributes}
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       className={`flex w-full cursor-pointer flex-col gap-1 rounded-md border bg-zinc-800 px-2.5 py-1.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
         atrasada ? "border-red-500/40" : "border-zinc-700"
       } ${concluida ? "opacity-60" : ""} ${isDragging ? "opacity-50" : ""}`}

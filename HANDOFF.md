@@ -99,6 +99,17 @@
   usuário. São ajustes de gosto/densidade independentes entre as duas páginas, não uma
   regra geral — se pedirem mais ajuste fino de tamanho no futuro, é só variar essas mesmas
   classes Tailwind.
+- **Tarefas (vista Calendário) ganhou os mesmos padrões do Calendário Editorial** (ver
+  Sessão 11): colunas de Sábado/Domingo mais estreitas que as de dia de semana
+  (`TaskCalendarGrid.tsx`, `grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1.4fr_0.5fr_0.5fr]` em vez
+  de `grid-cols-7` uniforme — pedido do usuário porque fim de semana raramente é usado);
+  clicar em qualquer parte do quadrado do dia cria uma tarefa nova (`TaskCalendarDayCell.tsx`,
+  mesmo padrão do `DayCell.tsx` do Calendário Editorial — botão "+ Nova" que só aparecia no
+  hover foi removido); `TaskModal.tsx` salva automaticamente ao fechar (✕, clique fora ou
+  botão "Fechar"), sem botões separados de Cancelar/Salvar, mesma função `fecharSalvando`
+  que o `PostModal.tsx` já tinha desde a Sessão 10. Não toquei no Kanban (`TaskCard.tsx`/
+  `KanbanColumn.tsx`) nem na caixa "Sem prazo definido" — só a vista Calendário, que foi o
+  que pediram.
 - **Sem autenticação**: acesso por link aberto. RLS habilitado nas 3 tabelas mas com
   política `using (true) with check (true)` (qualquer um com o link lê/escreve).
 - **Ambiente local**: máquina não tinha Node/npm/Homebrew — Node foi instalado via `nvm`
@@ -169,6 +180,60 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 11 — 2026-06-18
+
+**Contexto**: usuário pediu pra levar os padrões do Calendário Editorial (Sessão 10) pra
+Tarefas de Marketing (vista Calendário, a padrão): clicar em qualquer lugar do dia pra
+criar tarefa, autosave ao fechar o modal, checkbox+transparência (já existia desde a
+Sessão 8/9, só confirmei que estava certo). Além disso, pediu pra Sábado/Domingo
+ocuparem menos espaço na grade (raramente usados) e os cards dos outros dias ficarem
+maiores, aproveitando o espaço.
+
+**1. Colunas de fim de semana mais estreitas**
+- `components/tarefas/TaskCalendarGrid.tsx`: troquei `grid-cols-7` (7 colunas iguais) por
+  `grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1.4fr_0.5fr_0.5fr]` — como o array `dias` sempre
+  começa na segunda (`weekStartsOn: 1`), as 5 primeiras posições são sempre dia de semana e
+  as 2 últimas são sempre sábado/domingo, então não precisei calcular nada dinâmico, só
+  uma proporção fixa (segunda–sexta quase 3x mais largas que sábado/domingo). Isso já
+  resolve o "aumente os cards dentro dos outros dias" — os `TaskChip` são `w-full` dentro
+  da célula, então ficam automaticamente maiores com a coluna mais larga; não precisei
+  aumentar fonte/padding de novo (já tinha sido aumentado na Sessão 9).
+
+**2. Clicar em qualquer parte do dia cria tarefa**
+- Mesmo padrão exato da Sessão 10 no Calendário Editorial: `TaskCalendarDayCell.tsx`
+  ganhou `onClick={() => onNovaTarefa(dataStr)}` no container raiz, removi o botão
+  "+ Nova" que só aparecia no hover (e a classe `group`, sem mais nenhum consumidor) e
+  adicionei `cursor-pointer`/`hover:bg-zinc-800/70` (só quando não é fim de semana, pra não
+  conflitar com o estilo já esmaecido do `ehFimDeSemana`). `TaskChip.tsx` ganhou
+  `e.stopPropagation()` no `onClick` do card (não tinha desde a Sessão 8 — só o botão de
+  concluir tinha) pra clicar numa tarefa existente abrir a edição dela em vez de também
+  disparar a criação de uma nova por baixo.
+
+**3. Autosave ao fechar o modal de tarefa**
+- `components/tarefas/TaskModal.tsx`: mesma função `fecharSalvando` do `PostModal.tsx`
+  (Sessão 10) — salva se o título não estiver vazio, senão só fecha. Os 3 pontos de
+  fechamento (backdrop, ✕, botão do rodapé) chamam essa função; removidos os botões
+  separados "Cancelar"/"Salvar", sobrou um "Fechar" único.
+
+**4. Escopo: só a vista Calendário**
+- Não toquei no Kanban (`TaskCard.tsx`, `KanbanColumn.tsx`) nem na caixa "Sem prazo
+  definido" em `app/tarefas/page.tsx` — o pedido foi especificamente sobre a vista
+  Calendário (onde sábado/domingo aparecem, e que é a vista padrão/de referência). O
+  checkbox+transparência que o usuário mencionou já existia em todos os lugares desde as
+  Sessões 8/9, não precisei mudar nada ali.
+
+**5. Testes**
+- `npm run lint` e `npm run build` limpos.
+- Playwright/Chrome headless: confirmei visualmente que sábado/domingo ficam visivelmente
+  mais estreitos que os dias de semana. Testei o fluxo completo de criar tarefa clicando
+  no dia (segunda-feira vazia) → fechar sem digitar nada (não cria) → digitar título e
+  fechar pelo ✕ sem clicar em nenhum botão de salvar (cria) → clicar na tarefa criada
+  (abre "Editar tarefa", não "Nova tarefa" por cima) → excluir pelo botão de teste, sem
+  deixar lixo no banco.
+
+**6. Pendente**
+- Nada novo. Mudanças ainda não commitadas — perguntar antes de commitar/push.
 
 ### Sessão 10 — 2026-06-18
 
