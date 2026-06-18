@@ -70,6 +70,20 @@
   que cai no fallback `CORES_CANAL[canal].text` (`lib/postStyles.ts`), que pro Instagram
   é rosa (`text-pink-400`, trocado de laranja na Sessão 14 pra não conflitar com a cor da
   etiqueta Stories).
+- **Tarefa recorrente "Programar posts do fim de semana"** (ver Sessão 17): existe uma
+  linha em `tarefas` pra cada sexta-feira de 19/jun a 18/set/2026 (14 no total, mesmo
+  responsável Victoria/prioridade média/coluna a_fazer da que já existia em 19/jun) — não
+  é uma recorrência automática no código, foram inseridas manualmente via REST API como
+  linhas independentes. Se quiserem mais sextas além de 18/set, é preciso inserir mais
+  linhas (não há lógica de "repetir toda sexta" rodando em background).
+- **Posts "Stories" vazios em todo dia sem Stories (próx. 3 meses)** (ver Sessão 17): 80
+  posts genéricos (`titulo: "Stories"`, canal Instagram, tipo produto, etiqueta Stories)
+  foram inseridos pra cobrir todo dia de 18/jun a 18/set/2026 que não tinha post com
+  etiqueta Stories ainda (13 dias já tinham, principalmente a semana do Formobile —
+  esses não foram duplicados). É conteúdo placeholder pra equipe preencher/editar
+  depois, não conteúdo real. Mesma observação: inserção pontual via API, não é uma
+  regra/cron rodando — não vai continuar gerando novos posts automaticamente além de
+  18/set.
 - **Calendário mostra dias de outros meses** (ver Sessão 7): a grade volta a preencher a
   primeira/última semana com dias do mês anterior/seguinte (revertendo a decisão da
   Sessão 3 de escondê-los) — mas agora aparecem esmaecidos (`opacity-60`, fundo
@@ -223,6 +237,54 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 17 — 2026-06-18
+
+**Contexto**: dois pedidos de preenchimento de dados pros próximos 3 meses (sem mudança
+de código): (1) em Tarefas, repetir o card "Programar posts do fim de semana" toda
+sexta; (2) no Calendário Editorial, criar um card de Stories vazio em todo dia que ainda
+não tem Stories.
+
+**1. Tarefa recorrente de sexta**
+- Consultei a tarefa real já existente "Programar posts do fim de semana" (prazo
+  19/jun/2026, responsável Victoria, prioridade média, coluna a_fazer) pra usar como
+  template. Calculei todas as sextas seguintes até completar 3 meses (26/jun a
+  18/set/2026, 13 datas) e inseri uma linha por data via REST API, copiando os mesmos
+  campos. Confirmei a contagem final (14 = 1 original + 13 novas) e testei visualmente
+  navegando até a semana de 29/jun–5/jul, vendo a tarefa aparecer certo na sexta 3/jul.
+
+**2. Stories vazios em todo dia sem Stories**
+- Antes de escrever, levantei quantos dias dos próximos 3 meses já tinham um post com
+  etiqueta "Stories" (13 dias, concentrados na semana do Formobile) — isso revelou que
+  preencher "todo dia" significava ~80 posts novos, incluindo finais de semana. Como é
+  uma escrita grande no calendário real, perguntei ao usuário antes de executar: (a) se
+  o preenchimento valia pra todos os dias (incl. fim de semana) ou só dias úteis/dias
+  que já têm outro post, e (b) qual título/canal usar no post vazio. Usuário confirmou:
+  todos os dias incluindo fim de semana, título genérico "Stories" em Instagram.
+- Gerei a lista dos 80 dias faltantes (18/jun–18/set, excluindo os 13 que já tinham),
+  inseri um post por dia (`titulo: "Stories"`, canal instagram, tipo produto) via REST
+  API em lote, e aplichei a etiqueta "Stories" em cada um dos 80 (`post_etiquetas`,
+  `Prefer: resolution=ignore-duplicates` por segurança, embora não devesse haver
+  conflito já que são posts novos).
+- Validado visualmente: dias que antes estavam vazios (ex: 19, 21, 23, 25, 26 de junho)
+  agora mostram um card "Instagram - Stories" / título "Stories"; dias que já tinham
+  conteúdo específico de Stories (ex: "Stories - Backstage Cobertura" 28/jun) não foram
+  duplicados, ficaram como estavam.
+
+**3. Observação importante pra sessões futuras**
+- Nenhuma das duas operações criou uma regra/recorrência automática no código — são só
+  linhas inseridas pontualmente no banco via API. Se o usuário pedir "continue
+  repetindo" depois de 18/set, vai ser necessário gerar e inserir mais linhas
+  manualmente (ver bullets correspondentes em "Estado atual").
+
+**4. Testes**
+- Nenhuma mudança de código nesta sessão (só dados via REST API), então não houve
+  lint/build a rodar. Validação foi só visual via Playwright/Chrome headless, como
+  descrito acima.
+
+**5. Pendente**
+- Nada novo. `HANDOFF.md` é a única mudança de arquivo nesta sessão — perguntar ao
+  usuário se quer commit/push só dessa atualização de documentação.
 
 ### Sessão 16 — 2026-06-18
 
