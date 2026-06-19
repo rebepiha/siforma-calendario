@@ -28,24 +28,34 @@
   `eslint.config.mjs` pra essa pasta não poluir o `npm run lint` do projeto com
   warnings do código de terceiros. Se o usuário trocar de máquina, precisa
   reinstalar o skill manualmente — não é algo que `git clone` traz.
-- **Nav (TopNav) e grade semanal de Tarefas agora rolam horizontalmente em telas
-  estreitas em vez de vazar/cortar** (ver Sessão 34, bug relatado pelo usuário
-  com print do celular — "Banco de Ideias" virava 3 linhas e "Biblioteca"
-  aparecia fora do fundo cinza do header; tarefas de quinta apareciam com texto
-  cortado no meio da palavra). Causa: `<nav>` em `TopNav.tsx` não tinha
-  `flex-wrap` nem deixava os links rolarem, e a grade em
-  `TaskCalendarGrid.tsx` usava `grid-cols-[1.4fr_...]` (frações puras, sem
-  `minmax(0,...)`) dentro de um wrapper `overflow-hidden` — colunas não
-  encolhiam e o excesso ficava simplesmente escondido sem dar pra rolar até
-  ele. Corrigido: `nav` ganhou `overflow-x-auto` e cada link `shrink-0
-  whitespace-nowrap` (rola em vez de quebrar linha ou vazar); o wrapper da
-  grade de tarefas trocou `overflow-hidden` por `overflow-x-auto` e a grade
-  ganhou `min-w-[700px]` (rola horizontalmente pra ver sex/sáb/dom, em vez de
-  espremer colunas até ficarem ilegíveis). O mês do Calendário Editorial
-  (`CalendarGrid.tsx`) usa `grid-cols-7` puro do Tailwind (que já vira
-  `repeat(7, minmax(0,1fr))` por padrão) — nunca teve esse problema, confirmado
-  testando em 390px de largura junto com Metas/Banco de Ideias/Biblioteca (só
-  Tarefas estava quebrado).
+- **Nav (TopNav) rola horizontalmente em telas estreitas em vez de vazar**
+  (ver Sessão 34, bug relatado pelo usuário com print do celular — "Banco de
+  Ideias" virava 3 linhas e "Biblioteca" aparecia fora do fundo cinza do
+  header). `<nav>` em `TopNav.tsx` não tinha `flex-wrap` nem deixava os links
+  rolarem; corrigido com `overflow-x-auto` no `nav` e `shrink-0
+  whitespace-nowrap` em cada link.
+- **Calendário Editorial e Tarefas: telas estreitas (abaixo de `sm`, 640px)
+  mostram uma lista vertical por dia em vez da grade de colunas** (ver Sessão
+  35, mesmo bug relatado pelo usuário — a Sessão 34 tinha corrigido só pra
+  "rolar em vez de vazar/cortar", mas o usuário pediu explicitamente pra
+  conseguir ler os cards melhor, e uma grade de 7 colunas espremida — mesmo
+  rolável — nunca ia ficar realmente legível num celular). `CalendarGrid.tsx`
+  e `TaskCalendarGrid.tsx` agora renderizam **dois layouts no DOM
+  simultaneamente**, alternados via classes Tailwind `hidden sm:block` /
+  `sm:hidden` (sem JS de detecção de viewport, evita flash/hidratação
+  inconsistente): a grade de sempre pra `sm:` e acima (inalterada, mesma
+  experiência de antes), e uma lista vertical pra telas menores — cada dia com
+  um cabeçalho clicável (cria post/tarefa nesse dia, mesmo papel do clique
+  vazio no quadrado do dia na grade) e os `PostCard`/`TaskChip` em largura
+  cheia (sem o aperto da grade). No Calendário Editorial, a lista mobile **só
+  mostra dias do mês atual que têm post** (esconde dias vazios e dias de
+  outro mês — evita rolagem longa por um mês inteiro maioria vazio); em
+  Tarefas, a lista mobile mostra **todos os 7 dias da semana** mesmo vazios
+  (com "Nenhuma tarefa.") já que é só uma semana, pouco custo de rolagem.
+  Atenção pra quem for testar com seletores genéricos (ex: Playwright): como
+  os dois layouts existem no DOM ao mesmo tempo, buscas por texto sem escopo
+  retornam 2 resultados (um de cada layout) — escopar por `.sm\\:hidden`
+  ou `.hidden.sm\\:block` conforme o que se quer testar.
 - **App é instalável como PWA** (ver Sessão 33): `app/manifest.ts` (convenção
   nativa do Next.js, servido em `/manifest.webmanifest` e linkado
   automaticamente no `<head>` — não precisei adicionar a tag `<link>` manual),
@@ -444,6 +454,76 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 35 — 2026-06-18
+
+**Contexto**: continuação direta da Sessão 34. Usuário mandou outro print do
+celular mostrando o Calendário Editorial mobile — agora sem overflow (a
+correção anterior funcionou), mas ainda ilegível: 7 colunas espremidas em
+~52px cada, títulos de post quebrando em 3-4 linhas curtas. Pediu "edite a
+view mobile para conseguir ler os cards melhor, no calendario e em tarefas".
+Ficou claro que a Sessão 34 resolveu o overflow mas não o problema de fundo —
+uma grade de 7 colunas (rolável ou não) não cabe informação legível numa tela
+de celular.
+
+**1. Decisão de abordagem**
+Em vez de seguir ajustando a grade (mais scroll horizontal, fontes menores,
+etc.), troquei o padrão pra telas estreitas: lista vertical com um dia por
+vez, cards em largura cheia — abordagem comum em apps de calendário mobile
+(visão "agenda"). Implementado com **dois layouts renderizados ao mesmo
+tempo no DOM**, alternados via Tailwind `hidden sm:block` (grade) /
+`sm:hidden` (lista) — decisão deliberada de não fazer isso com JS
+(`useState` + `useEffect` medindo `window.innerWidth`) pra evitar flash de
+conteúdo errado antes da hidratação e manter consistência com SSR. O custo é
+~2x de DOM (ambos os layouts montados, só um visível via CSS) — aceitável
+pra esse tamanho de app, sem indício de problema de performance.
+
+**2. Implementação**
+- `components/calendario/CalendarGrid.tsx`: grade de sempre envolvida em
+  `hidden ... sm:block`. Lista mobile nova: calcula `diasDoMesComPosts`
+  (dias do mês atual, excluindo dias de fora do mês, filtrando só os que têm
+  pelo menos 1 post) e renderiza cada um como cabeçalho de data (botão
+  clicável → `onNovoPost`, destaca o dia de hoje em oliva) seguido dos
+  `PostCard` em coluna única (`flex flex-col`, sem grid). Reaproveita
+  `PostCard` direto, mesmas props (`onClick`/`onToggleStatus`/
+  `onContextMenu`) — zero duplicação de lógica de card.
+- `components/tarefas/TaskCalendarGrid.tsx`: mesmo padrão, mas a lista mobile
+  mostra **todos os 7 dias da semana**, mesmo sem tarefa (texto "Nenhuma
+  tarefa." nesse caso) — diferente do Calendário, que esconde dias vazios.
+  Decisão: uma semana são só 7 itens no máximo, esconder os vazios não
+  economiza rolagem relevante e esconderia informação real ("essa semana não
+  tem nada na quarta" é útil de ver, diferente de "esse mês tem 20 dias sem
+  post" que só seria ruído). Reaproveita `TaskChip` direto.
+- **Bug pego durante o teste, não durante a implementação**: o cabeçalho de
+  data em Tarefas usava `format(dia, "EEEE, d 'de' MMMM", {locale: ptBR})` +
+  classe Tailwind `capitalize` — `capitalize` aplica `text-transform:
+  capitalize` em **cada palavra**, não só a primeira letra da frase inteira,
+  resultando em "Segunda-Feira, 15 De Junho" (D maiúsculo errado). Corrigido
+  capitalizando manualmente só o primeiro caractere em JS
+  (`texto.charAt(0).toUpperCase() + texto.slice(1)`), sem a classe
+  `capitalize`. O cabeçalho do Calendário Editorial não tinha esse problema
+  (não usava `EEEE`/`capitalize`, só `{numeroDia} de {mes}` já em minúsculo).
+
+**3. Testes**
+- `npm run lint`/`npm run build` limpos.
+- Playwright em 390×1200: confirmei que a grade de 7 colunas não fica visível
+  (`isVisible()` false) em nenhuma das duas páginas, que os cards na lista
+  mobile ficam em largura cheia (~358px, não os ~50px de antes), que clicar
+  num card abre o modal de edição normalmente, e que clicar no cabeçalho de
+  uma data abre o modal de criação **já com a data certa preenchida**
+  (testei explicitamente o valor do `<input type="date">`). Tive que corrigir
+  os primeiros testes que davam falso positivo de erro ("strict mode
+  violation: resolved to 2 elements") — escopando pra `.sm\:hidden` — porque
+  os dois layouts (grade + lista) existem ao mesmo tempo no DOM, então buscas
+  de texto sem escopo batem nos dois. Não é bug do app, é uma característica
+  da abordagem que documentei em "Estado atual" pra não confundir testes
+  futuros.
+- Conferido por screenshot em 1280px (desktop) que a grade de 7 colunas
+  continua idêntica a antes nas duas páginas — nenhuma regressão visual no
+  desktop.
+
+**4. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
 
 ### Sessão 34 — 2026-06-18
 
