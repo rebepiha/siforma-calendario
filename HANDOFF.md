@@ -20,6 +20,19 @@
   sessão). Se no início de uma sessão `git fetch` mostrar commits em `origin/main` que não
   fazem sentido com o que está documentado aqui, **pare e avise o usuário antes de
   push/pull** — não dá pra saber se é trabalho real perdido ou outra sessão concorrente.
+- **App é instalável como PWA** (ver Sessão 33): `app/manifest.ts` (convenção
+  nativa do Next.js, servido em `/manifest.webmanifest` e linkado
+  automaticamente no `<head>` — não precisei adicionar a tag `<link>` manual),
+  `public/icon-192.png`/`public/icon-512.png` (gerados a partir de `app/icon.png`
+  via `sips`, nativo do macOS), `viewport.themeColor` e `metadata.appleWebApp`
+  em `app/layout.tsx`. Service worker **propositalmente vazio**
+  (`public/sw.js`, registrado por `components/RegistrarServiceWorker.tsx`) — só
+  existe pra satisfazer o critério de instalabilidade do Chrome/Android
+  (precisa de um service worker controlando a página), não cacheia nada de
+  verdade, porque os dados vêm do Supabase em tempo real e cachear
+  arriscaria mostrar informação desatualizada pra equipe. **Sem notificações
+  push** — não foi pedido nessa rodada (precisaria de mais infraestrutura:
+  permissão do usuário + um backend pra disparar).
 - **Biblioteca** (ver Sessões 30, 31 e 32): 5ª aba no `TopNav`, rota `/biblioteca`.
   **Não é uma tabela nova** — busca direto de `posts` no Supabase com
   `status = 'publicado'`, sem cadastro manual (decisão tomada perguntando ao
@@ -405,6 +418,69 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 33 — 2026-06-18
+
+**Contexto**: usuário tentou instalar um skill externo via
+`npx -y skills add pbakaus/impeccable --skill polish --agent claude-code` — não
+achou um skill chamado "polish" nesse repo (só existe "impeccable"); avisei e
+não instalei nada sem confirmação. Em seguida perguntou sobre transformar o
+site num app (PWA), expliquei a diferença entre PWA básico (manifest + ícones +
+instalável, relativamente simples em Next.js) e notificações push (mais
+trabalho, precisa de backend) — usuário pediu pra implementar o PWA básico
+("rode o pwa").
+
+**1. Implementação**
+- `app/manifest.ts`: usa a convenção nativa do Next.js (App Router) — Next.js
+  serve automaticamente em `/manifest.webmanifest` e injeta a tag `<link
+  rel="manifest">` no `<head>`, sem precisar editar `metadata` manualmente pra
+  isso. `name`/`short_name`/`description` batem com o que já estava em
+  `metadata` do `layout.tsx`; `background_color`/`theme_color` usam as cores
+  reais do app (`#0e0f11` de `--background` no `globals.css`, `#68a04a` do
+  `--color-oliva`), não cores arbitrárias.
+- Ícones: gerei `public/icon-192.png` a partir do `app/icon.png` (512×512, já
+  existia desde a Sessão 16) usando `sips -z 192 192` — `sips` é nativo do
+  macOS, não precisei instalar nada. Copiei o 512 original também pra
+  `public/icon-512.png` (caminho estável, independente de como o Next.js serve
+  internamente o `app/icon.png` da convenção de favicon).
+- `app/layout.tsx`: novo `export const viewport: Viewport = { themeColor:
+  "#68a04a" }` (Next.js 14+ moveu `themeColor` de `metadata` pra um export
+  `viewport` separado — colocar em `metadata` geraria warning/seria ignorado)
+  e `metadata.appleWebApp` (`capable: true`, `statusBarStyle:
+  "black-translucent"`, `title`). Confirmei depois que o Next.js gera a tag
+  moderna `mobile-web-app-capable` (não a antiga prefixada `apple-`) — meu
+  primeiro teste assumiu o nome errado e "falhou", mas era o teste que estava
+  desatualizado, não o app.
+- `public/sw.js` + `components/RegistrarServiceWorker.tsx` (client component,
+  só `useEffect` chamando `navigator.serviceWorker.register`, montado no
+  `layout.tsx`): service worker **intencionalmente vazio** — só
+  instala/ativa/escuta `fetch` sem fazer nada com ele. Decisão deliberada: o
+  Chrome/Android exige um service worker controlando a página pra considerar o
+  site instalável, mas implementar cache de verdade seria arriscado aqui — os
+  dados vêm do Supabase em tempo real e são compartilhados entre usuário/
+  Victoria/Roberto, cachear poderia mostrar versão desatualizada pra alguém.
+  Documentei isso como comentário no próprio `sw.js`, não só no HANDOFF.
+- Sem notificações push (mencionei como possibilidade na resposta anterior,
+  mas não foi pedido nessa rodada — precisaria de permissão do usuário e um
+  backend próprio pra disparar, escopo bem maior).
+
+**2. Testes**
+- `npm run lint`/`npm run build` limpos (rota `/manifest.webmanifest` aparece
+  na lista de rotas geradas).
+- Conferido via `curl` que `/manifest.webmanifest`, `/icon-192.png`,
+  `/icon-512.png` e `/sw.js` respondem 200 e o manifest tem o JSON esperado.
+- Playwright: confirmei a tag `<link rel="manifest">`, a meta `theme-color`, e
+  que o service worker efetivamente registra e chega ao estado `activated`
+  (`navigator.serviceWorker.getRegistration()`). Tirei um screenshot da home
+  pra confirmar que as mudanças no `layout.tsx` não quebraram nada
+  visualmente.
+
+**3. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
+- Usuário não respondeu se quer que eu tente instalar o skill "impeccable" (o
+  nome real do skill disponível no repo `pbakaus/impeccable`) no lugar de
+  "polish" — não instalei nada até confirmar.
+- Notificações push não implementadas (fora do escopo pedido nessa rodada).
 
 ### Sessão 32 — 2026-06-18
 
