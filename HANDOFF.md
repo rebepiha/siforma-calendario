@@ -20,6 +20,32 @@
   sessão). Se no início de uma sessão `git fetch` mostrar commits em `origin/main` que não
   fazem sentido com o que está documentado aqui, **pare e avise o usuário antes de
   push/pull** — não dá pra saber se é trabalho real perdido ou outra sessão concorrente.
+- **Skill de design "impeccable" instalada via `npx skills add pbakaus/impeccable`**
+  (Sessão 34, a pedido do usuário) em `.claude/skills/impeccable/` —
+  **deliberadamente NÃO commitada no repo** (é ferramenta pessoal do usuário no
+  Claude Code, não faz parte do app; `skills-lock.json` na raiz também não foi
+  commitado). `.claude/**` foi adicionado ao `globalIgnores` do
+  `eslint.config.mjs` pra essa pasta não poluir o `npm run lint` do projeto com
+  warnings do código de terceiros. Se o usuário trocar de máquina, precisa
+  reinstalar o skill manualmente — não é algo que `git clone` traz.
+- **Nav (TopNav) e grade semanal de Tarefas agora rolam horizontalmente em telas
+  estreitas em vez de vazar/cortar** (ver Sessão 34, bug relatado pelo usuário
+  com print do celular — "Banco de Ideias" virava 3 linhas e "Biblioteca"
+  aparecia fora do fundo cinza do header; tarefas de quinta apareciam com texto
+  cortado no meio da palavra). Causa: `<nav>` em `TopNav.tsx` não tinha
+  `flex-wrap` nem deixava os links rolarem, e a grade em
+  `TaskCalendarGrid.tsx` usava `grid-cols-[1.4fr_...]` (frações puras, sem
+  `minmax(0,...)`) dentro de um wrapper `overflow-hidden` — colunas não
+  encolhiam e o excesso ficava simplesmente escondido sem dar pra rolar até
+  ele. Corrigido: `nav` ganhou `overflow-x-auto` e cada link `shrink-0
+  whitespace-nowrap` (rola em vez de quebrar linha ou vazar); o wrapper da
+  grade de tarefas trocou `overflow-hidden` por `overflow-x-auto` e a grade
+  ganhou `min-w-[700px]` (rola horizontalmente pra ver sex/sáb/dom, em vez de
+  espremer colunas até ficarem ilegíveis). O mês do Calendário Editorial
+  (`CalendarGrid.tsx`) usa `grid-cols-7` puro do Tailwind (que já vira
+  `repeat(7, minmax(0,1fr))` por padrão) — nunca teve esse problema, confirmado
+  testando em 390px de largura junto com Metas/Banco de Ideias/Biblioteca (só
+  Tarefas estava quebrado).
 - **App é instalável como PWA** (ver Sessão 33): `app/manifest.ts` (convenção
   nativa do Next.js, servido em `/manifest.webmanifest` e linkado
   automaticamente no `<head>` — não precisei adicionar a tag `<link>` manual),
@@ -418,6 +444,65 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 34 — 2026-06-18
+
+**Contexto**: usuário mandou um print do celular (PWA recém-instalado, modo
+avião) mostrando a aba Tarefas com o header quebrado ("Banco de Ideias"
+empilhado em 3 linhas, "Biblioteca" fora do fundo cinza) e a grade da semana
+com texto cortado no meio da palavra na coluna de quinta. Pediu só "corrigir a
+visualização desconfigurada"; ele também repetiu o pedido de instalar o skill
+`pbakaus/impeccable` (já tinha sido instalado na Sessão 33 — não reinstalei de
+novo, só confirmei que já estava lá).
+
+**1. Diagnóstico**
+Reproduzi em viewport 390×844 (iPhone) via Playwright e medi via
+`getBoundingClientRect()`/`scrollWidth` antes de tocar em qualquer CSS — dois
+bugs reais e independentes:
+- `TopNav.tsx`: `<nav>` sem `flex-wrap` e os `<Link>` sem `whitespace-nowrap`;
+  com 5 abas (cresceu de 3 pra 5 nas últimas sessões), a linha inteira passou
+  a ultrapassar a largura da tela, e como o `<nav>` não tinha
+  `overflow-hidden` nem `overflow-x-auto`, o excesso renderizava por cima do
+  fundo preto da página em vez do fundo cinza do header.
+- `TaskCalendarGrid.tsx`: `grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1.4fr_0.5fr_0.5fr]`
+  — frações puras sem `minmax(0, ...)` fazem o CSS Grid recusar encolher as
+  colunas abaixo do conteúdo mínimo delas; medido `scrollWidth` de 731px contra
+  um container de ~358px em 390px de viewport. O wrapper tinha
+  `overflow-hidden` (não `overflow-x-auto`), entonces o excesso ficava
+  simplesmente escondido — sem nenhuma forma de rolar até ele, daí o texto
+  cortado no meio.
+
+**2. Correção**
+- `TopNav.tsx`: `nav` ganhou `overflow-x-auto`; cada `<Link>` ganhou
+  `shrink-0 whitespace-nowrap` — agora a barra de abas rola horizontalmente em
+  vez de quebrar texto em várias linhas ou vazar pro fundo errado.
+- `TaskCalendarGrid.tsx`: wrapper trocou `overflow-hidden` por
+  `overflow-x-auto`, grade ganhou `min-w-[700px]` — em telas estreitas, em vez
+  de espremer 7 colunas até ilegível, o usuário rola a semana inteira
+  horizontalmente com colunas em tamanho legível (mesmo padrão de "rolar
+  pra ver o resto" já usado dentro de cada quadrado de dia quando tem muito
+  post/tarefa).
+- Conferi que o mês do Calendário Editorial (`CalendarGrid.tsx`, `grid-cols-7`
+  puro do Tailwind) nunca teve esse problema — `grid-cols-N` do Tailwind já
+  usa `minmax(0,1fr)` por padrão, só o grid customizado de Tarefas usava
+  frações cruas.
+- De quebra, adicionei `.claude/**` ao `globalIgnores` do
+  `eslint.config.mjs` — sem isso, `npm run lint` passou a reportar 135
+  warnings vindos dos scripts internos do skill `impeccable` instalado na
+  Sessão 33 (código de terceiros, não é desse projeto).
+
+**3. Testes**
+- `npm run lint`/`npm run build` limpos.
+- Playwright em 390×844: confirmei que `body.scrollWidth` não estoura mais a
+  viewport, que rolar o `<nav>` até o fim revela "Biblioteca", e que rolar a
+  grade de tarefas até o fim revela "domingo" (com texto legível, sem corte).
+  Conferi visualmente por screenshot antes/depois. Testei também Calendário
+  Editorial, Metas, Banco de Ideias e Biblioteca no mesmo viewport — nenhuma
+  delas tinha overflow, só Tarefas estava quebrada (mais o nav, que afeta
+  todas as páginas igualmente já que é compartilhado).
+
+**4. Pendente**
+- Mudanças ainda não commitadas — perguntar antes de commitar/push.
 
 ### Sessão 33 — 2026-06-18
 

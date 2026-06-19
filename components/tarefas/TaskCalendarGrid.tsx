@@ -28,8 +28,8 @@ export default function TaskCalendarGrid({
   const hoje = new Date();
 
   return (
-    <div className="overflow-hidden rounded-xl shadow-sm">
-      <div className="grid grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1.4fr_0.5fr_0.5fr]">
+    <div className="overflow-x-auto rounded-xl shadow-sm">
+      <div className="grid min-w-[700px] grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1.4fr_0.5fr_0.5fr]">
         {dias.map((dia) => {
           const dataStr = format(dia, "yyyy-MM-dd");
           const tarefasDoDia = tarefas
