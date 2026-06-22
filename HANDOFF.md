@@ -589,9 +589,16 @@ objetivo é só confirmar detecção de colisão, e usar o Ctrl+Z do próprio ap
   — só o mouse (desktop) foi testado e validado. Se a equipe relatar isso no
   celular, é preciso adicionar `TouchSensor` (ou configurar `PointerSensor` com
   `touch-action: none` nos cards) e testar com emulação de toque, não só mouse.
-- Mudanças já commitadas e enviadas pro `main` nesta sessão (usuário autorizou
-  explicitamente "commit e push" antes de eu confirmar o teste ponta-a-ponta;
-  segui o pedido depois de validar a correção).
+- Mudanças commitadas e enviadas pro `main` nesta sessão, commit `c102efa`
+  ("Corrigir drag-and-drop quebrado entre dias e dentro do mesmo dia") — usuário
+  autorizou explicitamente "commit e push" antes de eu confirmar o teste
+  ponta-a-ponta; segui o pedido depois de validar a correção localmente.
+  Auto-deploy da Vercel deve ter disparado pelo push (pipeline existente desde
+  o início do projeto), mas **não confirmei o deploy nem pedi pro usuário
+  testar no site em produção antes do fim da sessão** — primeira coisa a
+  checar numa sessão futura se o usuário disser que ainda está quebrado: ver se
+  https://siforma-calendario.vercel.app está mesmo servindo o commit `c102efa`
+  (ou mais recente) antes de re-investigar do zero.
 
 ### Sessão 35 — 2026-06-18
 
