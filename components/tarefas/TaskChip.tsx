@@ -33,21 +33,30 @@ export default function TaskChip({
   onClick,
   onToggleConcluida,
   onContextMenu,
+  arrastavel = true,
 }: {
   tarefa: Tarefa;
   mostrarResponsavel: boolean;
   onClick: () => void;
   onToggleConcluida: () => void;
   onContextMenu: (e: MouseEvent) => void;
+  arrastavel?: boolean;
 }) {
   const concluida = tarefa.coluna === "concluido";
   const atrasada =
     !!tarefa.prazo && !concluida && isBefore(parseISO(tarefa.prazo), startOfToday());
 
+  // Card pode estar montado duas vezes ao mesmo tempo (grade desktop + lista mobile,
+  // ver TaskCalendarGrid.tsx) — usar o mesmo id da tarefa nas duas instâncias faria a
+  // segunda sobrescrever a referência de nó da primeira no registro do dnd-kit,
+  // quebrando a medição de retângulo do card visível. A instância não arrastável usa
+  // um id próprio pra não colidir.
+  const idDnd = arrastavel ? tarefa.id : `${tarefa.id}__estatico`;
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
-    id: tarefa.id,
+    id: idDnd,
+    disabled: !arrastavel,
   });
-  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: tarefa.id });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: idDnd, disabled: !arrastavel });
   const setRefs = (node: HTMLElement | null) => {
     setDragRef(node);
     setDropRef(node);

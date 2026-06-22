@@ -119,6 +119,7 @@ export default function CalendarGrid({
                     onClick={() => onClickPost(post)}
                     onToggleStatus={() => onToggleStatus(post)}
                     onContextMenu={(e) => onContextMenuPost(e, post)}
+                    arrastavel={false}
                   />
                 ))}
               </div>

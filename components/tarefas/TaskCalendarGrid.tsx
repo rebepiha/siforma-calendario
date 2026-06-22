@@ -91,6 +91,7 @@ export default function TaskCalendarGrid({
                     onClick={() => onClickTarefa(tarefa)}
                     onToggleConcluida={() => onToggleConcluida(tarefa)}
                     onContextMenu={(e) => onContextMenuTarefa(e, tarefa)}
+                    arrastavel={false}
                   />
                 ))}
               </div>

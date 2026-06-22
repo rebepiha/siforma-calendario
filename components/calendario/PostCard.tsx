@@ -32,12 +32,14 @@ export default function PostCard({
   onClick,
   onToggleStatus,
   onContextMenu,
+  arrastavel = true,
 }: {
   post: Post;
   etiquetas: Etiqueta[];
   onClick: () => void;
   onToggleStatus: () => void;
   onContextMenu: (e: MouseEvent) => void;
+  arrastavel?: boolean;
 }) {
   const publicado = post.status === "publicado";
   const corCanal = CORES_CANAL[post.canal];
@@ -54,9 +56,15 @@ export default function PostCard({
         ? "Stories- "
         : "Feed: "
       : "";
+  // Card pode estar montado duas vezes ao mesmo tempo (grade desktop + lista mobile,
+  // ver CalendarGrid.tsx) — usar o mesmo id do post nas duas instâncias faria a
+  // segunda sobrescrever a referência de nó da primeira no registro do dnd-kit,
+  // quebrando a medição de retângulo do card visível. A instância não arrastável
+  // usa um id próprio pra não colidir.
+  const idDnd = arrastavel ? post.id : `${post.id}__estatico`;
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } =
-    useDraggable({ id: post.id });
-  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: post.id });
+    useDraggable({ id: idDnd, disabled: !arrastavel });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: idDnd, disabled: !arrastavel });
   const setRefs = (node: HTMLElement | null) => {
     setDragRef(node);
     setDropRef(node);

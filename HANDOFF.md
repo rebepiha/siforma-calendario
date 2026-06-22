@@ -12,6 +12,30 @@
 
 ## Estado atual (resumo rápido)
 
+- **⚠️ Não existe banco de dados de desenvolvimento separado** — o
+  `.env.local` do projeto local aponta pro **mesmo** Supabase de produção
+  (`ayfbzhyykcqrkfpscgkv`) que o site no ar usa. `npm run dev` na máquina lê e
+  escreve dados reais. Isso já causou um incidente na Sessão 36: testes
+  automatizados de drag-and-drop via Playwright moveram um post de verdade
+  antes de eu perceber — revertido na hora, sem perda de dados, mas é um risco
+  real pra qualquer sessão futura que for testar escrita (drag, criar/editar/
+  excluir) via automação contra o dev server local. Preferir soltar fora de
+  qualquer área de drop quando o teste só precisa confirmar detecção/UI, e usar
+  o Ctrl+Z do próprio app (não SQL manual) como mecanismo de reversão quando
+  uma escrita real for inevitável.
+- **Arrastar (drag-and-drop) parou de funcionar completamente em qualquer
+  viewport — corrigido na Sessão 36**: regressão causada pela própria Sessão
+  34/35 (lista mobile duplicando `PostCard`/`TaskChip` no DOM com o mesmo id
+  dos hooks `useDraggable`/`useDroppable` da grade desktop — o registro interno
+  do dnd-kit é um `Map` por id, então a segunda instância montada sobrescrevia
+  a referência de nó da primeira, fazendo o dnd-kit medir o card arrastado como
+  um retângulo `0x0` e nunca detectar colisão com nada). Corrigido com um novo
+  prop `arrastavel` (default `true`) em `PostCard.tsx`/`TaskChip.tsx` — quando
+  `false` (usado só pela instância da lista mobile, em `CalendarGrid.tsx`/
+  `TaskCalendarGrid.tsx`), os hooks usam um id próprio (`` `${id}__estatico` ``)
+  e `disabled: true`, evitando a colisão de id e desativando o arraste por
+  mouse/clique nessa cópia (que não tinha suporte real a toque mesmo, ver
+  pendência abaixo). Ver Sessão 36 para o diagnóstico completo.
 - **⚠️ Risco conhecido: sessões paralelas no mesmo repositório** (ver Sessão 8). Já
   aconteceu de duas sessões de agente trabalharem nesse projeto ao mesmo tempo (provavelmente
   o usuário com duas janelas/dispositivos abertos) e ambas commitarem/pusharem pro mesmo
@@ -394,6 +418,16 @@
 
 - Nenhuma pendência crítica — o app está funcional e no ar, cobrindo os 3 requisitos
   (Calendário Editorial, Tarefas de Marketing, Metas e Progresso).
+- **Arrastar por toque (mobile) não tem suporte confirmado** (ver Sessão 36): a
+  correção do bug de drag-and-drop foi testada e validada só com mouse
+  (desktop). Não há `TouchSensor` nem `touch-action: none` configurado no
+  `PointerSensor` usado em `app/page.tsx`/`app/tarefas/page.tsx` — é provável
+  que num celular o navegador capture o gesto de arrastar como rolagem da
+  página antes do dnd-kit reconhecer a intenção de arraste. Além disso, a
+  lista mobile (`arrastavel={false}`) desativou de propósito o arraste nessa
+  cópia dos cards. Se a equipe pedir arrastar funcionando no celular, vai
+  precisar adicionar suporte a toque de verdade (sensor + CSS) e decidir como
+  isso interage com a lista mobile antes de reabilitar `arrastavel` lá.
 - Tabela `metas` continua vazia por design (a equipe deve popular). `tarefas` tem 2
   linhas de teste ("teste"/"teste", responsável Victoria, sem descrição) criadas pela
   própria usuária explorando o app ao vivo na Sessão 5 — não foram criadas por mim,
@@ -454,6 +488,110 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 36 — 2026-06-22
+
+**Contexto**: usuário relatou "não estou conseguindo mover os cards entre dias e
+entre si no mesmo dia" — no Calendário Editorial e em Tarefas. Bug crítico:
+arrastar (drag-and-drop) tinha parado de funcionar por completo, em qualquer
+viewport, regressão introduzida pela própria Sessão 34/35 (que eu mesmo tinha
+acabado de revisar no início desta sessão).
+
+**1. Diagnóstico**
+Reproduzi com Playwright (mouse simulado) contra o dev server local (que aponta
+pro mesmo Supabase de produção, `ayfbzhyykcqrkfpscgkv` — **não existe banco de
+dev separado**, atenção redobrada disso daqui pra frente). Confirmei visualmente
+que o card entra em estado "arrastando" (`opacity-50`) e segue o cursor
+normalmente — o problema é só no momento de soltar: `onDragEnd` sempre recebia
+`over: undefined`, em qualquer alvo, mesmo soltando bem no centro de um quadrado
+de dia vazio.
+- Instrumentei temporariamente o `DndContext` com um `collisionDetection` que
+  logava `args.collisionRect` (retângulo do elemento sendo arrastado, calculado
+  pelo dnd-kit) — estava sempre `{width: 0, height: 0}`, ou seja, o dnd-kit não
+  conseguia medir o tamanho real do card ativo, então a colisão contra qualquer
+  área de soltar nunca batia.
+- **Causa raiz**: a Sessão 34/35 passou a renderizar **dois layouts no DOM ao
+  mesmo tempo** (grade desktop + lista mobile, alternados só por CSS `hidden
+  sm:block`/`sm:hidden`), reaproveitando `PostCard`/`TaskChip` sem modificação
+  nas duas — e os dois chamam `useDraggable({id: post.id})`/
+  `useDroppable({id: post.id})` com **o mesmo id**. Conferi o código-fonte do
+  `@dnd-kit/core` instalado (`node_modules/@dnd-kit/core/dist/core.esm.js`): o
+  registro de nó (`draggableNodes`/`droppableContainers`, um `Map` por id) é
+  feito **sempre** no `useIsomorphicLayoutEffect`/`useEffect` de cada hook,
+  **independente da prop `disabled`** — então a segunda instância montada (a
+  lista mobile, que vem depois da grade na árvore JSX) sempre sobrescrevia a
+  referência de nó da primeira no `Map`, mesmo estando escondida via
+  `display:none`/zero de tamanho. Resultado: o dnd-kit media o card ativo pelo
+  nó **errado** (o duplicado, de tamanho zero) pra calcular o retângulo de
+  colisão — sempre `0x0`, então a colisão nunca batia em lugar nenhum,
+  independente de viewport (afetava desktop e mobile igualmente, já que a ordem
+  de montagem no DOM é sempre a mesma, só a visibilidade via CSS muda).
+
+**2. Correção**
+- `components/calendario/PostCard.tsx` e `components/tarefas/TaskChip.tsx`:
+  novo prop opcional `arrastavel` (default `true`). Quando `false`, os hooks
+  `useDraggable`/`useDroppable` usam um id próprio (`` `${id}__estatico` ``, não
+  o id real do post/tarefa) e `disabled: true` — evita a colisão no registro do
+  dnd-kit *e* desativa os listeners de arraste nessa instância (não tinha
+  sentido mesmo, já que não há `TouchSensor`/`touch-action` configurado, então
+  arrastar por toque na lista mobile não funcionaria bem de qualquer forma —
+  ver nota nova em "Pendências").
+- `components/calendario/CalendarGrid.tsx` e
+  `components/tarefas/TaskCalendarGrid.tsx`: a instância de `PostCard`/
+  `TaskChip` dentro da lista mobile (`sm:hidden`) passou a receber
+  `arrastavel={false}`. A instância da grade desktop (dentro de `DayCell.tsx`/
+  `TaskCalendarDayCell.tsx`) não mudou — continua arrastável normalmente, e
+  agora sem concorrência de id.
+- Removido todo o código de debug (`console.log`, `collisionDetection`
+  temporário) antes de comitar — não sobrou instrumentação no código final.
+
+**3. Incidente durante o diagnóstico (resolvido na hora)**
+Como não existe banco de dev separado, os primeiros testes de arrastar-e-soltar
+via Playwright (antes da correção, pra reproduzir o bug, e depois, pra validar)
+**escreveram de verdade no Supabase de produção** — um post ("OPK Perfect
+Synchro") ficou movido de 8/jun pra 9/jun. Detectei comparando uma screenshot
+antes/depois, revertido na hora via `UPDATE` direto pela REST API (anon key)
+pra `data`/`ordem` originais, e conferido por query que todo o intervalo de
+8–29/jun ficou idêntico ao estado antes dos testes. Os testes seguintes de
+verificação foram redesenhados pra serem seguros: soltar o mouse fora de
+qualquer área arrastável (sem persistir nada) pra testes de detecção de
+colisão, e um teste final ponta-a-ponta que arrasta de verdade, confirma o
+`PATCH` no Supabase, e **desfaz com Ctrl+Z do próprio app** (não SQL manual)
+pra validar tanto a correção quanto o undo na mesma tacada — conferido por
+query direta no Supabase que o post voltou exatamente ao estado original
+(`data`/`ordem`). Nenhum dado de tarefas chegou a ser escrito (todos os testes
+de Tarefas soltaram fora de qualquer área válida, de propósito, depois desse
+susto). **Lição pra sessões futuras**: qualquer teste de drag-and-drop (ou
+qualquer escrita) contra o dev server local está, na prática, testando contra
+produção — preferir sempre soltar fora de uma área de drop válida quando o
+objetivo é só confirmar detecção de colisão, e usar o Ctrl+Z do próprio app
+(não UPDATE manual) como mecanismo de reversão sempre que possível.
+
+**4. Testes**
+- `npm run lint` / `npm run build` limpos.
+- Playwright contra o dev server (viewport desktop 1280×900 e 1280×2600 pra
+  evitar alvos fora da viewport em dias de Tarefas com muitos cards): confirmei
+  via `collisionDetection` instrumentado que `collisionRect` passou a refletir
+  o tamanho real do card (ex: 188×42) e que `over` resolve corretamente tanto
+  pro Calendário (mover entre dias soltando em quadrado vazio; reordenar dentro
+  do mesmo dia soltando sobre outro post) quanto pra Tarefas (mesmos dois
+  casos). Teste ponta-a-ponta final (arrastar de verdade + Ctrl+Z) no
+  Calendário confirmou o ciclo completo: `PATCH` disparado, post migrou de dia
+  visualmente, Ctrl+Z desfez, e o banco bateu com o estado original.
+- Não testei arrastar por **toque** (mobile) — sem `TouchSensor`/
+  `touch-action: none` configurado, é provável que o navegador capture o gesto
+  como rolagem antes do dnd-kit reconhecer o arraste, independente desta
+  correção. Não era o que o usuário relatou (a reclamação não mencionava
+  celular) e não foi testado; ver nota nova em "Pendências".
+
+**5. Pendente**
+- Arrastar por toque (mobile) continua não confirmado/não suportado de verdade
+  — só o mouse (desktop) foi testado e validado. Se a equipe relatar isso no
+  celular, é preciso adicionar `TouchSensor` (ou configurar `PointerSensor` com
+  `touch-action: none` nos cards) e testar com emulação de toque, não só mouse.
+- Mudanças já commitadas e enviadas pro `main` nesta sessão (usuário autorizou
+  explicitamente "commit e push" antes de eu confirmar o teste ponta-a-ponta;
+  segui o pedido depois de validar a correção).
 
 ### Sessão 35 — 2026-06-18
 
