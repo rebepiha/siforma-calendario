@@ -5,18 +5,11 @@ import { supabase } from "@/lib/supabase";
 import {
   COLUNAS_SITE,
   NovaTarefaSite,
-  Prioridade,
   StatusTarefaSite,
   TarefaSite,
 } from "@/lib/types";
 import SiteTaskModal from "@/components/site/SiteTaskModal";
 import ContextMenu from "@/components/ContextMenu";
-
-const COR_PRIORIDADE: Record<Prioridade, string> = {
-  baixa: "bg-blue-400",
-  media: "bg-yellow-400",
-  alta: "bg-red-500",
-};
 
 const ESTILO_COLUNA: Record<StatusTarefaSite, { titulo: string }> = {
   a_fazer: { titulo: "text-zinc-300" },
@@ -218,10 +211,7 @@ export default function PaginaTarefasSite() {
                           : undefined
                       }
                     >
-                      <div className="flex items-start gap-2.5">
-                        <span
-                          className={`mt-[5px] h-2 w-2 shrink-0 rounded-full ${COR_PRIORIDADE[tarefa.prioridade]}`}
-                        />
+                      <div className="flex items-start">
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium leading-snug text-zinc-100 line-clamp-2">
                             {tarefa.titulo}
