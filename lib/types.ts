@@ -65,6 +65,26 @@ export const COLUNAS_TAREFA: { id: ColunaTarefa; titulo: string }[] = [
   { id: "concluido", titulo: "Concluído" },
 ];
 
+export type StatusTarefaSite = "a_fazer" | "em_andamento" | "concluido";
+
+export interface TarefaSite {
+  id: string;
+  titulo: string;
+  descricao: string | null;
+  status: StatusTarefaSite;
+  prioridade: Prioridade;
+  responsavel: string | null;
+  criado_em: string;
+}
+
+export type NovaTarefaSite = Omit<TarefaSite, "id" | "criado_em">;
+
+export const COLUNAS_SITE: { id: StatusTarefaSite; titulo: string }[] = [
+  { id: "a_fazer", titulo: "A Fazer" },
+  { id: "em_andamento", titulo: "Em Andamento" },
+  { id: "concluido", titulo: "Concluído" },
+];
+
 export type SecaoIdeia = "stories" | "posts";
 
 export interface Ideia {

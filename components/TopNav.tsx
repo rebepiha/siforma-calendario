@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 const ABAS = [
   { href: "/", label: "Calendário Editorial" },
   { href: "/tarefas", label: "Tarefas de Marketing" },
-  { href: "/metas", label: "Metas e Progresso" },
+  { href: "/site", label: "Tarefas Site" },
   { href: "/ideias", label: "Banco de Ideias" },
   { href: "/biblioteca", label: "Biblioteca" },
 ];
