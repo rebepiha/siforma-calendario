@@ -8,6 +8,7 @@ import {
   StatusTarefaSite,
   TarefaSite,
 } from "@/lib/types";
+import { PALETA_ETIQUETAS } from "@/lib/etiquetaCores";
 
 export default function SiteTaskModal({
   tarefa,
@@ -29,14 +30,14 @@ export default function SiteTaskModal({
           descricao: tarefa.descricao ?? "",
           status: tarefa.status,
           prioridade: tarefa.prioridade,
-          responsavel: tarefa.responsavel ?? "",
+          cor: tarefa.cor ?? null,
         }
       : {
           titulo: "",
           descricao: "",
           status: statusPadrao,
           prioridade: "media",
-          responsavel: "",
+          cor: null,
         }
   );
   const [salvando, setSalvando] = useState(false);
@@ -59,7 +60,6 @@ export default function SiteTaskModal({
       await onSalvar(tarefa?.id ?? null, {
         ...valores,
         descricao: valores.descricao?.trim() ? valores.descricao : null,
-        responsavel: valores.responsavel?.trim() ? valores.responsavel : null,
       });
     } finally {
       setSalvando(false);
@@ -78,7 +78,16 @@ export default function SiteTaskModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="absolute inset-0" onClick={fecharSalvando} />
       <div className="relative flex max-h-[90vh] w-full max-w-md flex-col overflow-y-auto rounded-xl bg-zinc-800 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-zinc-700 px-5 py-4">
+        <div
+          className="flex items-center justify-between px-5 py-4 border-b border-zinc-700"
+          style={valores.cor ? { borderBottomColor: valores.cor + "60" } : undefined}
+        >
+          {valores.cor && (
+            <div
+              className="absolute left-0 top-0 h-1 w-full rounded-t-xl"
+              style={{ backgroundColor: valores.cor }}
+            />
+          )}
           <h2 className="text-base font-semibold text-zinc-100">
             {tarefa ? "Editar tarefa" : "Nova tarefa"}
           </h2>
@@ -151,15 +160,31 @@ export default function SiteTaskModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-400">
-              Responsável
+            <label className="mb-2 block text-xs font-medium text-zinc-400">
+              Cor do card
             </label>
-            <input
-              value={valores.responsavel ?? ""}
-              onChange={(e) => campo("responsavel", e.target.value)}
-              placeholder="Ex: Victoria"
-              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
-            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => campo("cor", null)}
+                className={`h-6 w-6 rounded-full border-2 bg-zinc-700 transition-transform hover:scale-110 ${
+                  !valores.cor ? "border-white scale-110" : "border-zinc-600"
+                }`}
+                title="Sem cor"
+              />
+              {PALETA_ETIQUETAS.map((hex) => (
+                <button
+                  key={hex}
+                  type="button"
+                  onClick={() => campo("cor", hex)}
+                  className={`h-6 w-6 rounded-full border-2 transition-transform hover:scale-110 ${
+                    valores.cor === hex ? "border-white scale-110" : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: hex }}
+                  title={hex}
+                />
+              ))}
+            </div>
           </div>
         </div>
 

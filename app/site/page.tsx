@@ -18,16 +18,10 @@ const COR_PRIORIDADE: Record<Prioridade, string> = {
   alta: "bg-red-500",
 };
 
-const LABEL_PRIORIDADE: Record<Prioridade, string> = {
-  baixa: "baixa",
-  media: "média",
-  alta: "alta",
-};
-
-const ESTILO_COLUNA: Record<StatusTarefaSite, { titulo: string; borda: string }> = {
-  a_fazer: { titulo: "text-zinc-300", borda: "border-zinc-700" },
-  em_andamento: { titulo: "text-yellow-400", borda: "border-yellow-900/40" },
-  concluido: { titulo: "text-green-400", borda: "border-green-900/40" },
+const ESTILO_COLUNA: Record<StatusTarefaSite, { titulo: string }> = {
+  a_fazer: { titulo: "text-zinc-300" },
+  em_andamento: { titulo: "text-yellow-400" },
+  concluido: { titulo: "text-green-400" },
 };
 
 export default function PaginaTarefasSite() {
@@ -147,12 +141,7 @@ export default function PaginaTarefasSite() {
         ? [{ label: "Mover para A Fazer", onClick: () => moverStatus(tarefa, "a_fazer") }]
         : []),
       ...(tarefa.status !== "em_andamento"
-        ? [
-            {
-              label: "Mover para Em Andamento",
-              onClick: () => moverStatus(tarefa, "em_andamento"),
-            },
-          ]
+        ? [{ label: "Mover para Em Andamento", onClick: () => moverStatus(tarefa, "em_andamento") }]
         : []),
       ...(tarefa.status !== "concluido"
         ? [{ label: "Marcar concluída", onClick: () => moverStatus(tarefa, "concluido") }]
@@ -203,7 +192,7 @@ export default function PaginaTarefasSite() {
                   </span>
                   <button
                     onClick={() => abrirNova(col.id)}
-                    className="rounded p-1 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200 text-base leading-none"
+                    className="rounded p-1 text-base leading-none text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200"
                     title={`Nova tarefa em ${col.titulo}`}
                   >
                     +
@@ -220,27 +209,26 @@ export default function PaginaTarefasSite() {
                         e.stopPropagation();
                         setMenuContexto({ x: e.clientX, y: e.clientY, tarefa });
                       }}
-                      className={`cursor-pointer rounded-lg border bg-zinc-800/80 px-3 py-2.5 transition-colors hover:bg-zinc-800 ${estilo.borda} ${
+                      className={`cursor-pointer rounded-lg border border-zinc-700 bg-zinc-800/80 px-3 py-2.5 transition-colors hover:bg-zinc-800 ${
                         tarefa.status === "concluido" ? "opacity-50" : ""
                       }`}
+                      style={
+                        tarefa.cor
+                          ? { borderLeftColor: tarefa.cor, borderLeftWidth: "3px" }
+                          : undefined
+                      }
                     >
                       <div className="flex items-start gap-2.5">
                         <span
                           className={`mt-[5px] h-2 w-2 shrink-0 rounded-full ${COR_PRIORIDADE[tarefa.prioridade]}`}
-                          title={`Prioridade ${LABEL_PRIORIDADE[tarefa.prioridade]}`}
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-zinc-100 line-clamp-2 leading-snug">
+                          <p className="text-sm font-medium leading-snug text-zinc-100 line-clamp-2">
                             {tarefa.titulo}
                           </p>
                           {tarefa.descricao && (
-                            <p className="mt-1 text-xs text-zinc-500 line-clamp-2 leading-relaxed">
+                            <p className="mt-1 text-xs leading-relaxed text-zinc-500 line-clamp-2">
                               {tarefa.descricao}
-                            </p>
-                          )}
-                          {tarefa.responsavel && (
-                            <p className="mt-1.5 text-xs text-zinc-600">
-                              {tarefa.responsavel}
                             </p>
                           )}
                         </div>
@@ -251,7 +239,7 @@ export default function PaginaTarefasSite() {
                   {lista.length === 0 && (
                     <button
                       onClick={() => abrirNova(col.id)}
-                      className="rounded-lg border border-dashed border-zinc-700 px-3 py-5 text-center text-xs text-zinc-600 hover:border-zinc-500 hover:text-zinc-400 transition-colors"
+                      className="rounded-lg border border-dashed border-zinc-700 px-3 py-5 text-center text-xs text-zinc-600 transition-colors hover:border-zinc-500 hover:text-zinc-400"
                     >
                       + Adicionar tarefa
                     </button>

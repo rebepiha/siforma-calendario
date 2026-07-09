@@ -73,7 +73,7 @@ export interface TarefaSite {
   descricao: string | null;
   status: StatusTarefaSite;
   prioridade: Prioridade;
-  responsavel: string | null;
+  cor: string | null;
   criado_em: string;
 }
 
