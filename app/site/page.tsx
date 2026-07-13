@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  useDroppable,
+  useDraggable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { supabase } from "@/lib/supabase";
 import {
   COLUNAS_SITE,
@@ -11,11 +20,117 @@ import {
 import SiteTaskModal from "@/components/site/SiteTaskModal";
 import ContextMenu from "@/components/ContextMenu";
 
-const ESTILO_COLUNA: Record<StatusTarefaSite, { titulo: string }> = {
-  a_fazer: { titulo: "text-zinc-300" },
-  em_andamento: { titulo: "text-yellow-400" },
-  concluido: { titulo: "text-green-400" },
+const COR_STATUS: Record<StatusTarefaSite, string> = {
+  a_fazer: "#ef4444",
+  em_andamento: "#eab308",
+  concluido: "#22c55e",
 };
+
+const TITULO_STATUS: Record<StatusTarefaSite, string> = {
+  a_fazer: "text-zinc-300",
+  em_andamento: "text-yellow-400",
+  concluido: "text-green-400",
+};
+
+function CardTarefa({
+  tarefa,
+  onEdit,
+  onContextMenu,
+}: {
+  tarefa: TarefaSite;
+  onEdit: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: tarefa.id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: transform
+          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+          : undefined,
+        borderLeftColor: COR_STATUS[tarefa.status],
+        borderLeftWidth: "3px",
+      }}
+      className={`touch-none cursor-grab rounded-lg border border-zinc-700 bg-zinc-800/80 px-3 py-2.5 transition-colors hover:bg-zinc-800 active:cursor-grabbing ${
+        isDragging ? "opacity-40 shadow-xl" : ""
+      } ${tarefa.status === "concluido" ? "opacity-50" : ""}`}
+      onClick={!isDragging ? onEdit : undefined}
+      onContextMenu={onContextMenu}
+      {...attributes}
+      {...listeners}
+    >
+      <p className="text-sm font-medium leading-snug text-zinc-100 line-clamp-2">
+        {tarefa.titulo}
+      </p>
+      {tarefa.descricao && (
+        <p className="mt-1 text-xs leading-relaxed text-zinc-500 line-clamp-2">
+          {tarefa.descricao}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ColunaKanban({
+  col,
+  tarefas,
+  onNova,
+  onEdit,
+  onContextMenu,
+}: {
+  col: (typeof COLUNAS_SITE)[number];
+  tarefas: TarefaSite[];
+  onNova: () => void;
+  onEdit: (t: TarefaSite) => void;
+  onContextMenu: (e: React.MouseEvent, t: TarefaSite) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: col.id });
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between pb-1">
+        <span className={`text-sm font-semibold ${TITULO_STATUS[col.id]}`}>
+          {col.titulo}
+          <span className="ml-2 text-xs font-normal text-zinc-600">{tarefas.length}</span>
+        </span>
+        <button
+          onClick={onNova}
+          className="rounded p-1 text-base leading-none text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200"
+        >
+          +
+        </button>
+      </div>
+
+      <div
+        ref={setNodeRef}
+        className={`flex min-h-[80px] flex-col gap-2 rounded-lg p-1 transition-colors ${
+          isOver ? "bg-zinc-700/30 ring-1 ring-zinc-600" : ""
+        }`}
+      >
+        {tarefas.map((tarefa) => (
+          <CardTarefa
+            key={tarefa.id}
+            tarefa={tarefa}
+            onEdit={() => onEdit(tarefa)}
+            onContextMenu={(e) => onContextMenu(e, tarefa)}
+          />
+        ))}
+        {tarefas.length === 0 && (
+          <button
+            onClick={onNova}
+            className="rounded-lg border border-dashed border-zinc-700 px-3 py-5 text-center text-xs text-zinc-600 transition-colors hover:border-zinc-500 hover:text-zinc-400"
+          >
+            + Adicionar tarefa
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function PaginaTarefasSite() {
   const [tarefas, setTarefas] = useState<TarefaSite[]>([]);
@@ -29,6 +144,10 @@ export default function PaginaTarefasSite() {
     tarefa: TarefaSite;
   } | null>(null);
   const [busca, setBusca] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+  );
 
   async function carregar() {
     setCarregando(true);
@@ -119,6 +238,15 @@ export default function PaginaTarefasSite() {
     setMenuContexto(null);
   }
 
+  async function aoFinalizarArraste(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over) return;
+    const novoStatus = over.id as StatusTarefaSite;
+    const tarefa = tarefas.find((t) => t.id === active.id);
+    if (!tarefa || tarefa.status === novoStatus) return;
+    await moverStatus(tarefa, novoStatus);
+  }
+
   const itensMenuContexto = useMemo(() => {
     if (!menuContexto) return [];
     const { tarefa } = menuContexto;
@@ -170,75 +298,24 @@ export default function PaginaTarefasSite() {
       {carregando ? (
         <p className="text-sm text-zinc-500">Carregando...</p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {COLUNAS_SITE.map((col) => {
-            const estilo = ESTILO_COLUNA[col.id];
-            const lista = porColuna[col.id];
-            return (
-              <div key={col.id} className="flex flex-col gap-2">
-                <div className="flex items-center justify-between pb-1">
-                  <span className={`text-sm font-semibold ${estilo.titulo}`}>
-                    {col.titulo}
-                    <span className="ml-2 text-xs font-normal text-zinc-600">
-                      {lista.length}
-                    </span>
-                  </span>
-                  <button
-                    onClick={() => abrirNova(col.id)}
-                    className="rounded p-1 text-base leading-none text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200"
-                    title={`Nova tarefa em ${col.titulo}`}
-                  >
-                    +
-                  </button>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  {lista.map((tarefa) => (
-                    <div
-                      key={tarefa.id}
-                      onClick={() => abrirEdicao(tarefa)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setMenuContexto({ x: e.clientX, y: e.clientY, tarefa });
-                      }}
-                      className={`cursor-pointer rounded-lg border border-zinc-700 bg-zinc-800/80 px-3 py-2.5 transition-colors hover:bg-zinc-800 ${
-                        tarefa.status === "concluido" ? "opacity-50" : ""
-                      }`}
-                      style={
-                        tarefa.cor
-                          ? { borderLeftColor: tarefa.cor, borderLeftWidth: "3px" }
-                          : undefined
-                      }
-                    >
-                      <div className="flex items-start">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium leading-snug text-zinc-100 line-clamp-2">
-                            {tarefa.titulo}
-                          </p>
-                          {tarefa.descricao && (
-                            <p className="mt-1 text-xs leading-relaxed text-zinc-500 line-clamp-2">
-                              {tarefa.descricao}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {lista.length === 0 && (
-                    <button
-                      onClick={() => abrirNova(col.id)}
-                      className="rounded-lg border border-dashed border-zinc-700 px-3 py-5 text-center text-xs text-zinc-600 transition-colors hover:border-zinc-500 hover:text-zinc-400"
-                    >
-                      + Adicionar tarefa
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <DndContext sensors={sensors} onDragEnd={aoFinalizarArraste}>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {COLUNAS_SITE.map((col) => (
+              <ColunaKanban
+                key={col.id}
+                col={col}
+                tarefas={porColuna[col.id]}
+                onNova={() => abrirNova(col.id)}
+                onEdit={abrirEdicao}
+                onContextMenu={(e, tarefa) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMenuContexto({ x: e.clientX, y: e.clientY, tarefa });
+                }}
+              />
+            ))}
+          </div>
+        </DndContext>
       )}
 
       {modalAberto && (
