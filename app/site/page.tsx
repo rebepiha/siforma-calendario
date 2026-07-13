@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
   PointerSensor,
+  closestCenter,
   useDroppable,
   useDraggable,
   useSensor,
@@ -32,6 +35,21 @@ const TITULO_STATUS: Record<StatusTarefaSite, string> = {
   concluido: "text-green-400",
 };
 
+function CardConteudo({ tarefa }: { tarefa: TarefaSite }) {
+  return (
+    <>
+      <p className="text-sm font-medium leading-snug text-zinc-100 line-clamp-2">
+        {tarefa.titulo}
+      </p>
+      {tarefa.descricao && (
+        <p className="mt-1 text-xs leading-relaxed text-zinc-500 line-clamp-2">
+          {tarefa.descricao}
+        </p>
+      )}
+    </>
+  );
+}
+
 function CardTarefa({
   tarefa,
   onEdit,
@@ -41,42 +59,23 @@ function CardTarefa({
   onEdit: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }) {
-  const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: tarefa.id,
   });
-  const { setNodeRef: setDropRef } = useDroppable({ id: tarefa.id });
-
-  const setRefs = (el: HTMLDivElement | null) => {
-    setDragRef(el);
-    setDropRef(el);
-  };
 
   return (
     <div
-      ref={setRefs}
-      style={{
-        transform: transform
-          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-          : undefined,
-        borderLeftColor: COR_STATUS[tarefa.status],
-        borderLeftWidth: "3px",
-      }}
-      className={`touch-none cursor-grab rounded-lg border border-zinc-700 bg-zinc-800/80 px-3 py-2.5 transition-colors hover:bg-zinc-800 active:cursor-grabbing ${
-        isDragging ? "opacity-40 shadow-xl" : ""
-      } ${tarefa.status === "concluido" ? "opacity-50" : ""}`}
-      onClick={!isDragging ? onEdit : undefined}
+      ref={setNodeRef}
+      style={{ borderLeftColor: COR_STATUS[tarefa.status], borderLeftWidth: "3px" }}
+      className={`touch-none cursor-grab select-none rounded-lg border border-zinc-700 bg-zinc-800/80 px-3 py-2.5 transition-opacity hover:bg-zinc-800 active:cursor-grabbing ${
+        isDragging ? "opacity-20" : ""
+      } ${tarefa.status === "concluido" && !isDragging ? "opacity-50" : ""}`}
+      onClick={onEdit}
       onContextMenu={onContextMenu}
       {...attributes}
       {...listeners}
     >
-      <p className="text-sm font-medium leading-snug text-zinc-100 line-clamp-2">
-        {tarefa.titulo}
-      </p>
-      {tarefa.descricao && (
-        <p className="mt-1 text-xs leading-relaxed text-zinc-500 line-clamp-2">
-          {tarefa.descricao}
-        </p>
-      )}
+      <CardConteudo tarefa={tarefa} />
     </div>
   );
 }
@@ -113,8 +112,8 @@ function ColunaKanban({
 
       <div
         ref={setNodeRef}
-        className={`flex min-h-[80px] flex-col gap-2 rounded-lg p-1 transition-colors ${
-          isOver ? "bg-zinc-700/30 ring-1 ring-zinc-600" : ""
+        className={`flex min-h-[80px] flex-col gap-2 rounded-lg p-1.5 transition-colors ${
+          isOver ? "bg-zinc-700/40 ring-1 ring-zinc-500" : ""
         }`}
       >
         {tarefas.map((tarefa) => (
@@ -150,9 +149,10 @@ export default function PaginaTarefasSite() {
     tarefa: TarefaSite;
   } | null>(null);
   const [busca, setBusca] = useState("");
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   );
 
   async function carregar() {
@@ -168,6 +168,11 @@ export default function PaginaTarefasSite() {
   useEffect(() => {
     carregar();
   }, []);
+
+  const activeTarefa = useMemo(
+    () => tarefas.find((t) => t.id === activeId) ?? null,
+    [tarefas, activeId]
+  );
 
   const tarefasFiltradas = useMemo(() => {
     const b = busca.trim().toLowerCase();
@@ -244,16 +249,15 @@ export default function PaginaTarefasSite() {
     setMenuContexto(null);
   }
 
+  function aoIniciarArraste(event: DragStartEvent) {
+    setActiveId(event.active.id as string);
+  }
+
   async function aoFinalizarArraste(event: DragEndEvent) {
+    setActiveId(null);
     const { active, over } = event;
     if (!over) return;
-
-    const COLUNAS_IDS: StatusTarefaSite[] = ["a_fazer", "em_andamento", "concluido"];
-    const novoStatus: StatusTarefaSite = COLUNAS_IDS.includes(over.id as StatusTarefaSite)
-      ? (over.id as StatusTarefaSite)
-      : (tarefas.find((t) => t.id === over.id)?.status ?? null)!;
-
-    if (!novoStatus) return;
+    const novoStatus = over.id as StatusTarefaSite;
     const tarefa = tarefas.find((t) => t.id === active.id);
     if (!tarefa || tarefa.status === novoStatus) return;
     await moverStatus(tarefa, novoStatus);
@@ -310,7 +314,13 @@ export default function PaginaTarefasSite() {
       {carregando ? (
         <p className="text-sm text-zinc-500">Carregando...</p>
       ) : (
-        <DndContext sensors={sensors} onDragEnd={aoFinalizarArraste}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={aoIniciarArraste}
+          onDragEnd={aoFinalizarArraste}
+          onDragCancel={() => setActiveId(null)}
+        >
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             {COLUNAS_SITE.map((col) => (
               <ColunaKanban
@@ -327,6 +337,20 @@ export default function PaginaTarefasSite() {
               />
             ))}
           </div>
+
+          <DragOverlay>
+            {activeTarefa && (
+              <div
+                style={{
+                  borderLeftColor: COR_STATUS[activeTarefa.status],
+                  borderLeftWidth: "3px",
+                }}
+                className="cursor-grabbing rounded-lg border border-zinc-600 bg-zinc-800 px-3 py-2.5 shadow-2xl opacity-95"
+              >
+                <CardConteudo tarefa={activeTarefa} />
+              </div>
+            )}
+          </DragOverlay>
         </DndContext>
       )}
 
