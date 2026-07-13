@@ -41,13 +41,19 @@ function CardTarefa({
   onEdit: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
     id: tarefa.id,
   });
+  const { setNodeRef: setDropRef } = useDroppable({ id: tarefa.id });
+
+  const setRefs = (el: HTMLDivElement | null) => {
+    setDragRef(el);
+    setDropRef(el);
+  };
 
   return (
     <div
-      ref={setNodeRef}
+      ref={setRefs}
       style={{
         transform: transform
           ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
@@ -241,7 +247,13 @@ export default function PaginaTarefasSite() {
   async function aoFinalizarArraste(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
-    const novoStatus = over.id as StatusTarefaSite;
+
+    const COLUNAS_IDS: StatusTarefaSite[] = ["a_fazer", "em_andamento", "concluido"];
+    const novoStatus: StatusTarefaSite = COLUNAS_IDS.includes(over.id as StatusTarefaSite)
+      ? (over.id as StatusTarefaSite)
+      : (tarefas.find((t) => t.id === over.id)?.status ?? null)!;
+
+    if (!novoStatus) return;
     const tarefa = tarefas.find((t) => t.id === active.id);
     if (!tarefa || tarefa.status === novoStatus) return;
     await moverStatus(tarefa, novoStatus);
