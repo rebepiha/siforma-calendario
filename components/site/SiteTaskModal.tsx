@@ -30,6 +30,7 @@ export default function SiteTaskModal({
           status: tarefa.status,
           prioridade: tarefa.prioridade,
           cor: null,
+          ordem: tarefa.ordem,
         }
       : {
           titulo: "",
@@ -37,6 +38,7 @@ export default function SiteTaskModal({
           status: statusPadrao,
           prioridade: "media",
           cor: null,
+          ordem: 0,
         }
   );
   const [salvando, setSalvando] = useState(false);

@@ -9,10 +9,16 @@ import {
   PointerSensor,
   closestCenter,
   useDroppable,
-  useDraggable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "@/lib/supabase";
 import {
   COLUNAS_SITE,
@@ -34,6 +40,8 @@ const TITULO_STATUS: Record<StatusTarefaSite, string> = {
   em_andamento: "text-yellow-400",
   concluido: "text-green-400",
 };
+
+const STATUS_IDS = new Set<string>(["a_fazer", "em_andamento", "concluido"]);
 
 function CardConteudo({ tarefa }: { tarefa: TarefaSite }) {
   return (
@@ -59,18 +67,28 @@ function CardTarefa({
   onEdit: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: tarefa.id,
-  });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    isDragging,
+    transform,
+    transition,
+  } = useSortable({ id: tarefa.id });
 
   return (
     <div
       ref={setNodeRef}
-      style={{ borderLeftColor: COR_STATUS[tarefa.status], borderLeftWidth: "3px" }}
-      className={`touch-none cursor-grab select-none rounded-lg border border-zinc-700 bg-zinc-800/80 px-3 py-2.5 transition-opacity hover:bg-zinc-800 active:cursor-grabbing ${
+      style={{
+        borderLeftColor: COR_STATUS[tarefa.status],
+        borderLeftWidth: "3px",
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={`touch-none cursor-grab select-none rounded-lg border border-zinc-700 bg-zinc-800/80 px-3 py-2.5 hover:bg-zinc-800 active:cursor-grabbing ${
         isDragging ? "opacity-20" : ""
       } ${tarefa.status === "concluido" && !isDragging ? "opacity-50" : ""}`}
-      onClick={onEdit}
+      onClick={isDragging ? undefined : onEdit}
       onContextMenu={onContextMenu}
       {...attributes}
       {...listeners}
@@ -116,14 +134,16 @@ function ColunaKanban({
           isOver ? "bg-zinc-700/40 ring-1 ring-zinc-500" : ""
         }`}
       >
-        {tarefas.map((tarefa) => (
-          <CardTarefa
-            key={tarefa.id}
-            tarefa={tarefa}
-            onEdit={() => onEdit(tarefa)}
-            onContextMenu={(e) => onContextMenu(e, tarefa)}
-          />
-        ))}
+        <SortableContext items={tarefas.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+          {tarefas.map((tarefa) => (
+            <CardTarefa
+              key={tarefa.id}
+              tarefa={tarefa}
+              onEdit={() => onEdit(tarefa)}
+              onContextMenu={(e) => onContextMenu(e, tarefa)}
+            />
+          ))}
+        </SortableContext>
         {tarefas.length === 0 && (
           <button
             onClick={onNova}
@@ -160,6 +180,7 @@ export default function PaginaTarefasSite() {
     const { data } = await supabase
       .from("tarefas_site")
       .select("*")
+      .order("ordem", { ascending: true })
       .order("criado_em", { ascending: true });
     if (data) setTarefas(data as TarefaSite[]);
     setCarregando(false);
@@ -191,6 +212,7 @@ export default function PaginaTarefasSite() {
       concluido: [],
     };
     tarefasFiltradas.forEach((t) => m[t.status].push(t));
+    Object.values(m).forEach((arr) => arr.sort((a, b) => a.ordem - b.ordem));
     return m;
   }, [tarefasFiltradas]);
 
@@ -207,9 +229,14 @@ export default function PaginaTarefasSite() {
 
   async function salvar(id: string | null, valores: NovaTarefaSite) {
     if (id) {
+      const tarefaAtual = tarefas.find((t) => t.id === id);
+      const novaOrdem =
+        tarefaAtual?.status !== valores.status
+          ? porColuna[valores.status].length
+          : (tarefaAtual?.ordem ?? 0);
       const { data } = await supabase
         .from("tarefas_site")
-        .update(valores)
+        .update({ ...valores, ordem: novaOrdem })
         .eq("id", id)
         .select()
         .single();
@@ -217,9 +244,10 @@ export default function PaginaTarefasSite() {
         setTarefas((prev) => prev.map((t) => (t.id === id ? (data as TarefaSite) : t)));
       }
     } else {
+      const ordem = porColuna[valores.status].length;
       const { data } = await supabase
         .from("tarefas_site")
-        .insert(valores)
+        .insert({ ...valores, ordem })
         .select()
         .single();
       if (data) {
@@ -239,12 +267,15 @@ export default function PaginaTarefasSite() {
   }
 
   async function moverStatus(tarefa: TarefaSite, novoStatus: StatusTarefaSite) {
+    const novaOrdem = porColuna[novoStatus].length;
     await supabase
       .from("tarefas_site")
-      .update({ status: novoStatus })
+      .update({ status: novoStatus, ordem: novaOrdem })
       .eq("id", tarefa.id);
     setTarefas((prev) =>
-      prev.map((t) => (t.id === tarefa.id ? { ...t, status: novoStatus } : t))
+      prev.map((t) =>
+        t.id === tarefa.id ? { ...t, status: novoStatus, ordem: novaOrdem } : t
+      )
     );
     setMenuContexto(null);
   }
@@ -256,11 +287,45 @@ export default function PaginaTarefasSite() {
   async function aoFinalizarArraste(event: DragEndEvent) {
     setActiveId(null);
     const { active, over } = event;
-    if (!over) return;
-    const novoStatus = over.id as StatusTarefaSite;
-    const tarefa = tarefas.find((t) => t.id === active.id);
-    if (!tarefa || tarefa.status === novoStatus) return;
-    await moverStatus(tarefa, novoStatus);
+    if (!over || active.id === over.id) return;
+
+    const activeCard = tarefas.find((t) => t.id === active.id);
+    if (!activeCard) return;
+
+    if (STATUS_IDS.has(over.id as string)) {
+      // Dropped onto a column's empty area
+      if (activeCard.status !== (over.id as StatusTarefaSite)) {
+        await moverStatus(activeCard, over.id as StatusTarefaSite);
+      }
+      return;
+    }
+
+    const overCard = tarefas.find((t) => t.id === over.id);
+    if (!overCard) return;
+
+    if (activeCard.status === overCard.status) {
+      // Same column: reorder
+      const colCards = porColuna[activeCard.status];
+      const oldIndex = colCards.findIndex((t) => t.id === active.id);
+      const newIndex = colCards.findIndex((t) => t.id === over.id);
+      if (oldIndex === newIndex) return;
+
+      const reordenadas = arrayMove(colCards, oldIndex, newIndex);
+
+      setTarefas((prev) => {
+        const outras = prev.filter((t) => t.status !== activeCard.status);
+        return [...outras, ...reordenadas.map((t, i) => ({ ...t, ordem: i }))];
+      });
+
+      await Promise.all(
+        reordenadas.map((t, i) =>
+          supabase.from("tarefas_site").update({ ordem: i }).eq("id", t.id)
+        )
+      );
+    } else {
+      // Different column: move to end
+      await moverStatus(activeCard, overCard.status);
+    }
   }
 
   const itensMenuContexto = useMemo(() => {

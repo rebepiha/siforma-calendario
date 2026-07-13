@@ -74,6 +74,7 @@ export interface TarefaSite {
   status: StatusTarefaSite;
   prioridade: Prioridade;
   cor: string | null;
+  ordem: number;
   criado_em: string;
 }
 
