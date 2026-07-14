@@ -99,8 +99,11 @@ export default function PostCard({
         </span>
       )}
 
-      {etiquetasDoPost.length > 0 && (
+      {(etiquetasDoPost.length > 0 || post.canal === "email") && (
         <div className="mb-1 flex flex-wrap gap-1">
+          {post.canal === "email" && (
+            <span title="Email" className="h-1 w-5 rounded-full bg-red-500" />
+          )}
           {etiquetasDoPost.map((et) => (
             <span
               key={et.id}
@@ -128,9 +131,11 @@ export default function PostCard({
             <span className="block h-2.5 w-2.5 rounded-full border-2 border-zinc-500" />
           )}
         </button>
-        <span className={`text-[10px] font-medium ${corCanal.text}`}>
-          {LABEL_CANAL[post.canal]}
-        </span>
+        {post.canal !== "email" && (
+          <span className={`text-[10px] font-medium ${corCanal.text}`}>
+            {LABEL_CANAL[post.canal]}
+          </span>
+        )}
       </div>
 
       <p className="text-xs font-semibold leading-snug text-zinc-100">
