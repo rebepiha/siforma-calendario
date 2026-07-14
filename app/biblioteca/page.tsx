@@ -74,6 +74,7 @@ export default function PaginaBiblioteca() {
     const mapa = new Map<string, Grupo>();
 
     for (const post of postsFiltrados) {
+      if (post.tipo !== "produto" && post.tipo !== "lancamento") continue;
       const nome = nomeBase(post.titulo);
       const chave = nome.toLowerCase();
       const g = mapa.get(chave);
