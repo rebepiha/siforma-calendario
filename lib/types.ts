@@ -1,4 +1,4 @@
-export type Canal = "instagram" | "linkedin" | "youtube";
+export type Canal = "instagram" | "linkedin" | "youtube" | "email";
 
 export type TipoPost = "produto" | "lancamento" | "nao_produto" | "evento";
 
