@@ -9,10 +9,7 @@ function nomeBase(titulo: string): string {
   return titulo.replace(/^(stories|feed)\s*[-:]?\s*/i, "").trim();
 }
 
-interface Grupo {
-  nome: string;
-  posts: Post[];
-}
+interface Grupo { nome: string; posts: Post[] }
 
 export default function PaginaBiblioteca() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -68,32 +65,27 @@ export default function PaginaBiblioteca() {
     return posts.filter((p) => p.titulo.toLowerCase().includes(b));
   }, [posts, busca]);
 
-  const { produtos, outros } = useMemo(() => {
+  const { produtos } = useMemo(() => {
     const ord = (a: Post, b: Post) =>
       maisRecentesPrimeiro
         ? b.data.localeCompare(a.data)
         : a.data.localeCompare(b.data);
 
     const mapa = new Map<string, Grupo>();
-    const outrosList: Post[] = [];
 
     for (const post of postsFiltrados) {
-      if (post.tipo === "produto" || post.tipo === "lancamento") {
-        const nome = nomeBase(post.titulo);
-        const chave = nome.toLowerCase();
-        const g = mapa.get(chave);
-        if (g) g.posts.push(post);
-        else mapa.set(chave, { nome, posts: [post] });
-      } else {
-        outrosList.push(post);
-      }
+      const nome = nomeBase(post.titulo);
+      const chave = nome.toLowerCase();
+      const g = mapa.get(chave);
+      if (g) g.posts.push(post);
+      else mapa.set(chave, { nome, posts: [post] });
     }
 
     const produtos = Array.from(mapa.values());
     produtos.forEach((g) => g.posts.sort(ord));
     produtos.sort((a, b) => ord(a.posts[0], b.posts[0]));
 
-    return { produtos, outros: [...outrosList].sort(ord) };
+    return { produtos };
   }, [postsFiltrados, maisRecentesPrimeiro]);
 
   return (
@@ -121,52 +113,29 @@ export default function PaginaBiblioteca() {
 
       {carregando ? (
         <p className="py-12 text-center text-sm text-zinc-600">Carregando...</p>
-      ) : produtos.length === 0 && outros.length === 0 ? (
+      ) : produtos.length === 0 ? (
         <p className="py-12 text-center text-sm text-zinc-600">Nenhum conteúdo encontrado.</p>
       ) : (
-        <div className="flex flex-col gap-8">
-          {produtos.length > 0 && (
-            <section>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Produtos · {produtos.length}
-              </h2>
-              <div className="flex flex-col divide-y divide-zinc-800/80">
-                {produtos.map((grupo) => (
-                  <div key={grupo.nome} className="flex items-start justify-between gap-6 py-3">
-                    <p className="text-sm font-medium text-zinc-100">{grupo.nome}</p>
-                    <div className="flex shrink-0 flex-col items-end gap-1">
-                      {grupo.posts.map((post) => (
-                        <span key={post.id} className="text-xs text-zinc-500">
-                          {format(parseISO(post.data), "dd/MM/yyyy")}
-                          {post.categoria ? ` · ${post.categoria}` : ""}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {outros.length > 0 && (
-            <section>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Outros · {outros.length}
-              </h2>
-              <div className="flex flex-col divide-y divide-zinc-800/80">
-                {outros.map((post) => (
-                  <div key={post.id} className="flex items-center justify-between gap-6 py-3">
-                    <p className="text-sm text-zinc-100">{post.titulo}</p>
-                    <span className="shrink-0 text-xs text-zinc-500">
+        <section>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Produtos · {produtos.length}
+          </h2>
+          <div className="flex flex-col divide-y divide-zinc-800/80">
+            {produtos.map((grupo) => (
+              <div key={grupo.nome} className="flex items-start justify-between gap-6 py-3">
+                <p className="text-sm font-medium text-zinc-100">{grupo.nome}</p>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  {grupo.posts.map((post) => (
+                    <span key={post.id} className="text-xs text-zinc-500">
                       {format(parseISO(post.data), "dd/MM/yyyy")}
                       {post.categoria ? ` · ${post.categoria}` : ""}
                     </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </section>
-          )}
-        </div>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );
