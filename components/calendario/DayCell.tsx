@@ -34,7 +34,7 @@ export default function DayCell({
     <div
       ref={setNodeRef}
       onClick={() => onNovoPost(dataStr)}
-      className={`flex h-[130px] cursor-pointer flex-col gap-1 border border-zinc-700 p-1.5 transition-colors sm:h-[150px] ${
+      className={`flex h-[135px] cursor-pointer flex-col gap-1 border border-zinc-700 p-1.5 transition-colors sm:h-[155px] ${
         foraDoMes ? "bg-zinc-900/60" : "bg-zinc-800 hover:bg-zinc-800/70"
       } ${isOver ? "bg-oliva-claro/40 ring-2 ring-oliva" : foraDoMes ? "opacity-60" : ""}`}
       title="Clique para adicionar um post neste dia"
