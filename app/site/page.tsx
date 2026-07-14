@@ -177,11 +177,20 @@ export default function PaginaTarefasSite() {
 
   async function carregar() {
     setCarregando(true);
-    const { data } = await supabase
+    let { data, error } = await supabase
       .from("tarefas_site")
       .select("*")
       .order("ordem", { ascending: true })
       .order("criado_em", { ascending: true });
+
+    // fallback if `ordem` column doesn't exist yet
+    if (error || !data) {
+      ({ data } = await supabase
+        .from("tarefas_site")
+        .select("*")
+        .order("criado_em", { ascending: true }));
+    }
+
     if (data) setTarefas(data as TarefaSite[]);
     setCarregando(false);
   }
@@ -212,7 +221,7 @@ export default function PaginaTarefasSite() {
       concluido: [],
     };
     tarefasFiltradas.forEach((t) => m[t.status].push(t));
-    Object.values(m).forEach((arr) => arr.sort((a, b) => a.ordem - b.ordem));
+    Object.values(m).forEach((arr) => arr.sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)));
     return m;
   }, [tarefasFiltradas]);
 
