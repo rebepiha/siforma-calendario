@@ -12,6 +12,17 @@
 
 ## Estado atual (resumo rápido)
 
+- **Aba "Tarefas Site"** (`/site`, ver Sessões 37 e 38): kanban de 3 colunas (A Fazer /
+  Em Andamento / Concluído), sem datas, cartões com borda colorida por status (vermelho/
+  amarelo/verde). Drag-and-drop inter-coluna (mover de uma coluna pra outra) e
+  intra-coluna (reordenar dentro da mesma coluna) via `@dnd-kit/sortable`. Ordem
+  persistida em coluna `ordem` na tabela `tarefas_site` (adicionada manualmente via SQL
+  Editor pelo usuário, migration `0007_tarefas_site.sql` cria a tabela sem ela). Tabela
+  também tem `cor text` (adicionada via `alter table` — não está na migration). Modal de
+  edição tem Título, Detalhes (textarea), Status e Prioridade; sem campo Responsável (foi
+  removido). Sem Ctrl+Z aqui (não implementado — se pedirem, precisa adicionar).
+- **Aba "Metas e Progresso" removida do nav** (Sessão 37) — arquivos `app/metas/` e
+  `components/metas/` ainda existem mas nenhuma rota ou link os referencia.
 - **⚠️ Não existe banco de dados de desenvolvimento separado** — o
   `.env.local` do projeto local aponta pro **mesmo** Supabase de produção
   (`ayfbzhyykcqrkfpscgkv`) que o site no ar usa. `npm run dev` na máquina lê e
@@ -416,8 +427,11 @@
 
 ## Pendências / próximos passos conhecidos
 
-- Nenhuma pendência crítica — o app está funcional e no ar, cobrindo os 3 requisitos
-  (Calendário Editorial, Tarefas de Marketing, Metas e Progresso).
+- Nenhuma pendência crítica — o app está funcional e no ar, cobrindo os 4 requisitos
+  (Calendário Editorial, Tarefas de Marketing, Tarefas Site, Banco de Ideias/Biblioteca).
+- **Arquivos de Metas e Progresso ainda existem** (`app/metas/` e `components/metas/`)
+  mas a aba foi removida do nav. Usuário não confirmou se quer apagar os arquivos — deixados
+  no repo sem referência ativa até uma sessão futura pedir a limpeza.
 - **Arrastar por toque (mobile) não tem suporte confirmado** (ver Sessão 36): a
   correção do bug de drag-and-drop foi testada e validada só com mouse
   (desktop). Não há `TouchSensor` nem `touch-action: none` configurado no
@@ -488,6 +502,61 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 38 — 2026-07-14/15
+
+**Contexto**: continuação da Sessão 37 (conversa anterior que esgotou o contexto). Tarefas Site já existia. Pedidos desta sessão: reordenação intra-coluna no kanban de Tarefas Site, canal Email no Calendário Editorial, ajustes no tamanho dos quadrados de dia, e reformulação da Biblioteca.
+
+**1. Intra-column sorting em Tarefas Site (commits `612de96`, `917a1ee`)**
+- Substituído `useDraggable` por `useSortable` de `@dnd-kit/sortable` nos cards de `app/site/page.tsx`. Cada coluna ganhou `<SortableContext>` com `verticalListSortingStrategy`.
+- Adicionado campo `ordem integer not null default 0` em `tarefas_site` (usuário rodou o SQL manualmente). SQL também inicializa a ordem existente com `row_number() over (partition by status order by criado_em)`.
+- `aoFinalizarArraste` diferencia: se `active` e `over` estão na mesma coluna → `arrayMove` + persiste ordens; se colunas diferentes → move para o final da coluna destino.
+- `NovaTarefaSite` e `SiteTaskModal` atualizados para incluir campo `ordem`.
+- **Bug**: deploy quebrou as tarefas (sumiram). Causa: query `.order("ordem")` falha silenciosamente se a coluna não existir — `data` fica `null` e `setTarefas` nunca é chamado. Fix: fallback para `.order("criado_em")` se a query principal der erro.
+
+**2. Canal Email no Calendário Editorial (commits `2372454`, `d4bab0e`)**
+- `Canal` em `lib/types.ts`: adicionado `"email"`.
+- `lib/postStyles.ts`: `LABEL_CANAL["email"] = "Email"` e `CORES_CANAL["email"] = { text: "text-red-500" }`.
+- Supabase: usuário rodou `alter type canal_enum add value if not exists 'email'` no SQL Editor.
+- Visual no `PostCard.tsx`: email não aparece como texto, mas como barrinha vermelha (`h-1 w-5 rounded-full bg-red-500`) na seção de etiquetas — igual ao visual de Feed/Stories. Canal label escondido para email.
+
+**3. Tamanho dos quadrados de dia (commits `30ac2b2`→`c37049b`→`be03846`)**
+- Várias tentativas de encontrar o tamanho ideal. Tentativa de `min-h` sem cap causou excesso de espaço vazio (CSS Grid estica toda a linha pela célula mais alta). Tentativas de `min-h + max-h` também insatisfatórias.
+- Resultado final: voltou ao tamanho original `h-[130px] sm:h-[150px]` com +5px: `h-[135px] sm:h-[155px]` (commit `be03846`). `overflow-y-auto` mantido para dias com muitos cards.
+
+**4. Biblioteca reformulada (commits `1b3b2a9`, `b47bf1f`, `8e6ebfa`)**
+- Lógica de filtragem mudada: em vez de `canal = 'instagram'`, agora busca posts com etiqueta "Feed" (3 queries: etiquetas → post_etiquetas → posts).
+- Layout mudado de grid de cards para lista com divisores (`divide-y`): nome do produto à esquerda, datas à direita.
+- Posts sem título real (placeholders "Stories") filtrados na carga (`nomeBase(titulo) !== ""`).
+- Seção "Outros" removida — Biblioteca mostra apenas `tipo = produto | lancamento`.
+- "Rotary aluminio" tinha `tipo = "nao_produto"` — corrigido via PATCH direto na REST API.
+- Formobile e Tendência (etiqueta Feed mas tipo nao_produto/evento) corretamente excluídos pelo filtro de tipo.
+
+**Pendente desta sessão**: nada — todas as requests foram implementadas e deployadas.
+
+### Sessão 37 — 2026-07-13/14
+
+**Contexto**: continuação de sessão anterior que esgotou o contexto. Trabalho realizado em conversa anterior (não documentada separadamente). Pedidos cobertos: criação da aba Tarefas Site, remoção da aba Metas e Progresso, drag-and-drop entre colunas, atualização de tarefas de Marketing.
+
+**1. Aba "Metas e Progresso" removida do nav**
+- `components/TopNav.tsx`: entrada removida do array `ABAS`. Arquivos `app/metas/` e `components/metas/` mantidos no repo sem referência ativa.
+
+**2. Nova aba "Tarefas Site" (`/site`)**
+- Tabela `tarefas_site` criada via `supabase/migrations/0007_tarefas_site.sql`: id, titulo, descricao, status (`a_fazer|em_andamento|concluido`), prioridade, responsavel, criado_em. RLS habilitado com política aberta.
+- Colunas adicionais via SQL Editor pelo usuário (fora da migration): `cor text` e `ordem integer` (adicionadas em momentos diferentes).
+- `lib/types.ts`: `StatusTarefaSite`, `TarefaSite`, `NovaTarefaSite`, `COLUNAS_SITE` adicionados.
+- `app/site/page.tsx`: kanban de 3 colunas, cores por status (vermelho/amarelo/verde na borda esquerda), sem campo responsável, sem prioridade visual.
+- `components/site/SiteTaskModal.tsx`: modal com Título, Detalhes, Status, Prioridade. Sem responsável, sem color picker.
+- 18+ tarefas inseridas via REST API pelo Claude em duas rodadas.
+
+**3. Drag-and-drop entre colunas (3 tentativas, resolvido)**
+- Tentativa 1: só colunas droppable → falha em colunas cheias (sem área vazia).
+- Tentativa 2: cards também droppable → falha por conflito de ids.
+- Tentativa 3 (commit `14aca99`): `DragOverlay` — card fica transparente no lugar, overlay segue o ponteiro em portal externo. Collision detection passa a medir posições reais do DOM. Resolveu inter-coluna.
+
+**4. Atualizações em Tarefas de Marketing**
+- Todos os cards "Atendimento nas redes sociais" renomeados para "Atendimento nas redes sociais + site painel admin" via PATCH na REST API.
+- Toda sexta-feira: card "Analisar Concorrência e atualizar doc" adicionado (ao lado do existente "Programar posts do fim de semana") via INSERT em batch.
 
 ### Sessão 36 — 2026-06-22
 
