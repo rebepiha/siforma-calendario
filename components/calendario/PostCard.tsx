@@ -88,7 +88,7 @@ export default function PostCard({
         e.stopPropagation();
         onContextMenu(e);
       }}
-      className={`relative cursor-pointer rounded-lg border border-white/10 bg-white/10 px-1.5 py-1 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md ${
+      className={`relative cursor-pointer rounded-lg border border-white/10 bg-white/10 px-[7px] py-[5px] text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md ${
         publicado ? "opacity-60" : ""
       } ${isDragging ? "opacity-50" : ""} ${isOver ? "ring-2 ring-oliva" : ""}`}
     >
