@@ -706,6 +706,11 @@ pastel, todos com texto cinza) **continuam em vigor** — só a parte de
 tamanho/layout-em-linha foi revertida, não o resto do trabalho da sessão. Verificado
 com `tsc --noEmit` e screenshot do dev server. Pendente: nada.
 
+**Pedido 10**: aumentar de novo "bem pouco" o tamanho de cada card. Commit
+`00d93ce`: `px-1.5 py-1` (6px/4px) → `px-[7px] py-[5px]` — só +1px em cada eixo,
+bem mais sutil que o aumento do Pedido 6 (que tinha sido revertido no Pedido 9).
+Verificado com screenshot. Pendente: nada.
+
 ### Sessão 38 — 2026-07-14/15
 
 **Contexto**: continuação da Sessão 37 (conversa anterior que esgotou o contexto). Tarefas Site já existia. Pedidos desta sessão: reordenação intra-coluna no kanban de Tarefas Site, canal Email no Calendário Editorial, ajustes no tamanho dos quadrados de dia, e reformulação da Biblioteca.
