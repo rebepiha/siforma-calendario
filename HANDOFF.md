@@ -694,6 +694,18 @@ correspondente não vai se atualizar sozinho (não é um cálculo ao vivo, foi e
 uma vez só nesta sessão) — se pedirem de novo mais pra frente, repetir o mesmo
 processo manual.
 
+**Pedido 9** (revert dos Pedidos 4 e 6): usuário pediu pra voltar o card "como
+estava antes" em tamanho e na posição do texto do canal. Commit `a32fc93`:
+`components/calendario/PostCard.tsx` restaurado pro conteúdo exato do commit
+`3947b0e` (`git show 3947b0e:... > PostCard.tsx`) — desfaz o aumento de padding
+(`px-2 py-1.5` → volta pra `px-1.5 py-1`) e desfaz a junção da barrinha com o texto
+do canal numa linha só (volta a ter a barrinha numa `<div>` acima com `mb-1`, e o
+botão de status + nome do canal numa `<div>` separada abaixo). As mudanças de cor e
+de ordem por canal dos Pedidos 1/2 (LinkedIn azul, YouTube vermelho, Email roxo
+pastel, todos com texto cinza) **continuam em vigor** — só a parte de
+tamanho/layout-em-linha foi revertida, não o resto do trabalho da sessão. Verificado
+com `tsc --noEmit` e screenshot do dev server. Pendente: nada.
+
 ### Sessão 38 — 2026-07-14/15
 
 **Contexto**: continuação da Sessão 37 (conversa anterior que esgotou o contexto). Tarefas Site já existia. Pedidos desta sessão: reordenação intra-coluna no kanban de Tarefas Site, canal Email no Calendário Editorial, ajustes no tamanho dos quadrados de dia, e reformulação da Biblioteca.
