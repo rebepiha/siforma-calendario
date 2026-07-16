@@ -594,6 +594,12 @@ próximos candidatos a cortar seriam a linha de `categoria` (só aparece se o po
 categoria) ou reduzir `py-1`/`gap-1` do card — não mexido ainda porque não foi
 pedido.
 
+**Pedido 5** (correção rápida do pedido 4): usuário pediu pra colocar a barrinha
+antes do nome do canal, não depois. Commit `1df6c47`: na mesma `<div>` de
+`PostCard.tsx`, as barrinhas (LinkedIn/YouTube/Email/etiquetas) agora vêm antes do
+`<span>` do `LABEL_CANAL`, não depois. Verificado com screenshot do dev server.
+Pendente: nada.
+
 ### Sessão 38 — 2026-07-14/15
 
 **Contexto**: continuação da Sessão 37 (conversa anterior que esgotou o contexto). Tarefas Site já existia. Pedidos desta sessão: reordenação intra-coluna no kanban de Tarefas Site, canal Email no Calendário Editorial, ajustes no tamanho dos quadrados de dia, e reformulação da Biblioteca.
