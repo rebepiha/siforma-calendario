@@ -4,7 +4,7 @@ import type { MouseEvent } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Etiqueta, Post } from "@/lib/types";
-import { CORES_CANAL, LABEL_CANAL } from "@/lib/postStyles";
+import { LABEL_CANAL } from "@/lib/postStyles";
 
 function IconeCheck() {
   return (
@@ -42,7 +42,6 @@ export default function PostCard({
   arrastavel?: boolean;
 }) {
   const publicado = post.status === "publicado";
-  const corCanal = CORES_CANAL[post.canal];
   const etiquetasDoPost = post.etiqueta_ids
     .map((id) => etiquetas.find((e) => e.id === id))
     .filter((e): e is Etiqueta => !!e);
@@ -100,14 +99,18 @@ export default function PostCard({
       )}
 
       {(etiquetasDoPost.length > 0 ||
-        post.canal === "email" ||
-        post.canal === "youtube") && (
+        post.canal === "linkedin" ||
+        post.canal === "youtube" ||
+        post.canal === "email") && (
         <div className="mb-1 flex flex-wrap gap-1">
+          {post.canal === "linkedin" && (
+            <span title="LinkedIn" className="h-1 w-5 rounded-full bg-blue-500" />
+          )}
           {post.canal === "youtube" && (
             <span title="YouTube" className="h-1 w-5 rounded-full bg-red-500" />
           )}
           {post.canal === "email" && (
-            <span title="Email" className="h-1 w-5 rounded-full bg-purple-500" />
+            <span title="Email" className="h-1 w-5 rounded-full bg-purple-300" />
           )}
           {etiquetasDoPost.map((et) => (
             <span
@@ -136,11 +139,9 @@ export default function PostCard({
             <span className="block h-2.5 w-2.5 rounded-full border-2 border-zinc-500" />
           )}
         </button>
-        {post.canal !== "email" && post.canal !== "youtube" && (
-          <span className={`text-[10px] font-medium ${corCanal.text}`}>
-            {LABEL_CANAL[post.canal]}
-          </span>
-        )}
+        <span className="text-[10px] font-medium text-zinc-400">
+          {LABEL_CANAL[post.canal]}
+        </span>
       </div>
 
       <p className="text-xs font-semibold leading-snug text-zinc-100">
