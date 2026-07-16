@@ -114,9 +114,6 @@ export default function PostCard({
             <span className="block h-2.5 w-2.5 rounded-full border-2 border-zinc-500" />
           )}
         </button>
-        <span className="text-[10px] font-medium text-zinc-400">
-          {LABEL_CANAL[post.canal]}
-        </span>
         {post.canal === "linkedin" && (
           <span title="LinkedIn" className="h-1 w-5 rounded-full bg-blue-500" />
         )}
@@ -134,6 +131,9 @@ export default function PostCard({
             style={{ backgroundColor: et.cor }}
           />
         ))}
+        <span className="text-[10px] font-medium text-zinc-400">
+          {LABEL_CANAL[post.canal]}
+        </span>
       </div>
 
       <p className="text-xs font-semibold leading-snug text-zinc-100">
