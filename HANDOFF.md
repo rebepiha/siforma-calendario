@@ -573,7 +573,26 @@ Sessão 39: 135/155 → 140/160 agora). Se o usuário pedir de novo pra aumentar
 pouco", considere perguntar o valor exato antes de adivinhar — já rendeu confusão
 mais de uma vez.
 
-**Pendente**: nada.
+**Pedido 4**: mesmo com a caixa do dia maior (pedido 3), cada card de post ("cada
+tarefa" no pedido do usuário — mas ele quis dizer os cards do Calendário Editorial,
+não a aba Tarefas) ainda ocupava altura demais pra caber vários no mesmo dia sem
+rolar. Pediu especificamente pra juntar a barrinha de etiqueta com o texto do canal
+(Instagram/YouTube/etc) na mesma linha, tirando uma linha do card.
+
+**O que foi feito** (commit `2aaaf0e`): `components/calendario/PostCard.tsx` — as
+duas `<div>` separadas (uma só com as barrinhas de etiqueta/canal, `mb-1`; outra com
+o botão de toggle + nome do canal) viraram uma única `<div className="mb-0.5 flex
+flex-wrap items-center gap-1">` com tudo junto: botão de status, nome do canal,
+barrinha fixa de LinkedIn/YouTube/Email (se aplicável) e as barrinhas de etiqueta do
+post, todos na mesma linha (usa `flex-wrap` pra não cortar em posts com muitas
+etiquetas). Verificado com `tsc --noEmit` e screenshot do dev server local — dias com
+3+ posts agora mostram bem mais conteúdo sem cortar (ex: 20/jul passou a mostrar 3
+cards inteiros). Commitado e push pro `origin/main`.
+
+**Pendente**: nada. Se ainda não parecer legível o suficiente numa sessão futura, os
+próximos candidatos a cortar seriam a linha de `categoria` (só aparece se o post tem
+categoria) ou reduzir `py-1`/`gap-1` do card — não mexido ainda porque não foi
+pedido.
 
 ### Sessão 38 — 2026-07-14/15
 
