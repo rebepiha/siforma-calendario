@@ -600,6 +600,12 @@ antes do nome do canal, não depois. Commit `1df6c47`: na mesma `<div>` de
 `<span>` do `LABEL_CANAL`, não depois. Verificado com screenshot do dev server.
 Pendente: nada.
 
+**Pedido 6**: aumentar "só um pouco" cada card de post. Commit `a5475b3`:
+`px-1.5 py-1` → `px-2 py-1.5` no container do card em `PostCard.tsx` (só padding, não
+mexi em tamanho de fonte nem no `gap`/`mb` internos). Verificado com screenshot.
+Pendente: nada — se pedirem mais, os próximos ajustes possíveis são aumentar
+`text-xs`/`text-[10px]` do título/labels ou o `gap-1` interno, não mexidos ainda.
+
 ### Sessão 38 — 2026-07-14/15
 
 **Contexto**: continuação da Sessão 37 (conversa anterior que esgotou o contexto). Tarefas Site já existia. Pedidos desta sessão: reordenação intra-coluna no kanban de Tarefas Site, canal Email no Calendário Editorial, ajustes no tamanho dos quadrados de dia, e reformulação da Biblioteca.
