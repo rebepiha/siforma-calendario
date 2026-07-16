@@ -557,6 +557,22 @@ pastel" pro Email (o `bg-purple-500` do pedido 1 ficou forte demais).
   vermelho dia 21, Email roxo pastel dias 8/28, Instagram laranja/amarelo por
   etiqueta como sempre). Commitado e push pro `origin/main`.
 
+**Pedido 3**: aumentar a caixa de cada dia do calendário "em 0.5px" pra conseguir ver
+melhor que tem mais cards. Como 0.5px é imperceptível (e contradiz o objetivo
+declarado), perguntei ao usuário quanto de verdade — escolheu 5px, o mesmo
+incremento já usado na Sessão 38.
+
+**O que foi feito** (commit `d4f6b35`): `components/calendario/DayCell.tsx`,
+`h-[135px] sm:h-[155px]` → `h-[140px] sm:h-[160px]`. Verificado com `tsc --noEmit` e
+screenshot do dev server local (Julho 2026) — dias com 3 posts (ex: 24/jul) agora
+cabem mais visivelmente sem cortar. Commitado e push pro `origin/main`.
+
+**Nota pra sessões futuras**: esse valor (altura do quadrado de dia) já foi mexido
+várias vezes (Sessão 38: 130/150 → tentativas de min-h/max-h → volta pra 135/155;
+Sessão 39: 135/155 → 140/160 agora). Se o usuário pedir de novo pra aumentar "um
+pouco", considere perguntar o valor exato antes de adivinhar — já rendeu confusão
+mais de uma vez.
+
 **Pendente**: nada.
 
 ### Sessão 38 — 2026-07-14/15
