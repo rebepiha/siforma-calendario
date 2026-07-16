@@ -646,6 +646,54 @@ app, é tudo linha a linha no banco).
 
 **Pendente**: nada.
 
+**Pedido 8**: completar o conteúdo dos posts genéricos "Stories" (placeholder, título
+exatamente `"Stories"`, sem conteúdo real) — regra: nos dias que também têm um post
+de Feed, repetir o conteúdo do Feed no Stories; nos demais dias, "Stories -
+Interativo"; e (ajuste dado no meio da tarefa) sábado/domingo sem Feed no dia usam
+"Stories - Conteúdo" em vez de "Interativo" (usuário: não dá pra programar conteúdo
+interativo de verdade pra esses dias). **De novo, escrita de dados em produção via
+REST API, não mudança de código.**
+
+Achei 72 posts com título exatamente `"Stories"` no banco inteiro (08/jun a
+18/set/2026, 64 pendentes + 8 já publicados) — perguntei ao usuário o escopo antes
+de mexer, já que reescrever posts já publicados seria reescrever histórico; escolheu
+**só os pendentes de hoje (16/07) em diante** (64 posts, todos com exatamente 1 por
+dia, de 17/07 a 18/09).
+
+**Detalhe técnico importante descoberto nesta sessão**: a maioria dos posts de
+Feed/Stories com conteúdo real **não tem "Feed:"/"Stories -" no `titulo` guardado no
+banco** — isso é só o prefixo que `PostCard.tsx` adiciona na hora de exibir
+(`prefixoFormato`), baseado na **etiqueta** do post (Feed ou Stories), não no texto.
+Só uns poucos posts antigos têm o prefixo digitado à mão dentro do próprio título
+(esses batem no regex `/^(stories|feed)\b/i` e por isso não recebem o prefixo
+duplicado). Por causa disso, pra achar "quais dias têm Feed" tive que consultar
+`post_etiquetas` filtrando pela etiqueta "Feed" (id `c4aa81a1-...`) e dar join com
+`posts`, em vez de simplesmente filtrar `titulo ilike '*Feed*'` (que só pegaria 3
+posts no banco inteiro — os que têm o prefixo manual).
+
+**O que foi feito**: script Python ad-hoc que, pra cada um dos 64 dias, decide o
+`titulo` novo: se há post com etiqueta Feed naquele dia, `"Stories - " + <título do
+Feed>` (múltiplos posts de Feed no mesmo dia seriam unidos com " / ", não aconteceu
+nenhum caso); senão, `"Stories - Conteúdo"` se sáb/dom, `"Stories - Interativo"` se
+seg-sex. Um caso (`31/07`, Feed com título `"- respiro -"`) geraria
+`"Stories - - respiro -"` com hífen duplicado — limpei tirando os hífens/espaços das
+pontas do conteúdo mirrorado antes de prefixar (virou `"Stories - respiro"`), decisão
+minha não pedida explicitamente, mas evidente. 64 `PATCH` individuais via REST API
+(um por post, só no campo `titulo`) — todos com HTTP 204, nenhuma falha. Verificado
+com screenshot do dev server (Julho 2026): dias com Feed mostram o conteúdo
+espelhado mesmo caindo em sábado/domingo (ex: 18/07 sáb, 25/07 sáb, 26/07 dom — a
+regra de fim de semana só vale quando NÃO há Feed no dia, confirmado visualmente que
+a prioridade ficou correta), dias sem Feed em dia de semana mostram "Interativo",
+sem Feed em fim de semana mostram "Conteúdo".
+
+**Pendente**: nada — os posts de Stories de agosto/setembro não têm Feed
+correspondente além de 26/08 (não há mais conteúdo de Feed planejado depois disso no
+banco), então de 27/08 em diante todo Stories virou "Interativo"/"Conteúdo" por
+enquanto; quando a equipe planejar mais produtos de Feed pra essas datas, o Stories
+correspondente não vai se atualizar sozinho (não é um cálculo ao vivo, foi escrito
+uma vez só nesta sessão) — se pedirem de novo mais pra frente, repetir o mesmo
+processo manual.
+
 ### Sessão 38 — 2026-07-14/15
 
 **Contexto**: continuação da Sessão 37 (conversa anterior que esgotou o contexto). Tarefas Site já existia. Pedidos desta sessão: reordenação intra-coluna no kanban de Tarefas Site, canal Email no Calendário Editorial, ajustes no tamanho dos quadrados de dia, e reformulação da Biblioteca.
