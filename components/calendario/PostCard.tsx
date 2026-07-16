@@ -98,32 +98,7 @@ export default function PostCard({
         </span>
       )}
 
-      {(etiquetasDoPost.length > 0 ||
-        post.canal === "linkedin" ||
-        post.canal === "youtube" ||
-        post.canal === "email") && (
-        <div className="mb-1 flex flex-wrap gap-1">
-          {post.canal === "linkedin" && (
-            <span title="LinkedIn" className="h-1 w-5 rounded-full bg-blue-500" />
-          )}
-          {post.canal === "youtube" && (
-            <span title="YouTube" className="h-1 w-5 rounded-full bg-red-500" />
-          )}
-          {post.canal === "email" && (
-            <span title="Email" className="h-1 w-5 rounded-full bg-purple-300" />
-          )}
-          {etiquetasDoPost.map((et) => (
-            <span
-              key={et.id}
-              title={et.nome}
-              className="h-1 w-5 rounded-full"
-              style={{ backgroundColor: et.cor }}
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="flex items-center gap-1">
+      <div className="mb-0.5 flex flex-wrap items-center gap-1">
         <button
           type="button"
           onClick={(e) => {
@@ -142,6 +117,23 @@ export default function PostCard({
         <span className="text-[10px] font-medium text-zinc-400">
           {LABEL_CANAL[post.canal]}
         </span>
+        {post.canal === "linkedin" && (
+          <span title="LinkedIn" className="h-1 w-5 rounded-full bg-blue-500" />
+        )}
+        {post.canal === "youtube" && (
+          <span title="YouTube" className="h-1 w-5 rounded-full bg-red-500" />
+        )}
+        {post.canal === "email" && (
+          <span title="Email" className="h-1 w-5 rounded-full bg-purple-300" />
+        )}
+        {etiquetasDoPost.map((et) => (
+          <span
+            key={et.id}
+            title={et.nome}
+            className="h-1 w-5 rounded-full"
+            style={{ backgroundColor: et.cor }}
+          />
+        ))}
       </div>
 
       <p className="text-xs font-semibold leading-snug text-zinc-100">
