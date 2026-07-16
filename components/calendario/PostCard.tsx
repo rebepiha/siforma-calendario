@@ -88,7 +88,7 @@ export default function PostCard({
         e.stopPropagation();
         onContextMenu(e);
       }}
-      className={`relative cursor-pointer rounded-lg border border-white/10 bg-white/10 px-2 py-1.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md ${
+      className={`relative cursor-pointer rounded-lg border border-white/10 bg-white/10 px-1.5 py-1 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md ${
         publicado ? "opacity-60" : ""
       } ${isDragging ? "opacity-50" : ""} ${isOver ? "ring-2 ring-oliva" : ""}`}
     >
@@ -98,7 +98,32 @@ export default function PostCard({
         </span>
       )}
 
-      <div className="mb-0.5 flex flex-wrap items-center gap-1">
+      {(etiquetasDoPost.length > 0 ||
+        post.canal === "linkedin" ||
+        post.canal === "youtube" ||
+        post.canal === "email") && (
+        <div className="mb-1 flex flex-wrap gap-1">
+          {post.canal === "linkedin" && (
+            <span title="LinkedIn" className="h-1 w-5 rounded-full bg-blue-500" />
+          )}
+          {post.canal === "youtube" && (
+            <span title="YouTube" className="h-1 w-5 rounded-full bg-red-500" />
+          )}
+          {post.canal === "email" && (
+            <span title="Email" className="h-1 w-5 rounded-full bg-purple-300" />
+          )}
+          {etiquetasDoPost.map((et) => (
+            <span
+              key={et.id}
+              title={et.nome}
+              className="h-1 w-5 rounded-full"
+              style={{ backgroundColor: et.cor }}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={(e) => {
@@ -114,23 +139,6 @@ export default function PostCard({
             <span className="block h-2.5 w-2.5 rounded-full border-2 border-zinc-500" />
           )}
         </button>
-        {post.canal === "linkedin" && (
-          <span title="LinkedIn" className="h-1 w-5 rounded-full bg-blue-500" />
-        )}
-        {post.canal === "youtube" && (
-          <span title="YouTube" className="h-1 w-5 rounded-full bg-red-500" />
-        )}
-        {post.canal === "email" && (
-          <span title="Email" className="h-1 w-5 rounded-full bg-purple-300" />
-        )}
-        {etiquetasDoPost.map((et) => (
-          <span
-            key={et.id}
-            title={et.nome}
-            className="h-1 w-5 rounded-full"
-            style={{ backgroundColor: et.cor }}
-          />
-        ))}
         <span className="text-[10px] font-medium text-zinc-400">
           {LABEL_CANAL[post.canal]}
         </span>
