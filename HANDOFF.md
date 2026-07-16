@@ -503,6 +503,34 @@
 
 ## Histórico de sessões
 
+### Sessão 39 — 2026-07-16
+
+**Pedido**: no Calendário Editorial, trocar a barrinha (etiqueta) vermelha do canal
+Email pro canal YouTube, e colocar roxo na barrinha do Email — reforçando que devia
+ser a etiqueta colorida (barrinha), não o texto do nome do canal.
+
+**O que foi feito** (commit `279ecee`):
+- `components/calendario/PostCard.tsx`: a condição que mostrava a barrinha fixa
+  (antes só `post.canal === "email"`) passou a cobrir também `youtube`. YouTube ganhou
+  `<span title="YouTube" className="h-1 w-5 rounded-full bg-red-500" />` (a cor
+  vermelha que antes era do Email) e Email passou pra `bg-purple-500`. O texto do
+  nome do canal (`LABEL_CANAL`) continua escondido pra ambos (`post.canal !== "email"
+  && post.canal !== "youtube"`) — só Instagram e LinkedIn mostram o nome do canal em
+  texto colorido.
+- `lib/postStyles.ts`: `CORES_CANAL.email.text` atualizado de `text-red-500` pra
+  `text-purple-400` só por consistência de tipo — na prática não é mais lido em
+  lugar nenhum pra email/youtube, já que o texto do canal fica escondido pra esses
+  dois (`CORES_CANAL` só é usado em `PostCard.tsx`, confirmado por grep).
+- Verificação: `npx tsc --noEmit` sem erros; subi o dev server local (aponta pro
+  Supabase de produção, ver aviso de risco acima — só naveguei/tirei screenshot via
+  Playwright CLI, nenhuma escrita) e conferi visualmente em Julho 2026 (mês com posts
+  reais dos dois canais: "Email 1 - Bem Vindo" dia 8, "Vídeo 1 - Formobile" dia 21,
+  "Email 4" dia 28) — barrinhas roxa/vermelha aparecendo corretamente, sem texto de
+  canal. Commitado e feito push pro `origin/main` (deploy automático Vercel
+  disparado, não fiquei esperando confirmar o deploy terminar).
+
+**Pendente**: nada.
+
 ### Sessão 38 — 2026-07-14/15
 
 **Contexto**: continuação da Sessão 37 (conversa anterior que esgotou o contexto). Tarefas Site já existia. Pedidos desta sessão: reordenação intra-coluna no kanban de Tarefas Site, canal Email no Calendário Editorial, ajustes no tamanho dos quadrados de dia, e reformulação da Biblioteca.
