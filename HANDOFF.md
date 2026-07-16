@@ -606,6 +606,46 @@ mexi em tamanho de fonte nem no `gap`/`mb` internos). Verificado com screenshot.
 Pendente: nada — se pedirem mais, os próximos ajustes possíveis são aumentar
 `text-xs`/`text-[10px]` do título/labels ou o `gap-1` interno, não mexidos ainda.
 
+**Pedido 7**: criar posts recorrentes até o fim de agosto — LinkedIn toda
+segunda e sexta, YouTube toda terça, Email toda quinta. **Isso foi uma escrita de
+dados em produção, não uma mudança de código** (via REST API do Supabase, `INSERT`
+em `posts`, não passou por migration nem commit).
+
+Antes de escrever, perguntei ao usuário (via AskUserQuestion) duas coisas por serem
+decisões de produto que eu não tinha como adivinhar: (1) que título usar nos posts
+placeholder — escolheu "nome do canal" (`"LinkedIn"`/`"YouTube"`/`"Email"`, mesmo
+padrão já usado em posts existentes como `"Linkedin"` em 20/07 e outros); (2) o que
+fazer nos dias que já tinham post do mesmo canal batendo com o padrão pedido (ex:
+LinkedIn já tinha posts em 20/07, 24/07, 27/07 e 31/07; YouTube em 21/07; Email em
+21/07, 28/07 e 04/08 — mas essas datas de Email caíam em terças, não quintas) —
+escolheu **pular** esses dias, sem duplicar.
+
+**O que foi feito**: calculei com Python todas as segundas/sextas (LinkedIn),
+terças (YouTube) e quintas (Email) de 16/jul (hoje) a 31/ago/2026, busquei via REST
+API (`GET .../posts?canal=eq.X&data=gte...&data=lte...`) os posts já existentes
+nesses canais no período, e removi da lista de criação qualquer data que já tinha
+post do mesmo canal (mesmo que não fosse exatamente o dia da semana pedido — ex:
+04/08 já tinha "Email 5" numa terça, então não criei um segundo Email lá; mas
+16/08... não, chequei certo por data exata, não por semana). Resultado: **10 posts
+de LinkedIn** (17/07, 03/08, 07/08, 10/08, 14/08, 17/08, 21/08, 24/08, 28/08, 31/08),
+**5 de YouTube** (28/07, 04/08, 11/08, 18/08, 25/08) e **7 de Email** (16/07, 23/07,
+30/07, 06/08, 13/08, 20/08, 27/08). Todos com `tipo: "produto"`, `status: "pendente"`,
+`categoria`/`copy`/`observacoes: null`, sem etiqueta (a barrinha desses canais é fixa
+por código, ver Pedido 1/2 acima, não depende de etiqueta) — mesmo padrão dos posts
+"Stories"/"Linkedin" placeholder que já existiam. Verifiquei visualmente no dev
+server (Julho 2026) que os novos cards aparecem certos nos dias corretos (17/07
+LinkedIn, 21/07 e 28/07 já tinham conteúdo real então não mexi, 23/07 Email, etc.);
+para agosto confirmei só pela resposta da própria API (mesma lógica de renderização
+de julho já validada visualmente).
+
+**Nota pra sessões futuras**: se pedirem pra estender esse padrão além de agosto ou
+mudar os dias da semana, a lógica de cálculo de datas + checagem de conflito foi
+feita ad-hoc em Python/curl nesta sessão, não virou script/feature no código — vai
+precisar refazer o cálculo manualmente (não há automação de "post recorrente" no
+app, é tudo linha a linha no banco).
+
+**Pendente**: nada.
+
 ### Sessão 38 — 2026-07-14/15
 
 **Contexto**: continuação da Sessão 37 (conversa anterior que esgotou o contexto). Tarefas Site já existia. Pedidos desta sessão: reordenação intra-coluna no kanban de Tarefas Site, canal Email no Calendário Editorial, ajustes no tamanho dos quadrados de dia, e reformulação da Biblioteca.
