@@ -505,7 +505,7 @@
 
 ### Sessão 39 — 2026-07-16
 
-**Pedido**: no Calendário Editorial, trocar a barrinha (etiqueta) vermelha do canal
+**Pedido 1**: no Calendário Editorial, trocar a barrinha (etiqueta) vermelha do canal
 Email pro canal YouTube, e colocar roxo na barrinha do Email — reforçando que devia
 ser a etiqueta colorida (barrinha), não o texto do nome do canal.
 
@@ -528,6 +528,34 @@ ser a etiqueta colorida (barrinha), não o texto do nome do canal.
   "Email 4" dia 28) — barrinhas roxa/vermelha aparecendo corretamente, sem texto de
   canal. Commitado e feito push pro `origin/main` (deploy automático Vercel
   disparado, não fiquei esperando confirmar o deploy terminar).
+
+**Pedido 2**: usuário mandou print mostrando inconsistência entre canais — Instagram
+(Feed/Stories) mostrava barrinha colorida + texto "Instagram" cinza; LinkedIn mostrava
+só texto azul, sem barrinha; YouTube e Email (do pedido 1) mostravam só barrinha, sem
+texto nenhum. Pediu pra padronizar todo mundo no modelo do Instagram (barrinha +
+texto cinza do nome do canal). Também pediu, à parte, um roxo "menos forte, mais
+pastel" pro Email (o `bg-purple-500` do pedido 1 ficou forte demais).
+
+**O que foi feito** (commit `3947b0e`):
+- `components/calendario/PostCard.tsx`:
+  - Barrinha do LinkedIn adicionada (`post.canal === "linkedin"` → `bg-blue-500`,
+    já que LinkedIn não tem etiqueta Feed/Stories pra gerar barrinha sozinho, ao
+    contrário do Instagram).
+  - Email trocado de `bg-purple-500` pra `bg-purple-300` (mais pastel, a pedido
+    explícito do usuário).
+  - Texto do nome do canal (`LABEL_CANAL`) passou a aparecer **sempre**, pra todo
+    canal, sempre em `text-zinc-400` — removida a condição que escondia o texto
+    pra `email`/`youtube` e removida a diferenciação de cor por canal
+    (`corCanal.text`, que dava azul pro LinkedIn).
+- `lib/postStyles.ts`: `CORES_CANAL` removido inteiramente (só existia pra colorir
+  esse texto por canal, que agora é sempre cinza uniforme — confirmado por grep que
+  não tinha nenhum outro import). `LABEL_CANAL` mantido (ainda usado).
+- Verificação: `npx tsc --noEmit` sem erros; dev server local + Playwright CLI pra
+  screenshot (só leitura, mesmo aviso de risco de sessão anterior sobre Supabase de
+  produção) confirmando visualmente em Julho 2026 que os 4 canais agora mostram
+  barrinha + texto cinza de forma consistente (LinkedIn azul dias 10/14/25, YouTube
+  vermelho dia 21, Email roxo pastel dias 8/28, Instagram laranja/amarelo por
+  etiqueta como sempre). Commitado e push pro `origin/main`.
 
 **Pendente**: nada.
 
