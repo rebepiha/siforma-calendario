@@ -12,15 +12,17 @@
 
 ## Estado atual (resumo rápido)
 
-- **Aba "Tarefas Site"** (`/site`, ver Sessões 37 e 38): kanban de 3 colunas (A Fazer /
+- **Aba "Tarefas Site"** (`/site`, ver Sessões 37, 38 e 40): kanban de 3 colunas (A Fazer /
   Em Andamento / Concluído), sem datas, cartões com borda colorida por status (vermelho/
   amarelo/verde). Drag-and-drop inter-coluna (mover de uma coluna pra outra) e
   intra-coluna (reordenar dentro da mesma coluna) via `@dnd-kit/sortable`. Ordem
   persistida em coluna `ordem` na tabela `tarefas_site` (adicionada manualmente via SQL
   Editor pelo usuário, migration `0007_tarefas_site.sql` cria a tabela sem ela). Tabela
-  também tem `cor text` (adicionada via `alter table` — não está na migration). Modal de
-  edição tem Título, Detalhes (textarea), Status e Prioridade; sem campo Responsável (foi
-  removido). Sem Ctrl+Z aqui (não implementado — se pedirem, precisa adicionar).
+  também tem `cor text` (adicionada via `alter table` — não está na migration, e **não é
+  editável pela UI ainda**, sempre fica `null` — ver Pendências). Modal de edição tem
+  Título, Detalhes (textarea), Status e Prioridade; sem campo Responsável (foi removido).
+  **Ctrl+Z implementado na Sessão 40** (ver detalhe na entrada da sessão) — cobre criar/
+  editar/excluir/mover(status)/reordenar, mesmo padrão do resto do app.
 - **Aba "Metas e Progresso" removida do nav** (Sessão 37) — arquivos `app/metas/` e
   `components/metas/` ainda existem mas nenhuma rota ou link os referencia.
 - **⚠️ Não existe banco de dados de desenvolvimento separado** — o
@@ -171,13 +173,14 @@
   (`PostCard.tsx`) e Tarefas (`TaskChip.tsx`) — clique direito abre Editar/Duplicar/
   Marcar publicado-concluído/Excluir na posição do cursor (clamped pra não vazar da
   tela), fecha ao clicar fora, rodar scroll ou Esc.
-- **Ctrl+Z desfaz a última ação** (ver Sessão 25), no Calendário Editorial e em
-  Tarefas: criar/editar/excluir/mover (drag) post ou tarefa, e marcar
-  publicado/concluído. Hook `lib/useUndoStack.ts` — pilha em memória (perdida ao
-  recarregar a página), sem redo, desativada automaticamente enquanto um modal está
-  aberto (pra não capturar o Ctrl+Z nativo de um campo de texto). **Não cobre**
-  criar/editar/excluir etiqueta nem nada em Metas e Progresso — só os cards de post e
-  tarefa, que foi o que o usuário pediu.
+- **Ctrl+Z desfaz a última ação** (ver Sessão 25, estendido pra Tarefas Site na Sessão
+  40), no Calendário Editorial, em Tarefas de Marketing e em Tarefas Site: criar/editar/
+  excluir/mover (drag/status) card, reordenar, e marcar publicado/concluído. Hook
+  `lib/useUndoStack.ts` — pilha em memória (perdida ao recarregar a página), sem redo,
+  desativada automaticamente enquanto um modal está aberto (pra não capturar o Ctrl+Z
+  nativo de um campo de texto). **Não cobre** criar/editar/excluir etiqueta nem nada em
+  Metas e Progresso — só os cards de post/tarefa/tarefa-site, que foi o que o usuário
+  pediu.
 - **Tarefas e posts: arrastar para reordenar dentro do mesmo dia** (Tarefas na Sessão
   25, Posts no Calendário Editorial na Sessão 26), além de mover entre dias (já
   existia nos dois). Usa a coluna `ordem` (inteiro, default 0) nas duas tabelas — em
@@ -502,6 +505,97 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 40 — 2026-07-21
+
+**Pedido 1**: em Tarefas de Marketing (vista Calendário semanal), "dar um pouco de
+zoom out" pra ver melhor quando tem mais tarefas — "só um pouco".
+
+**O que foi feito**: reduzi padding/gap sem tocar no tamanho da fonte (pra não perder
+legibilidade, só densidade):
+- `components/tarefas/TaskChip.tsx`: container `gap-1 ... px-1.5 py-1` →
+  `gap-0.5 ... px-1.5 py-[3px]`; título `min-h-[2rem] ... leading-4` →
+  `min-h-[1.75rem] ... leading-[14px]` (ainda `line-clamp-2`, só menos espaço reservado
+  por linha).
+- `components/tarefas/TaskCalendarDayCell.tsx`: coluna do dia `gap-1.5 ... p-2` →
+  `gap-1 ... p-1.5`; lista interna de cards `gap-1.5` → `gap-1`.
+- `components/tarefas/TaskCalendarGrid.tsx`: mesmo ajuste de `gap-1.5`→`gap-1` na lista
+  mobile, por consistência (não era o foco do pedido, mas é o mesmo componente
+  `TaskChip` reaproveitado lá).
+- Não mexi na largura das colunas nem no `min-h-[480px]` da coluna do dia (esse é
+  `flex-col` e cresce com o conteúdo — não tem cap/scroll interno como o Calendário
+  Editorial, então "ver mais tarefas" aqui é sobre densidade do card, não altura do
+  quadrado).
+
+Verificado com `tsc --noEmit`/`npm run build` limpos e screenshot do dev server numa
+semana real bem cheia (20–26/jul, a semana atual, todos os dias com 6+ tarefas) —
+a semana inteira passou a caber numa tela sem cortar texto nem sobrepor cards, títulos
+longos ainda quebram em até 2 linhas legíveis. Nenhuma escrita no Supabase (só
+navegação/screenshot).
+
+**Nota pra sessões futuras**: se pedirem mais zoom out depois, os próximos candidatos
+são a altura do círculo de status (`h-2.5 w-2.5`) ou o `gap-1` entre ícone e título —
+não mexidos ainda porque a densidade já melhorou bastante só com padding/gap. Difícil
+prever se "um pouco" vai ser suficiente pro usuário; se ele pedir de novo, considerar
+perguntar o alvo exato (como já aconteceu antes com a altura do quadrado de dia,
+Sessões 38/39) em vez de adivinhar de novo.
+
+**Pedido 2**: Ctrl+Z (desfazer) em Tarefas Site, "assim como em todas as abas do site
+que já têm isso" — ou seja, estender pra essa aba o mesmo Ctrl+Z que Calendário
+Editorial e Tarefas de Marketing já tinham desde a Sessão 25 (pendência já registrada
+em "Estado atual" desde a Sessão 37/38: "Sem Ctrl+Z aqui — se pedirem, precisa
+adicionar").
+
+**O que foi feito**: `app/site/page.tsx` passou a usar `lib/useUndoStack.ts`, mesmo
+hook e mesmo padrão já usado em `app/tarefas/page.tsx` (`registrarAcao` chamado depois
+de cada mutação bem-sucedida, com uma função que reverte só aquela mutação; hook
+desativado enquanto o modal está aberto via `useUndoStack(!modalAberto)`):
+- Quatro helpers novos, espelhando os equivalentes de `app/tarefas/page.tsx`
+  (`aplicarCamposTarefa`/`aplicarExclusaoTarefa`/`aplicarRestauracaoTarefa`/
+  `aplicarPosicoes`): `aplicarCamposSite` (UPDATE parcial), `aplicarExclusaoSite`
+  (DELETE), `aplicarRestauracaoSite` (INSERT preservando o registro completo,
+  incluindo `id`/`criado_em`), `aplicarPosicoesSite` (UPDATE em lote só de `ordem`).
+- `salvar`: editar registra undo restaurando todos os campos anteriores (título,
+  descrição, status, prioridade, cor, ordem — importante incluir `ordem` porque trocar
+  de status já recalcula a ordem pro fim da coluna nova); criar registra undo que
+  exclui o registro recém-criado.
+- `excluir`: guarda a tarefa antes de deletar, registra undo que recria a linha
+  inteira.
+- `moverStatus` (usado tanto pelo menu de contexto quanto pelo drag entre colunas):
+  guarda status/ordem anteriores, registra undo que os restaura.
+- `aoFinalizarArraste`, ramo de reordenar dentro da mesma coluna: guarda a ordem de
+  todos os cards da coluna antes do `arrayMove`, registra undo via
+  `aplicarPosicoesSite`. O ramo de mover pra outra coluna já reusa `moverStatus`, que já
+  registra o próprio undo — não duplica lógica.
+
+**Teste ponta-a-ponta** (mesma cautela documentada em sessões anteriores — dev server
+local aponta pro Supabase de produção, sem banco de dev separado): criei uma tarefa de
+teste ("TESTE UNDO CTRLZ 12345") via UI no dev server, confirmei que apareceu no
+kanban, apertei Ctrl+Z fora de qualquer campo de texto, confirmei que o card sumiu da
+tela, e por fim consultei a REST API do Supabase filtrando por esse título — retornou
+array vazio, confirmando que o Ctrl+Z desfez de verdade no banco (não só no state
+local do React). `tsc --noEmit`/`npm run build`/`npm run lint` rodados (lint mantém os
+mesmos 1 erro + 1 aviso pré-existentes, não relacionados a esta mudança — ver nota
+abaixo); nenhum dado de teste ficou pra trás.
+
+**Nota sobre o lint pré-existente**: `npm run lint` já reportava, antes desta sessão,
+um erro (`prefer-const` na linha do `let { data, error } = ...` em `carregar()`,
+`app/site/page.tsx`) e um aviso (`react-hooks/exhaustive-deps` no `useMemo` dos itens
+do menu de contexto, faltando `moverStatus` nas deps). Confirmei via `git stash` que
+os dois já existiam antes de eu tocar no arquivo — não são regressão desta sessão, só
+não commitados/notados antes. Não corrigi porque não fazia parte do pedido; o aviso
+agora também menciona `excluir` como dependência faltando (mesma causa raiz: funções
+declaradas dentro do componente, recriadas a cada render, não memoizadas com
+`useCallback` — pré-existente, não um bug funcional).
+
+**Pendente**: nada dos dois pedidos. Sugestões de funcionalidades futuras pra Tarefas
+Site levantadas nesta sessão a pedido do usuário (não implementadas, só sugeridas):
+prazo/data com destaque de atrasada, prioridade visível no card (hoje só editável no
+modal), color picker pro campo `cor` (existe na tabela desde sessão antiga mas nunca
+foi exposto na UI — sempre grava `null`), botão "Duplicar" no modal (existe em
+Calendário Editorial/Tarefas de Marketing, falta aqui), campo Responsável de volta
+(foi removido antes a pedido do usuário), filtro por prioridade (hoje só busca por
+texto).
 
 ### Sessão 39 — 2026-07-16
 

@@ -82,7 +82,7 @@ export default function TaskCalendarGrid({
             {tarefasDoDia.length === 0 ? (
               <p className="px-2 text-xs text-zinc-600">Nenhuma tarefa.</p>
             ) : (
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1">
                 {tarefasDoDia.map((tarefa) => (
                   <TaskChip
                     key={tarefa.id}

@@ -80,7 +80,7 @@ export default function TaskChip({
         e.stopPropagation();
         onContextMenu(e);
       }}
-      className={`flex w-full cursor-pointer flex-col gap-1 rounded-md border bg-zinc-800 px-1.5 py-1 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+      className={`flex w-full cursor-pointer flex-col gap-0.5 rounded-md border bg-zinc-800 px-1.5 py-[3px] text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
         atrasada ? "border-red-500/40" : "border-zinc-700"
       } ${concluida ? "opacity-60" : ""} ${isDragging ? "opacity-50" : ""} ${
         isOver ? "ring-2 ring-oliva" : ""
@@ -103,7 +103,7 @@ export default function TaskChip({
           )}
         </button>
         <p
-          className={`line-clamp-2 min-h-[2rem] text-xs font-semibold leading-4 text-zinc-100 ${
+          className={`line-clamp-2 min-h-[1.75rem] text-xs font-semibold leading-[14px] text-zinc-100 ${
             concluida ? "line-through" : ""
           }`}
         >

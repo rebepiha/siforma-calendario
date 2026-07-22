@@ -26,6 +26,7 @@ import {
   StatusTarefaSite,
   TarefaSite,
 } from "@/lib/types";
+import { useUndoStack } from "@/lib/useUndoStack";
 import SiteTaskModal from "@/components/site/SiteTaskModal";
 import ContextMenu from "@/components/ContextMenu";
 
@@ -175,6 +176,8 @@ export default function PaginaTarefasSite() {
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   );
 
+  const { registrarAcao } = useUndoStack(!modalAberto);
+
   async function carregar() {
     setCarregando(true);
     let { data, error } = await supabase
@@ -236,6 +239,35 @@ export default function PaginaTarefasSite() {
     setModalAberto(true);
   }
 
+  async function aplicarCamposSite(id: string, campos: Partial<NovaTarefaSite>) {
+    setTarefas((prev) => prev.map((t) => (t.id === id ? { ...t, ...campos } : t)));
+    await supabase.from("tarefas_site").update(campos).eq("id", id);
+  }
+
+  async function aplicarExclusaoSite(id: string) {
+    await supabase.from("tarefas_site").delete().eq("id", id);
+    setTarefas((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  async function aplicarRestauracaoSite(tarefa: TarefaSite) {
+    const { error } = await supabase.from("tarefas_site").insert(tarefa);
+    if (error) return;
+    setTarefas((prev) => [...prev, tarefa]);
+  }
+
+  async function aplicarPosicoesSite(posicoes: { id: string; ordem: number }[]) {
+    setTarefas((prev) => {
+      const porId = new Map(posicoes.map((p) => [p.id, p]));
+      return prev.map((t) => {
+        const p = porId.get(t.id);
+        return p ? { ...t, ordem: p.ordem } : t;
+      });
+    });
+    await Promise.all(
+      posicoes.map((p) => supabase.from("tarefas_site").update({ ordem: p.ordem }).eq("id", p.id))
+    );
+  }
+
   async function salvar(id: string | null, valores: NovaTarefaSite) {
     if (id) {
       const tarefaAtual = tarefas.find((t) => t.id === id);
@@ -251,6 +283,18 @@ export default function PaginaTarefasSite() {
         .single();
       if (data) {
         setTarefas((prev) => prev.map((t) => (t.id === id ? (data as TarefaSite) : t)));
+        if (tarefaAtual) {
+          registrarAcao(() =>
+            aplicarCamposSite(id, {
+              titulo: tarefaAtual.titulo,
+              descricao: tarefaAtual.descricao,
+              status: tarefaAtual.status,
+              prioridade: tarefaAtual.prioridade,
+              cor: tarefaAtual.cor,
+              ordem: tarefaAtual.ordem,
+            })
+          );
+        }
       }
     } else {
       const ordem = porColuna[valores.status].length;
@@ -260,7 +304,9 @@ export default function PaginaTarefasSite() {
         .select()
         .single();
       if (data) {
-        setTarefas((prev) => [...prev, data as TarefaSite]);
+        const tarefaCriada = data as TarefaSite;
+        setTarefas((prev) => [...prev, tarefaCriada]);
+        registrarAcao(() => aplicarExclusaoSite(tarefaCriada.id));
       }
     }
     setModalAberto(false);
@@ -268,14 +314,20 @@ export default function PaginaTarefasSite() {
   }
 
   async function excluir(id: string) {
+    const tarefaAnterior = tarefas.find((t) => t.id === id) ?? null;
     await supabase.from("tarefas_site").delete().eq("id", id);
     setTarefas((prev) => prev.filter((t) => t.id !== id));
+    if (tarefaAnterior) {
+      registrarAcao(() => aplicarRestauracaoSite(tarefaAnterior));
+    }
     setModalAberto(false);
     setTarefaSelecionada(null);
     setMenuContexto(null);
   }
 
   async function moverStatus(tarefa: TarefaSite, novoStatus: StatusTarefaSite) {
+    const statusAnterior = tarefa.status;
+    const ordemAnterior = tarefa.ordem;
     const novaOrdem = porColuna[novoStatus].length;
     await supabase
       .from("tarefas_site")
@@ -285,6 +337,9 @@ export default function PaginaTarefasSite() {
       prev.map((t) =>
         t.id === tarefa.id ? { ...t, status: novoStatus, ordem: novaOrdem } : t
       )
+    );
+    registrarAcao(() =>
+      aplicarCamposSite(tarefa.id, { status: statusAnterior, ordem: ordemAnterior })
     );
     setMenuContexto(null);
   }
@@ -319,6 +374,7 @@ export default function PaginaTarefasSite() {
       const newIndex = colCards.findIndex((t) => t.id === over.id);
       if (oldIndex === newIndex) return;
 
+      const posicoesAnteriores = colCards.map((t) => ({ id: t.id, ordem: t.ordem }));
       const reordenadas = arrayMove(colCards, oldIndex, newIndex);
 
       setTarefas((prev) => {
@@ -331,6 +387,7 @@ export default function PaginaTarefasSite() {
           supabase.from("tarefas_site").update({ ordem: i }).eq("id", t.id)
         )
       );
+      registrarAcao(() => aplicarPosicoesSite(posicoesAnteriores));
     } else {
       // Different column: move to end
       await moverStatus(activeCard, overCard.status);
