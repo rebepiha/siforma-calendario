@@ -12,6 +12,16 @@
 
 ## Estado atual (resumo rápido)
 
+- **Tarefas de Marketing, vista Calendário desktop: a grade da semana se estica até o
+  fim da página** (ver Sessão 40, Pedido 3), preenchendo o espaço vazio abaixo dela em
+  vez de parar na altura do conteúdo (`h-full`/`auto-rows-fr` em
+  `TaskCalendarGrid.tsx`, que só funciona porque `app/layout.tsx` trocou o `<body>` de
+  `min-h-full` pra `h-full` — mudança **global**, afeta a altura disponível de
+  `<main>` em toda página do app, embora só Tarefas de Marketing hoje dependa disso
+  visualmente). Cada dia mantém um piso de `min-h-[480px]`; se o conteúdo real for
+  maior que o espaço disponível (dias muito cheios ou viewport curta), a grade volta a
+  crescer pelo conteúdo normalmente e a página rola — nada é cortado. Só a grade
+  desktop (`sm:block`); a lista mobile (`sm:hidden`) não foi alterada.
 - **Aba "Tarefas Site"** (`/site`, ver Sessões 37, 38 e 40): kanban de 3 colunas (A Fazer /
   Em Andamento / Concluído), sem datas, cartões com borda colorida por status (vermelho/
   amarelo/verde). Drag-and-drop inter-coluna (mover de uma coluna pra outra) e
@@ -596,6 +606,72 @@ foi exposto na UI — sempre grava `null`), botão "Duplicar" no modal (existe e
 Calendário Editorial/Tarefas de Marketing, falta aqui), campo Responsável de volta
 (foi removido antes a pedido do usuário), filtro por prioridade (hoje só busca por
 texto).
+
+**Pedido 3** (correção de rumo do Pedido 1, mesma sessão, antes de commitar/dar
+push): usuário mandou print mostrando que a abordagem do Pedido 1 (reduzir padding/gap
+dos cards) não era o que ele queria — o problema real não era o tamanho do card, era
+que a grade da semana parava na altura do conteúdo e sobrava bastante espaço vazio
+(preto) embaixo dela até o fim da página. Pediu explicitamente: "volte o padding e
+espaçamento interno como estava" + "arraste o calendário até o fim da página para
+caber mais coisas em cada dia".
+
+**O que foi feito**:
+1. Revertido 100% do Pedido 1: `TaskChip.tsx`, `TaskCalendarDayCell.tsx` e
+   `TaskCalendarGrid.tsx` voltaram exatamente aos valores de padding/gap/line-height de
+   antes desta sessão (`gap-1`/`px-1.5 py-1`/`min-h-[2rem]`/`leading-4` no card;
+   `gap-1.5`/`p-2` na coluna do dia).
+2. Implementado o esticamento de verdade da grade até o fim da página, via cadeia de
+   `flex-1`/altura definida (não é só um ajuste de Tailwind isolado — precisou mexer no
+   layout raiz):
+   - `app/layout.tsx`: `<body>` trocou `min-h-full` por `h-full`. **Motivo raiz
+     descoberto durante o diagnóstico**: com `min-h-full` (min-height), o flexbox do
+     `body` (`flex flex-col`, `<TopNav>` + `<main className="flex-1">`) não tem uma
+     altura *definida* pro `main` crescer contra — `min-height` só vira o piso do
+     tamanho da caixa depois que o conteúdo já foi calculado, não participa da
+     distribuição de espaço extra do flexbox. Resultado: mesmo com `flex-1` no
+     `<main>`, ele nunca esticava de verdade, só a caixa do `<body>` ficava mais alta
+     por baixo do conteúdo — daí a faixa preta vazia que aparecia no print do usuário.
+     Trocando pra `h-full` (height, não min-height) o `body` passa a ter uma altura
+     definida (100% de `html`, que já é `h-full` = 100vh), o que faz o `flex-1` do
+     `<main>` finalmente crescer pra preencher o espaço sobrando. Overflow continua
+     `visible` (padrão) — se o conteúdo precisar de mais espaço que isso, ele
+     simplesmente ultrapassa e a página rola normalmente, sem cortar nada (testado, ver
+     abaixo). Essa mudança é global (afeta todas as páginas), não só Tarefas.
+   - `app/tarefas/page.tsx`: div raiz ganhou `h-full`; o container que engloba a caixa
+     "Sem prazo definido" + a grade (`<div className="flex flex-col gap-3">`, dentro do
+     `<DndContext>`) virou `flex-1`; a caixa "Sem prazo definido" ganhou `shrink-0` (pra
+     não ser espremida, mantendo sua altura natural de conteúdo).
+   - `components/tarefas/TaskCalendarGrid.tsx`: o wrapper da grade desktop (`hidden ...
+     sm:block`) ganhou `flex-1`; a grade em si (`grid grid-cols-[...]`) ganhou `h-full
+     auto-rows-fr` — `auto-rows-fr` faz a única linha da grade (os 7 dias, já que é uma
+     grade de 1 linha × 7 colunas) ocupar 100% da altura disponível do wrapper, em vez
+     de só a altura do conteúdo. O `min-h-[480px]` que já existia em cada
+     `TaskCalendarDayCell` continua valendo como piso — se o espaço disponível da
+     página for menor que isso (viewport curta) ou se o conteúdo de um dia for mais
+     alto que o espaço esticado, a grade volta a crescer pelo conteúdo normalmente (não
+     regride pra menos que antes). Só mexi na versão desktop (`sm:block`) — a lista
+     mobile (`sm:hidden`) é uma lista vertical simples, não tem esse problema de "sobra
+     espaço embaixo de uma grade".
+
+**Testes**: `tsc --noEmit`/`npm run build` limpos. Playwright contra o dev server (sem
+escrita nenhuma):
+- Viewport larga (2000×1100, semelhante ao print do usuário): confirmei visualmente que
+  a grade agora se estica até bem perto do fim da página, preenchendo o espaço que antes
+  ficava vazio — mesma semana do print do usuário (20–26 jul).
+- Confirmei que a mudança de `body` (`min-h-full`→`h-full`) não quebrou nenhuma outra
+  página: screenshot de `/` (Calendário Editorial), `/site` (Tarefas Site) e
+  `/biblioteca` — todas continuam idênticas visualmente a antes.
+- Viewport propositalmente baixa (1600×650, forçando os dias cheios a passar da altura
+  da tela): confirmei via `document.documentElement.scrollHeight >
+  document.documentElement.clientHeight` que a página continua rolável e, por
+  screenshot, que nenhum card fica cortado/escondido — o `min-h-[480px]` +
+  `overflow: visible` (padrão) garantem que esticar pra preencher espaço vazio não
+  quebra o caso oposto (conteúdo maior que a tela).
+
+**Pendente**: nada. Como a mudança em `app/layout.tsx` é global, vale ficar atento nas
+próximas sessões se algum layout muito diferente (ex: uma página nova com conteúdo bem
+curto) tiver comportamento inesperado de altura — não encontrei nenhum caso assim
+nas páginas existentes, mas não é impossível.
 
 ### Sessão 39 — 2026-07-16
 
