@@ -280,7 +280,7 @@ export default function PaginaTarefas() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold text-zinc-100">Tarefas de Marketing</h1>
 
@@ -336,10 +336,10 @@ export default function PaginaTarefas() {
         <p className="py-12 text-center text-sm text-zinc-600">Carregando...</p>
       ) : (
         <DndContext sensors={sensors} onDragEnd={aoFinalizarArrasteCalendario}>
-          <div className="flex flex-1 flex-col gap-3">
+          <div className="flex flex-col gap-3">
             <div
               ref={setSemPrazoRef}
-              className={`flex shrink-0 flex-col gap-2 rounded-xl border p-3 ${
+              className={`flex flex-col gap-2 rounded-xl border p-3 ${
                 semPrazoIsOver ? "border-oliva bg-oliva-claro/10" : "border-zinc-700 bg-zinc-900"
               }`}
             >

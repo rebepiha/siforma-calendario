@@ -38,11 +38,9 @@ export default function TaskCalendarGrid({
 
   return (
     <>
-      {/* Telas largas: grade da semana, 7 colunas. flex-1 + h-full/auto-rows-fr faz as
-          colunas esticarem até o fim do espaço disponível na página (em vez de parar na
-          altura do conteúdo), sem nunca ficar menor que o min-h-[480px] de cada dia. */}
-      <div className="hidden flex-1 overflow-x-auto rounded-xl shadow-sm sm:block">
-        <div className="grid h-full min-w-[700px] auto-rows-fr grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1.4fr_0.5fr_0.5fr]">
+      {/* Telas largas: grade da semana, 7 colunas. */}
+      <div className="hidden overflow-x-auto rounded-xl shadow-sm sm:block">
+        <div className="grid min-w-[700px] grid-cols-[1.4fr_1.4fr_1.4fr_1.4fr_1.4fr_0.5fr_0.5fr]">
           {diasComTarefas.map(({ dia, dataStr, tarefasDoDia }) => {
             const diaDaSemana = dia.getDay();
             return (

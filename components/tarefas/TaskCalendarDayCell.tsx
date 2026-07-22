@@ -36,7 +36,7 @@ export default function TaskCalendarDayCell({
     <div
       ref={setNodeRef}
       onClick={() => onNovaTarefa(dataStr)}
-      className={`flex min-h-[480px] cursor-pointer flex-col gap-1.5 border-x border-b p-2 transition-colors ${
+      className={`flex min-h-[480px] cursor-pointer flex-col gap-1.5 border-x border-b px-2 pb-[150px] pt-2 transition-colors ${
         ehHoje ? "border-t-2 border-t-oliva" : "border-t border-t-zinc-700"
       } border-x-zinc-700 border-b-zinc-700 ${
         isOver

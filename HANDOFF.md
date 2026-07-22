@@ -12,16 +12,18 @@
 
 ## Estado atual (resumo rápido)
 
-- **Tarefas de Marketing, vista Calendário desktop: a grade da semana se estica até o
-  fim da página** (ver Sessão 40, Pedido 3), preenchendo o espaço vazio abaixo dela em
-  vez de parar na altura do conteúdo (`h-full`/`auto-rows-fr` em
-  `TaskCalendarGrid.tsx`, que só funciona porque `app/layout.tsx` trocou o `<body>` de
-  `min-h-full` pra `h-full` — mudança **global**, afeta a altura disponível de
-  `<main>` em toda página do app, embora só Tarefas de Marketing hoje dependa disso
-  visualmente). Cada dia mantém um piso de `min-h-[480px]`; se o conteúdo real for
-  maior que o espaço disponível (dias muito cheios ou viewport curta), a grade volta a
-  crescer pelo conteúdo normalmente e a página rola — nada é cortado. Só a grade
-  desktop (`sm:block`); a lista mobile (`sm:hidden`) não foi alterada.
+- **Tarefas de Marketing, vista Calendário desktop: cada dia reserva ~150px de espaço
+  vazio abaixo da última tarefa** (ver Sessão 40, Pedidos 3 e 4 — Pedido 3 tentou
+  esticar a grade dinamicamente até o fim da página via `app/layout.tsx`/`flex-1`, o
+  usuário achou exagerado e dependente do tamanho da janela; revertido por completo no
+  Pedido 4). Implementação final, bem mais simples: `TaskCalendarDayCell.tsx` tem
+  `pb-[150px]` fixo (em vez de padding uniforme) — valor calculado a partir da altura
+  real de um card (42px) + gap (6px) × 3, não é um número arbitrário. Como é uma grade
+  CSS de uma linha só, todas as colunas do dia esticam pra bater com a mais cheia, então
+  esses ~150px de folga aparecem garantidos depois da última tarefa do dia mais cheio da
+  semana; dias mais vazios naturalmente sobram ainda mais espaço (comportamento padrão
+  do grid). `app/layout.tsx` está de volta ao original (`min-h-full`, não `h-full`) —
+  não tem mais nenhuma mudança de altura global pendente.
 - **Aba "Tarefas Site"** (`/site`, ver Sessões 37, 38 e 40): kanban de 3 colunas (A Fazer /
   Em Andamento / Concluído), sem datas, cartões com borda colorida por status (vermelho/
   amarelo/verde). Drag-and-drop inter-coluna (mover de uma coluna pra outra) e
@@ -672,6 +674,34 @@ escrita nenhuma):
 próximas sessões se algum layout muito diferente (ex: uma página nova com conteúdo bem
 curto) tiver comportamento inesperado de altura — não encontrei nenhum caso assim
 nas páginas existentes, mas não é impossível.
+
+**Pedido 4** (correção do Pedido 3, mesma sessão): usuário viu o resultado do Pedido 3
+e explicou que não era esticar até o fim da página de verdade (isso dava um espaço
+vazio grande demais e variável conforme o tamanho da janela) — o que ele queria era só
+"certo espaço livre embaixo como se ainda tivesse espaço pra mais tarefas em cada dia,
+espaço de umas 3 tarefas a mais da última".
+
+**O que foi feito**: revertido 100% o mecanismo de esticar dinamicamente (`app/layout.tsx`
+voltou `<body>` de `h-full` pra `min-h-full`; `app/tarefas/page.tsx` e
+`TaskCalendarGrid.tsx` voltaram a não ter `flex-1`/`h-full`/`auto-rows-fr` — exatamente
+como estava antes do Pedido 3). No lugar disso, `TaskCalendarDayCell.tsx` ganhou um
+espaço fixo reservado embaixo: `p-2` virou `px-2 pt-2 pb-[150px]`. O valor `150px` não
+foi chutado — medi via Playwright a altura real de um card renderizado (42px) e o gap
+entre cards (6px) e calculei 3 × (42+6) ≈ 144px, arredondado pra 150px. Como a grade é
+CSS Grid de uma linha só, todas as colunas do dia compartilham a mesma altura de linha
+(a do dia mais cheio) — então esse espaço reservado de ~150px aparece garantido *depois
+da última tarefa do dia mais cheio da semana*; dias com menos tarefas continuam com
+ainda mais espaço vazio embaixo (comportamento padrão de grid, já existia antes). Não
+depende do tamanho da janela — é sempre a mesma folga em pixels, diferente da tentativa
+anterior.
+
+**Testes**: `tsc --noEmit`/`npm run build` limpos. Medi via Playwright
+(`getBoundingClientRect()`) a distância entre o fundo do último card e o fundo da
+coluna mais cheia da semana (Quarta, 20–26 jul) — deu 151px, batendo com o alvo de
+~150px. Conferido visualmente por screenshot que não voltou o problema do Pedido 1
+(padding compacto) nem o exagero do Pedido 3 (esticar até o fim da tela).
+
+**Pendente**: nada.
 
 ### Sessão 39 — 2026-07-16
 

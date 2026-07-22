@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className={`${mulish.variable} h-full antialiased`}>
-      <body className="h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-full flex flex-col bg-background text-foreground">
         <RegistrarServiceWorker />
         <TopNav />
         <main className="w-full flex-1 px-4 py-6 sm:px-6">
