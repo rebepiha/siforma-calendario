@@ -12,25 +12,38 @@
 
 ## Estado atual (resumo rápido)
 
-- **Calendário Editorial: rolar a página até o fim/topo troca de mês automaticamente**
-  (ver Sessão 41). Continua mostrando um mês por vez (não é scroll contínuo estilo
-  Google Calendar, com vários meses emendados — opção descartada pelo usuário por ser
-  bem mais trabalho e o usuário preferiu o comportamento mais simples/previsível).
-  Implementado como um listener de `wheel` em `window` dentro de `app/page.tsx`: só
-  conta o gesto quando a página já está no fim (`deltaY > 0`) ou no topo (`deltaY < 0`)
-  — se ainda dá pra rolar na direção do gesto (incluindo rolar internamente dentro do
-  quadrado de um dia muito cheio, que tem scroll próprio, ver `DayCell.tsx`), o listener
-  ignora o evento e deixa o scroll normal acontecer, sem trocar de mês. Acumula
-  `deltaY` até passar de um limiar (60) pra evitar trocar de mês com qualquer tremor
-  de scroll, e entra em cooldown de 700ms depois de trocar (evita passar vários meses
-  de uma vez só num gesto de scroll contínuo/inércia de trackpad). Ao trocar de mês,
-  a página volta pro topo automaticamente (`window.scrollTo(0, 0)`), pra sempre mostrar
-  o mês novo desde o início. Desativado enquanto o modal de post está aberto, mesmo
-  padrão do Ctrl+Z. **Testado só com wheel de mouse/trackpad** (via Playwright,
-  `page.mouse.wheel` numa posição real da viewport) — não tem suporte a swipe de touch
-  em celular; como a grade desktop já não aparece em telas estreitas (ver bullet da
-  lista mobile mais abaixo), isso não afeta a versão mobile, que é só uma lista vertical
-  sem essa troca automática de mês por scroll.
+- **Calendário Editorial: scroll contínuo estilo Google Calendar, vários meses
+  empilhados** (ver Sessão 41, Pedido 2 — substitui completamente uma primeira versão
+  mais simples do Pedido 1, "rolar até a borda troca de mês", que só durou até o
+  usuário pedir pra experimentar essa alternativa; o commit da versão antiga,
+  `aa7f556`, está superado). `app/page.tsx` renderiza vários `<CalendarGrid>` (um por
+  mês) empilhados verticalmente, começando com 5 meses (hoje ±2). Duas sentinelas
+  invisíveis (topo/fim da lista) com `IntersectionObserver` (rootMargin 800px) carregam
+  mais um mês quando o usuário se aproxima de qualquer borda — sem teto, o array só
+  cresce (decisão deliberada, ver a entrada da sessão pro motivo). Um segundo
+  `IntersectionObserver` (faixa fina perto do topo da tela) decide qual mês está "em
+  destaque" e atualiza o `<h1>` do cabeçalho conforme o usuário rola — não é mais
+  clique de botão que decide isso. Prependar um mês no topo é compensado por
+  `window.scrollBy` num `useLayoutEffect` (mede a diferença de `scrollHeight`
+  antes/depois), pra não fazer a tela "pular" — validado matematicamente, não só
+  visualmente (ver detalhe na sessão). Botões ←/→/Hoje viraram `irParaMes()`: dão
+  scroll suave até a seção do mês pedido, estendendo a lista primeiro se o mês ainda
+  não estiver renderizado. **Efeito colateral que precisou de correção**: com vários
+  meses montados ao mesmo tempo, os dias de padding (início/fim de semana fora do mês,
+  que mostravam posts reais esmaecidos desde a Sessão 7) duplicavam o mesmo dia real
+  já renderizado na seção do mês vizinho — mesmo bug de Map-por-id do dnd-kit que a
+  Sessão 36 já corrigiu uma vez (aqui pro `useDroppable`, não o `useDraggable`).
+  Corrigido com um prop `interativo` novo em `DayCell.tsx`: dias de padding usam um id
+  de droppable próprio e desativado, e não recebem mais posts (`CalendarGrid.tsx` passa
+  `posts={[]}` pra eles) — continuam clicáveis (criam post na data certa) mas **não são
+  mais alvo de drop**; pra mover um post pra aquela data, precisa usar o dia real na
+  seção do mês vizinho. Testado só com wheel de mouse/trackpad em viewport larga (via
+  Playwright) — sem teste de swipe de touch em celular. As sentinelas de scroll
+  infinito e o `IntersectionObserver` de mês em destaque ficam no nível da página (em
+  `app/page.tsx`, por fora do `CalendarGrid`), não dentro do bloco `sm:block`/
+  `sm:hidden` — em teoria valem igual pra lista mobile de cada seção de mês, já que ela
+  também está dentro da mesma seção observada, mas **não testado em viewport estreita
+  nesta sessão**.
 - **Tarefas de Marketing, vista Calendário desktop: cada dia reserva ~150px de espaço
   vazio abaixo da última tarefa** (ver Sessão 40, Pedidos 3 e 4 — Pedido 3 tentou
   esticar a grade dinamicamente até o fim da página via `app/layout.tsx`/`flex-1`, o
@@ -662,6 +675,158 @@ exclusão do resumo mensal (item 2 acima) é baseada em padrão de nome, não em
 característica estrutural do dado — se render frágil no futuro (post de resumo com
 nome diferente, ou um produto real cujo nome comece coincidentemente com "Lançamentos
 de"), vai precisar de ajuste manual na regex de `app/biblioteca/page.tsx`.
+
+**Pedido 2** (mesma sessão, logo depois do Pedido 1 ir pro ar): dois pedidos
+curtos em sequência — (a) "deixe a biblioteca como estava, em lista, não
+gostei dessa view" (rejeitando os cards do Pedido 1); (b) "quero testar a
+versão google" pro Calendário Editorial — a alternativa de scroll contínuo
+(vários meses emendados, tipo Google Calendar) que eu tinha descrito e
+descartado no Pedido 1 em favor da versão mais simples (rolar até a borda
+troca de mês). O usuário pediu explicitamente pra experimentar essa segunda
+versão.
+
+**O que foi feito**:
+
+1. **Biblioteca revertida pra lista**: `app/biblioteca/page.tsx` voltou
+   exatamente ao layout de lista de texto (nome + datas empilhadas à
+   direita) de antes do Pedido 1. **Mantive só a exclusão do post-resumo
+   mensal** ("Lançamentos de \<mês\>") do Pedido 1 — o usuário não reclamou
+   dessa parte, só do visual em cards. `LABEL_TIPO` (import que só servia
+   pro badge dos cards) foi removido de novo.
+
+2. **Calendário Editorial: versão "Google Calendar" substituindo a versão por
+   borda de página do Pedido 1** — o commit `aa7f556` (wheel na borda da
+   página troca de mês) fica **superado** por esta implementação; o
+   mecanismo antigo (listener de `wheel` acumulando delta) foi removido
+   inteiro de `app/page.tsx`. Nova abordagem: vários meses renderizados
+   simultaneamente, empilhados verticalmente, cada um sua própria instância
+   de `<CalendarGrid>` (nenhuma mudança na estrutura interna do
+   `CalendarGrid` foi necessária pra isso — só como ele é chamado).
+   - **Estado**: `mesesRenderizados: Date[]` substitui o antigo `mesAtual`
+     como fonte de quais meses existem no DOM — começa com 5 meses (hoje −2
+     a hoje +2). `mesAtual` continua existindo, mas agora é só "qual mês
+     está em destaque no cabeçalho", derivado do scroll (não é mais setado
+     direto pelos botões).
+   - **Mês em destaque**: um `IntersectionObserver` com `rootMargin: "-45%
+     0px -50% 0px"` (uma faixa fina perto do topo da tela) observa a seção
+     de cada mês (`data-mes="yyyy-MM"` no wrapper); quem tiver maior
+     `intersectionRatio` na faixa vira o `mesAtual` novo. Recriado sempre
+     que `mesesRenderizados` muda (novas seções precisam entrar na
+     observação).
+   - **Scroll infinito**: duas sentinelas invisíveis (`<div>` de 1px),
+     uma no topo da lista e outra no fim, cada uma com seu próprio
+     `IntersectionObserver` (`rootMargin` de 800px na direção
+     correspondente, pra carregar андtes de realmente chegar na borda).
+     Ao intersectar, adiciona um mês (`subMonths`/`addMonths` no início/fim
+     do array). Criados **uma vez só** (`useEffect` com deps `[carregando]`,
+     não `[mesesRenderizados]`) — recriar o observer a cada mês novo
+     causaria disparos redundantes assim que o observer é religado sobre um
+     alvo que já está intersectando.
+   - **Sem "pulo" visual ao carregar mês pro topo**: prependar conteúdo
+     acima do que já está visível desloca tudo pra baixo — sem correção, a
+     tela "pularia". Um `useLayoutEffect` (roda antes do navegador pintar)
+     mede `document.documentElement.scrollHeight` antes/depois do prepend e
+     faz `window.scrollBy` pela diferença exata, então o que já estava na
+     tela continua exatamente na mesma posição visual, só ganha mais
+     conteúdo por cima "invisivelmente". **Validado matematicamente** (ver
+     Testes abaixo) — não só visualmente.
+   - **Botões ←/→/Hoje**: `irParaMes()` substitui o antigo `setMesAtual`
+     direto — se o mês alvo já está renderizado, só dá `scrollIntoView`
+     suave nele; se não está (usuário pulou longe, ex: clicou Hoje depois de
+     rolar meses pra frente), estende `mesesRenderizados` até incluir o mês
+     alvo (preenchendo os meses intermediários) e só então rola.
+   - **Sem teto de meses renderizados** (decisão deliberada, não um
+     descuido): o array `mesesRenderizados` só cresce, nunca poda o lado
+     oposto. Podar exigiria a mesma correção de scroll que o prepend, só que
+     na direção inversa, e adicionava risco/complexidade sem necessidade
+     real — como todos os posts já são carregados de uma vez só (sem
+     paginação por mês, isso já era assim antes desta sessão), o custo de
+     manter mais meses no DOM é só mais nós, não mais chamadas ao Supabase.
+     Pra uma sessão de uso real (não uma maratona de scroll de dezenas de
+     meses), isso não deve ser perceptível. **Se algum dia virar problema de
+     performance**, a poda do lado oposto ao scroll é o próximo passo óbvio.
+
+3. **Efeito colateral que precisou de correção em `CalendarGrid.tsx` e
+   `DayCell.tsx`**: com vários meses montados ao mesmo tempo, os dias de
+   "padding" (início/fim de semana fora do mês, que a Sessão 7 fez mostrarem
+   posts reais esmaecidos) **duplicavam** o mesmo dia real que já aparece
+   cheio na seção do mês vizinho — mesmo dia, dois `DayCell` montados ao
+   mesmo tempo, cada um chamando `useDroppable({id: dataStr})` com o
+   **mesmo id**, sobrescrevendo a referência de nó um do outro no registro
+   do dnd-kit (idêntico ao bug de Map-por-id que a Sessão 36 já corrigiu
+   uma vez, só que pro `useDroppable` em vez do `useDraggable`). Corrigido
+   com um novo prop `interativo` em `DayCell.tsx` (default `true`): quando
+   `false` (usado só pelos dias de padding, via `CalendarGrid.tsx`), o
+   `useDroppable` usa um id próprio (`` `${dataStr}__pad` ``) e
+   `disabled: true` — mesmo padrão já estabelecido pro `arrastavel` do
+   `PostCard.tsx`. `CalendarGrid.tsx` também passa `posts={[]}` pros dias de
+   padding (não busca mais os posts reais daquela data pra eles), já que o
+   mesmo post já aparece de verdade no mês vizinho. **Trade-off aceito**:
+   dias de padding continuam clicáveis (criam post na data certa) mas **não
+   são mais alvo de drop** — arrastar um post pra cima de um dia de padding
+   não funciona mais; pra mover pra aquela data, precisa usar o dia real na
+   seção do mês vizinho. Também achei de quebra e corrigi uma duplicação
+   parecida no destaque visual de "hoje" (círculo oliva): `ehHoje` não
+   verificava `foraDoMes`, então o dia de hoje também acendia o círculo
+   quando aparecia como padding esmaecido em outro mês — agora
+   `CalendarGrid.tsx` passa `ehHoje={!foraDoMes && isSameDay(dia, hoje)}`.
+   A lista mobile (`sm:hidden`) não precisou de nenhuma mudança — ela já só
+   mostra dias do próprio mês (`isSameMonth`), nunca padding.
+
+**Testes**: `tsc --noEmit`, `npm run build` e `npm run lint` limpos (mesmos 2
+problemas pré-existentes de `app/site/page.tsx`, não relacionados). Testado no
+navegador via Playwright (Chrome local, mesmo contorno da sessão anterior pro
+Chromium do Playwright não ter build pra mac13-arm64) contra o dev server,
+só leitura/navegação:
+- Scroll pra baixo/cima em rajadas de wheel pequenas (simulando trackpad de
+  verdade, não um delta gigante de uma vez) carrega novos meses, sem
+  duplicar nem deixar buraco na sequência (validado lendo os atributos
+  `data-mes` de todas as seções montadas e conferindo que formam uma
+  sequência mensal contígua).
+- **Validação matemática da correção de scroll** (não só visual): instrumentei
+  temporariamente o código com `console.log` (removido depois de confirmar),
+  forcei um prepend e conferi que `window.scrollY` depois da correção bateu
+  **exatamente** com a altura adicionada pelo mês novo (`scrollHeight`
+  depois − `scrollHeight` antes) — 0 → 895, sem sobra nem falta. Uma
+  primeira tentativa de medir isso via posição de elemento (`getBoundingClientRect`)
+  antes/depois deu uma diferença de 300px que parecia um bug real, mas era
+  o próprio "hoje" duplicado (item 3 acima, ainda não corrigido nesse ponto
+  do teste) fazendo o seletor de teste pegar instâncias diferentes do
+  círculo antes/depois — não era um bug de scroll. Depois de corrigir a
+  duplicação e trocar a âncora do teste, a diferença sumiu.
+- Testei também com um wheel sintético gigante (delta de -20000 de uma vez,
+  o que nenhum hardware real geraria) só pra ver o comportamento limite —
+  isso expôs um "arrasto" (fling/inércia) nativo do próprio Chrome que
+  continua rolando a página por conta própria por até ~1s depois do evento,
+  **independente da minha correção** (que já tinha rodado certinha bem
+  antes disso). Confirmei que isso é um artefato do teste sintético (nenhum
+  mouse/trackpad real dispara um delta desse tamanho de uma vez), não um
+  bug do código — documentado aqui só pra quem for reusar esse script de
+  teste no futuro não se confundir com a mesma coisa.
+- Clique num dia de padding (fora do mês) ainda abre o modal de novo post
+  com a data certa preenchida (testado: cliquei no "27" de padding no início
+  da grade de agosto, o modal abriu com `2026-07-27`).
+- Drag-and-drop: teste de fumaça (iniciar um arraste e soltar fora de
+  qualquer área de drop, sem mover dado de verdade) não gerou nenhum erro de
+  console depois da mudança de id do `useDroppable`.
+- **Durante o teste manual do usuário**, apareceu uma falsa suspeita de
+  "nada mudou" que na verdade era confusão sobre onde o dev server estava
+  rodando — o usuário tentou `npm run dev` no próprio terminal e recebeu
+  aviso do Next.js de que já havia outro servidor na porta 3000 (o mesmo
+  processo que eu tinha iniciado antes, `PID` visível e compartilhado —
+  **não é um ambiente isolado/sandbox**, é o mesmo `localhost` real da
+  máquina). O `npm run dev` do usuário terminou sozinho (trava de instância
+  única do Next.js/Turbopack) sem chegar a ocupar a porta 3001. Confirmado
+  via `lsof` que só o processo original segue ouvindo em `:3000`. Registrado
+  aqui só como nota — não indicava bug nenhum no código, só a confusão de
+  "qual servidor está de pé".
+
+**Pendente**: nada. Ponto de atenção pra sessões futuras: como não há teto
+pra `mesesRenderizados`, uma sessão de uso muito longa rolando por dezenas de
+meses seguidos vai acumular DOM/registros do dnd-kit sem nunca podar — não é
+esperado ser um problema no uso real de um calendário de marketing mensal,
+mas se algum dia o app ficar perceptivelmente lento depois de muito scroll
+numa sessão só, é o primeiro lugar pra olhar.
 
 ### Sessão 40 — 2026-07-21
 
