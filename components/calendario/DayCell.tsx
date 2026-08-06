@@ -72,6 +72,7 @@ export default function DayCell({
             onClick={() => onClickPost(post)}
             onToggleStatus={() => onToggleStatus(post)}
             onContextMenu={(e) => onContextMenuPost(e, post)}
+            arrastavel={interativo}
           />
         ))}
       </div>

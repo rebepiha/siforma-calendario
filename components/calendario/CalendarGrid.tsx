@@ -71,13 +71,16 @@ export default function CalendarGrid({
           {dias.map((dia) => {
             const dataStr = format(dia, "yyyy-MM-dd");
             const foraDoMes = !isSameMonth(dia, mesAtual);
-            // Dias de padding (fora do mês) não recebem posts nem viram alvo de
-            // drop aqui — o mesmo dia já aparece "de verdade" (interativo, com
-            // posts) na seção do mês vizinho, no calendário contínuo. Ver
-            // DayCell.tsx pro motivo (colisão de id no dnd-kit).
-            const postsDoDia = foraDoMes
-              ? []
-              : posts.filter((p) => p.data === dataStr).sort((a, b) => a.ordem - b.ordem);
+            // Dias de padding (fora do mês) mostram os mesmos posts de sempre —
+            // só não viram alvo de drop nem ficam arrastáveis (prop `interativo`
+            // abaixo, propagada até o PostCard como `arrastavel`), porque o
+            // mesmo dia já aparece "de verdade" (interativo) na seção do mês
+            // vizinho, no calendário contínuo. Ver DayCell.tsx/PostCard.tsx pro
+            // motivo (colisão de id no dnd-kit, mesmo padrão já usado pela lista
+            // mobile desde a Sessão 36).
+            const postsDoDia = posts
+              .filter((p) => p.data === dataStr)
+              .sort((a, b) => a.ordem - b.ordem);
             return (
               <DayCell
                 key={dataStr}
