@@ -150,43 +150,51 @@
   arriscaria mostrar informação desatualizada pra equipe. **Sem notificações
   push** — não foi pedido nessa rodada (precisaria de mais infraestrutura:
   permissão do usuário + um backend pra disparar).
-- **Biblioteca** (ver Sessões 30, 31, 32, 39 e 41 — a doc deste bloco estava
-  desatualizada até a Sessão 41, que corrigiu pra refletir mudanças da Sessão 39
-  que nunca tinham sido registradas aqui): 5ª aba no `TopNav`, rota
-  `/biblioteca`. **Não é uma tabela nova** — busca direto de `posts` no
-  Supabase, sem cadastro manual (diferente do Banco de Ideias que é
-  `localStorage`). Desde a Sessão 39, a query busca por **etiqueta "Feed"**
-  (não mais por `canal = 'instagram'` fixo como na Sessão 31 — na prática hoje
-  todo post com essa etiqueta ainda é Instagram, mas o filtro em si mudou de
-  critério) + `status = 'publicado'`. Não tem mais duas seções — a seção
-  "Outros conteúdos publicados" foi removida (Sessão 39); só existe "Produtos",
-  e só entram posts `tipo` `produto` ou `lancamento` (eventos/não-produto ficam
-  de fora). **Desde a Sessão 41, também exclui especificamente posts tipo
-  `lancamento` cujo título (depois de tirar o prefixo Stories/Feed) começa com
-  "Lançamentos de"** (regex `/^lançamentos? de\b/i` em `app/biblioteca/page.tsx`)
-  — é um resumo mensal recorrente (ex: "Feed: Lançamentos de julho (o que
-  tivemos de novidades?)"), não um produto único; os outros 5 posts tipo
-  `lancamento` da leva atual (E-Motion, E-Motion Slim, Porta Invisível em
-  Alumínio slim, Perfect Pivot Brises 360 Central Slim, Coplanar 2 Portas) são
-  produtos reais sendo lançados e continuam aparecendo normalmente — decisão
-  confirmada com o usuário na Sessão 41, não é uma regra óbvia do código, então
-  se aparecer um post de resumo mensal com título fora desse padrão no futuro
-  ele não vai ser pego por essa regex. Posts são agrupados pelo título —
-  `nomeBase()` em `app/biblioteca/page.tsx` remove um prefixo `Stories`/`Feed`
-  do início antes de agrupar, pra não separar "Stories - X" de "Feed: X" como
-  produtos diferentes; funciona só por correspondência exata do nome
-  resultante, sem fuzzy matching. **Desde a Sessão 41, exibição é uma grade de
-  cards** (`grid sm:grid-cols-2 xl:grid-cols-3`, antes era uma lista de texto
-  em linhas) — cada card mostra nome do produto, badge de tipo (Produto/verde
-  oliva ou Lançamento/âmbar, via `LABEL_TIPO` de `lib/postStyles.ts`), contagem
-  de posts, categoria (do primeiro post do grupo que tiver uma), badge "✓ vídeo
-  pronto" se algum post do grupo tem `video_pronto`, badge "NOVO" (mesmo
-  estilo do `PostCard.tsx` do Calendário) se algum post tem `novo_produto`, e
-  um chip por data em que foi postado. Busca por título e `<select>` de ordem
-  ("Postado há menos/mais tempo") continuam no header, do jeito que já
-  estavam. Sem filtro de tipo/etiqueta na UI — não pedido. Puramente leitura
-  (clicar num card não abre nada — pra editar, é preciso ir no Calendário
-  Editorial).
+- **Biblioteca** (ver Sessões 30, 31, 32, 39, 41 e 42 — a doc deste bloco
+  ficou desatualizada duas vezes seguidas antes, ver Sessão 41 pro histórico
+  completo da bagunça): 5ª aba no `TopNav`, rota `/biblioteca`. **Não é uma
+  tabela nova** — busca direto de `posts` no Supabase, sem cadastro manual
+  (diferente do Banco de Ideias que é `localStorage`). A query busca por
+  **etiqueta "Feed"** (não `canal = 'instagram'` fixo, desde a Sessão 39) +
+  `status = 'publicado'`. Só existe uma seção "Produtos" (a seção "Outros
+  conteúdos publicados" foi removida na Sessão 39), com posts `tipo`
+  `produto` ou `lancamento` (eventos/não-produto ficam de fora). Exclui
+  também posts tipo `lancamento` cujo título bate com o padrão "Lançamentos
+  de \<mês\>" (regex `/^lançamentos? de\b/i`, Sessão 41) — são resumos
+  mensais recorrentes, não produtos únicos. **Exibição é lista de texto**
+  (nome + datas empilhadas à direita) — a Sessão 41 chegou a trocar por uma
+  grade de cards, mas o usuário não gostou e pediu pra reverter na mesma
+  sessão; o código atual é a lista original de sempre. Busca por título e
+  `<select>` de ordem ("Postado há menos/mais tempo") no header, do jeito
+  que já estavam desde a Sessão 31/32.
+  **Agrupamento de produtos** (`app/biblioteca/page.tsx`): posts são
+  agrupados pelo título depois de tirar o prefixo `Stories`/`Feed`
+  (`nomeBaseProduto()`, hoje em `lib/nomesProdutos.ts` — antes vivia local
+  no arquivo, chamada `nomeBase()`), pra não separar "Stories - X" de
+  "Feed: X" como produtos diferentes. **Desde a Sessão 42, passa também por
+  `nomeCanonicoProduto()`** (mesmo arquivo), que aplica um dicionário
+  `ALIASES_PRODUTO` de nomes alternativos conhecidos pro mesmo produto real
+  (ex: "SI Porta Invisível" → "Porta Invisível em Alumínio (slim)", "E-Motion
+  (video editado)" → "E-Motion Slim") — sem isso, o mesmo produto aparecia
+  duas vezes na Biblioteca com títulos diferentes, porque o agrupamento
+  continua sendo por correspondência exata do nome resultante, **sem fuzzy
+  matching de verdade** (decisão da Sessão 30, reafirmada na 42 depois de
+  descartar tanto uma tabela `produtos` de verdade quanto matching automático
+  por similaridade — ver a entrada da Sessão 42 pro raciocínio completo).
+  O dicionário de aliases é **manual** — só cobre os 2 pares que o usuário
+  confirmou até agora; um produto novo escrito com um nome diferente do que
+  já existe vai voltar a duplicar até alguém notar e adicionar uma entrada
+  nova. **Desde a Sessão 42, o campo Título do `PostModal.tsx` (Calendário
+  Editorial) tem um `<datalist>` de autocompletar** (`sugestoesProdutos`,
+  vindo de `nomesProdutosExistentes()` em `lib/nomesProdutos.ts`, calculado em
+  `app/page.tsx` a partir de **todos** os posts tipo produto/lançamento,
+  qualquer status/etiqueta — mais amplo que o que a própria Biblioteca
+  mostra) — sugere nomes de produto já usados enquanto a pessoa digita, já
+  passando pelo `nomeCanonicoProduto()` (então nomes antigos tipo "SI Porta
+  Invisível" não aparecem mais como sugestão, só o canônico). É só uma
+  sugestão nativa do HTML, não bloqueia nem valida nada — reduz a chance de
+  duplicata nova, não garante. Puramente leitura (clicar num item da lista
+  não abre nada — pra editar, é preciso ir no Calendário Editorial).
 - **Banco de Ideias: cards clicáveis, edição completa, exclusão e "Enviar pro
   calendário"** (ver Sessão 29): clicar num card abre `IdeiaModal.tsx` (título,
   seção, tipo — o select de tipo atualiza junto se a seção mudar —, descrição,
@@ -563,6 +571,89 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 42 — 2026-08-06
+
+**Pedido**: usuário reportou que produtos duplicados apareciam na Biblioteca
+como entradas separadas (exemplo dado: "Porta Invisível" tinha 2). Depois de
+eu mostrar a lista completa de 18 produtos e perguntar quais outros pares
+eram duplicatas, confirmou mais um par (E-Motion) e pediu explicitamente uma
+solução que **previna isso nos próximos posts**, não só um conserto pontual
+dos casos atuais.
+
+**Investigação**: a Biblioteca (`app/biblioteca/page.tsx`) sempre agrupou
+produtos por **título exato** (só removendo o prefixo Stories/Feed via
+`nomeBase()`) — decisão original da Sessão 30, documentada como limitação
+conhecida ("sem fuzzy matching"). Consultei a Supabase direto (só leitura)
+e confirmei os 2 pares: "Porta Invisível em Alumínio (slim)" +
+"SI Porta Invisível" (4 posts entre Stories/Feed), e (confirmado pelo
+usuário) "E-Motion (video editado)" + "E-Motion Slim" — nomes diferentes pro
+mesmo produto real, escritos em momentos diferentes pela equipe.
+
+**Decisão de abordagem**: descartei duas alternativas mais pesadas —
+(1) criar uma tabela `produtos` de verdade com FK em `posts` (resolveria a
+raiz, mas exige migration, backfill de todos os posts existentes decidindo
+manualmente qual produto cada um pertence, e um seletor novo no
+`PostModal`); (2) fuzzy matching automático por similaridade de texto
+(arriscado — "OPK Perfect Pivot" e "OPK Perfect Pocket Wood" são produtos
+**diferentes** de verdade, mesma família, um algoritmo de similaridade
+ingênuo os juntaria errado). Optei por uma solução em duas partes, mais
+simples e sem mexer no schema:
+
+1. **Conserta os casos já existentes sem tocar nos posts**: novo arquivo
+   `lib/nomesProdutos.ts` com um dicionário `ALIASES_PRODUTO` (nome em
+   minúsculas → nome canônico) e `nomeCanonicoProduto()`, que aplica o
+   alias por cima do `nomeBase()` de sempre (renomeado
+   `nomeBaseProduto()`). `app/biblioteca/page.tsx` trocou o `nomeBase()`
+   local por essa função importada — os posts no banco continuam com seus
+   títulos originais (`SI Porta Invisível` etc. não foram renomeados via
+   UPDATE), só a forma como a Biblioteca agrupa mudou. **Nomes canônicos
+   escolhidos por mim** (não confirmados com o usuário palavra por palavra):
+   "Porta Invisível em Alumínio (slim)" venceu por ser o nome mais recente e
+   descritivo; "E-Motion Slim" venceu porque "(video editado)" parecia nota
+   de produção interna, não nome de produto de verdade — se o usuário
+   preferir o nome contrário em algum dos dois casos, é só trocar o valor no
+   dicionário.
+2. **Previne repetir o problema em posts futuros**: campo Título do
+   `PostModal.tsx` ganhou um `<datalist>` nativo do HTML (`list="produtos-existentes"`),
+   populado por `nomesProdutosExistentes()` (mesmo arquivo) — lista única de
+   todos os nomes canônicos de produto já usados em posts existentes
+   (`tipo` produto ou lançamento, **qualquer** status/etiqueta, não só os
+   que aparecem na Biblioteca — o objetivo é sugerir mesmo produtos ainda
+   não publicados). Calculada em `app/page.tsx`
+   (`sugestoesProdutos = useMemo(() => nomesProdutosExistentes(posts), [posts])`)
+   e passada como prop nova pro modal. Como a lista já passa pelo
+   `nomeCanonicoProduto()`, os nomes antigos tipo "SI Porta Invisível" **não
+   aparecem mais como sugestão** — só o nome canônico. Adicionei uma dica de
+   uma linha abaixo do campo (só quando `tipo` é produto/lançamento)
+   avisando que dá pra ver produtos já cadastrados digitando. **Limitação
+   consciente**: é só uma sugestão de autocompletar nativa do navegador, não
+   trava nem valida nada — a pessoa ainda pode ignorar a sugestão e digitar
+   um nome novo por engano. Não é um bloqueio, é uma redução de atrito pra
+   reduzir a chance, não uma garantia.
+
+**Testes**: `tsc --noEmit`, `npm run build`, `npm run lint` limpos (mesmos 2
+problemas pré-existentes de sempre). Playwright contra o dev server, só
+leitura:
+- Biblioteca: contagem de produtos caiu de 18 pra 16 (os 2 pares realmente
+  colapsaram em 1 entrada cada); confirmei que nem "SI Porta Invisível" nem
+  "E-Motion (video editado)" aparecem mais como texto solto na página.
+- Modal de novo post: `#produtos-existentes` (o datalist) existe com 73
+  opções (mais que os 16 da Biblioteca porque inclui produto/lançamento de
+  qualquer status/etiqueta, não só Feed+publicado); confirmei que
+  "Porta Invisível em Alumínio (slim)" está na lista e "SI Porta Invisível"
+  não está (o alias escondeu a variante antiga da sugestão, como esperado).
+- Nenhum erro de console em nenhum dos dois fluxos.
+
+**Pendente**: nada do pedido. Nota pra sessões futuras — **este mecanismo é
+manual por natureza**: se a equipe criar mais um post com um nome novo pro
+mesmo produto sem usar a sugestão do autocompletar, ele vai voltar a
+aparecer duplicado até alguém (usuário ou uma sessão futura) notar e
+adicionar mais uma entrada em `ALIASES_PRODUTO` (`lib/nomesProdutos.ts`).
+Se isso acontecer com frequência, vale reconsiderar a opção (1) descartada
+acima (tabela `produtos` de verdade com seletor no modal, em vez de campo de
+texto livre) — mas não implementada agora porque não foi pedido e é bem
+mais trabalho.
 
 ### Sessão 41 — 2026-08-05
 
