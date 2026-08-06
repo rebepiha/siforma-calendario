@@ -498,6 +498,21 @@
 
 - Nenhuma pendência crítica — o app está funcional e no ar, cobrindo os 4 requisitos
   (Calendário Editorial, Tarefas de Marketing, Tarefas Site, Banco de Ideias/Biblioteca).
+- **Calendário Editorial (scroll contínuo, Sessão 41)**: não testado em viewport
+  estreita/mobile nem com swipe de touch; `mesesRenderizados` não tem teto (só cresce
+  numa sessão longa de scroll); dias de padding (fora do mês) não são mais alvo de
+  drop pra drag-and-drop, só a seção real do mês vizinho aceita. Ver bullet completo
+  mais acima pra detalhe técnico.
+- **Biblioteca: aliases de produto duplicado são mantidos manualmente**
+  (`lib/nomesProdutos.ts`, `ALIASES_PRODUTO`, Sessão 42) — cobre só os 2 pares que o
+  usuário confirmou até agora (Porta Invisível, E-Motion). Os nomes canônicos
+  escolhidos ("Porta Invisível em Alumínio (slim)" e "E-Motion Slim") foram decisão
+  minha, não confirmados palavra por palavra com o usuário — se ele preferir o nome
+  contrário em algum dos dois, é só trocar o valor no dicionário. Se a equipe continuar
+  criando nomes novos pro mesmo produto com frequência (mesmo com o autocomplete do
+  Pedido 2), vale reconsiderar uma tabela `produtos` de verdade em vez desse dicionário
+  manual — avaliado e descartado na Sessão 42 por ser bem mais trabalho sem necessidade
+  comprovada ainda.
 - **Arquivos de Metas e Progresso ainda existem** (`app/metas/` e `components/metas/`)
   mas a aba foi removida do nav. Usuário não confirmou se quer apagar os arquivos — deixados
   no repo sem referência ativa até uma sessão futura pedir a limpeza.
