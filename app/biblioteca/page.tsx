@@ -4,10 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { Post } from "@/lib/types";
-
-function nomeBase(titulo: string): string {
-  return titulo.replace(/^(stories|feed)\s*[-:]?\s*/i, "").trim();
-}
+import { nomeCanonicoProduto } from "@/lib/nomesProdutos";
 
 interface Grupo { nome: string; posts: Post[] }
 
@@ -52,7 +49,7 @@ export default function PaginaBiblioteca() {
         .order("data", { ascending: false });
 
       setPosts(
-        (data as Post[] ?? []).filter((p) => nomeBase(p.titulo) !== "")
+        (data as Post[] ?? []).filter((p) => nomeCanonicoProduto(p.titulo) !== "")
       );
       setCarregando(false);
     }
@@ -75,7 +72,7 @@ export default function PaginaBiblioteca() {
 
     for (const post of postsFiltrados) {
       if (post.tipo !== "produto" && post.tipo !== "lancamento") continue;
-      const nome = nomeBase(post.titulo);
+      const nome = nomeCanonicoProduto(post.titulo);
       // "Lançamentos de <mês> (...)" é um resumo mensal recorrente (ex: "Feed:
       // Lançamentos de julho"), não um produto único — não deve virar uma
       // entrada na Biblioteca mesmo sendo tipo "lancamento".

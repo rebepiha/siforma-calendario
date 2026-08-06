@@ -25,6 +25,7 @@ export default function PostModal({
   post,
   dataPadrao,
   etiquetas,
+  sugestoesProdutos,
   onFechar,
   onSalvar,
   onExcluir,
@@ -36,6 +37,7 @@ export default function PostModal({
   post: Post | null;
   dataPadrao: string;
   etiquetas: Etiqueta[];
+  sugestoesProdutos: string[];
   onFechar: () => void;
   onSalvar: (id: string | null, valores: NovoPost, etiquetaIds: string[]) => Promise<void>;
   onExcluir: (id: string) => Promise<void>;
@@ -137,8 +139,20 @@ export default function PostModal({
               value={valores.titulo}
               onChange={(e) => campo("titulo", e.target.value)}
               placeholder="Nome do produto ou tema do post"
+              list="produtos-existentes"
               className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
+            <datalist id="produtos-existentes">
+              {sugestoesProdutos.map((nome) => (
+                <option key={nome} value={nome} />
+              ))}
+            </datalist>
+            {(valores.tipo === "produto" || valores.tipo === "lancamento") && (
+              <p className="mt-1 text-[11px] text-zinc-500">
+                Dica: comece a digitar pra ver produtos já cadastrados e evitar criar um
+                nome novo pro mesmo produto.
+              </p>
+            )}
           </div>
 
           <div>

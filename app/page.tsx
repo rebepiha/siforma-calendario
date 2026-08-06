@@ -21,6 +21,7 @@ import {
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
 import { Etiqueta, NovoPost, Post } from "@/lib/types";
+import { nomesProdutosExistentes } from "@/lib/nomesProdutos";
 import { useUndoStack } from "@/lib/useUndoStack";
 import { mesmosValores } from "@/lib/mesmosValores";
 import CalendarGrid from "@/components/calendario/CalendarGrid";
@@ -269,6 +270,12 @@ export default function PaginaCalendario() {
     const publicados = doMes.filter((p) => p.status === "publicado").length;
     return { total: doMes.length, publicados };
   }, [posts, mesAtual]);
+
+  // Sugestões de autocompletar no campo Título do modal — mostra nomes de
+  // produto já usados em posts existentes, pra reduzir a chance de alguém
+  // criar sem querer uma variação de nome nova pro mesmo produto (ver
+  // lib/nomesProdutos.ts e Sessão 42 do HANDOFF).
+  const sugestoesProdutos = useMemo(() => nomesProdutosExistentes(posts), [posts]);
 
   function abrirNovoPost(data: string) {
     setPostSelecionado(null);
@@ -607,6 +614,7 @@ export default function PaginaCalendario() {
           post={postSelecionado}
           dataPadrao={dataParaNovoPost}
           etiquetas={etiquetas}
+          sugestoesProdutos={sugestoesProdutos}
           onFechar={() => setModalAberto(false)}
           onSalvar={salvarPost}
           onExcluir={excluirPost}
