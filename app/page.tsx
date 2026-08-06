@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -8,7 +8,16 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { addMonths, format, isSameMonth, parseISO, subMonths } from "date-fns";
+import {
+  addMonths,
+  format,
+  isAfter,
+  isBefore,
+  isSameMonth,
+  parseISO,
+  startOfMonth,
+  subMonths,
+} from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
 import { Etiqueta, NovoPost, Post } from "@/lib/types";
@@ -19,8 +28,26 @@ import PostModal from "@/components/calendario/PostModal";
 import Filtros, { FiltrosState } from "@/components/calendario/Filtros";
 import ContextMenu from "@/components/ContextMenu";
 
+const MESES_BUFFER_INICIAL = 2;
+
+function chaveMes(d: Date) {
+  return format(d, "yyyy-MM");
+}
+
 export default function PaginaCalendario() {
-  const [mesAtual, setMesAtual] = useState(() => new Date());
+  const [mesesRenderizados, setMesesRenderizados] = useState<Date[]>(() => {
+    const base = startOfMonth(new Date());
+    const arr: Date[] = [];
+    for (let i = -MESES_BUFFER_INICIAL; i <= MESES_BUFFER_INICIAL; i++) {
+      arr.push(addMonths(base, i));
+    }
+    return arr;
+  });
+  // "Mês em destaque" no cabeçalho — segue o que está visível na tela conforme
+  // o usuário rola (ver useEffect do IntersectionObserver mais abaixo), não é
+  // mais só trocado pelos botões ←/→.
+  const [mesAtual, setMesAtual] = useState(() => startOfMonth(new Date()));
+  const [mesParaFoco, setMesParaFoco] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -39,6 +66,17 @@ export default function PaginaCalendario() {
   const [dataParaNovoPost, setDataParaNovoPost] = useState(() =>
     format(new Date(), "yyyy-MM-dd")
   );
+
+  const secaoRefs = useRef(new Map<string, HTMLDivElement>());
+  const sentinelTopoRef = useRef<HTMLDivElement>(null);
+  const sentinelFimRef = useRef<HTMLDivElement>(null);
+  // Altura da página logo antes de prependar um mês no topo — usada só pra
+  // corrigir o scroll depois (ver useLayoutEffect abaixo), pra rolar pra cima
+  // não fazer a tela "pular" quando o conteúdo novo entra acima do que já
+  // estava visível.
+  const scrollAncoraRef = useRef<number | null>(null);
+  const carregandoTopoRef = useRef(false);
+  const carregandoFimRef = useRef(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
@@ -83,85 +121,133 @@ export default function PaginaCalendario() {
     carregarEtiquetas();
   }, []);
 
-  // Scroll até o fim/topo da página troca de mês (como clicar em →/←), sem
-  // mudar o formato "um mês por vez" — só o gatilho passa a ser o scroll.
-  // Não conta wheel events que ainda podem ser absorvidos por um contêiner
-  // rolável interno (ex: quadrado de um dia muito cheio, ver DayCell.tsx),
-  // pra não sequestrar o scroll de quem só quer ver os posts extras daquele
-  // dia. Desativado enquanto o modal está aberto, mesmo padrão do Ctrl+Z.
+  // Qual mês está "em destaque" no cabeçalho conforme o usuário rola a
+  // página — a seção com maior interseção numa faixa fina perto do topo da
+  // tela vence. Recriado sempre que a lista de meses renderizados muda (novas
+  // seções entram no DOM e precisam ser observadas).
   useEffect(() => {
-    if (modalAberto) return;
+    if (carregando) return;
+    const elementos = Array.from(secaoRefs.current.values());
+    if (elementos.length === 0) return;
 
-    const LIMIAR_BORDA = 4;
-    const LIMIAR_ACUMULADO = 60;
-    const COOLDOWN_MS = 700;
-
-    let acumulado = 0;
-    let emCooldown = false;
-    let timeoutCooldown: ReturnType<typeof setTimeout> | undefined;
-
-    function encontrarAncestralRolavel(alvo: EventTarget | null): HTMLElement | null {
-      let node = alvo instanceof HTMLElement ? alvo : null;
-      while (node && node !== document.body) {
-        const estilo = getComputedStyle(node);
-        if (
-          (estilo.overflowY === "auto" || estilo.overflowY === "scroll") &&
-          node.scrollHeight > node.clientHeight
-        ) {
-          return node;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let melhor: { chave: string; ratio: number } | null = null;
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const chave = (entry.target as HTMLElement).dataset.mes;
+          if (chave && (!melhor || entry.intersectionRatio > melhor.ratio)) {
+            melhor = { chave, ratio: entry.intersectionRatio };
+          }
         }
-        node = node.parentElement;
-      }
-      return null;
-    }
-
-    function aoRolar(e: WheelEvent) {
-      if (emCooldown || e.deltaY === 0) return;
-
-      const ancestral = encontrarAncestralRolavel(e.target);
-      if (ancestral) {
-        const podeRolarNaDirecao =
-          e.deltaY > 0
-            ? ancestral.scrollTop + ancestral.clientHeight < ancestral.scrollHeight - LIMIAR_BORDA
-            : ancestral.scrollTop > LIMIAR_BORDA;
-        if (podeRolarNaDirecao) {
-          acumulado = 0;
-          return;
+        if (melhor) {
+          const [ano, mesNum] = melhor.chave.split("-").map(Number);
+          setMesAtual(new Date(ano, mesNum - 1, 1));
         }
-      }
+      },
+      { rootMargin: "-45% 0px -50% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] }
+    );
+    for (const el of elementos) observer.observe(el);
+    return () => observer.disconnect();
+  }, [mesesRenderizados, carregando]);
 
-      const scrollY = window.scrollY;
-      const noFim =
-        scrollY + window.innerHeight >= document.documentElement.scrollHeight - LIMIAR_BORDA;
-      const noTopo = scrollY <= LIMIAR_BORDA;
+  // Scroll contínuo estilo Google Calendar: sentinelas invisíveis no topo e
+  // no fim da lista de meses. Quando uma delas se aproxima da tela, mais um
+  // mês entra (no início ou no fim). Criado uma vez só (não depende de
+  // mesesRenderizados) pra não recriar o observer a cada mês novo — os refs
+  // dos sentinelas não mudam de elemento entre renders.
+  useEffect(() => {
+    const elTopo = sentinelTopoRef.current;
+    const elFim = sentinelFimRef.current;
+    if (!elTopo || !elFim) return;
 
-      if (e.deltaY > 0 && noFim) {
-        acumulado = Math.max(0, acumulado) + e.deltaY;
-      } else if (e.deltaY < 0 && noTopo) {
-        acumulado = Math.min(0, acumulado) + e.deltaY;
-      } else {
-        acumulado = 0;
-        return;
-      }
+    const obsTopo = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || carregandoTopoRef.current) return;
+        carregandoTopoRef.current = true;
+        scrollAncoraRef.current = document.documentElement.scrollHeight;
+        setMesesRenderizados((atual) => [subMonths(atual[0], 1), ...atual]);
+      },
+      { rootMargin: "800px 0px 0px 0px" }
+    );
 
-      if (Math.abs(acumulado) <= LIMIAR_ACUMULADO) return;
+    const obsFim = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || carregandoFimRef.current) return;
+        carregandoFimRef.current = true;
+        setMesesRenderizados((atual) => [...atual, addMonths(atual[atual.length - 1], 1)]);
+        setTimeout(() => {
+          carregandoFimRef.current = false;
+        }, 300);
+      },
+      { rootMargin: "0px 0px 800px 0px" }
+    );
 
-      const indo = acumulado > 0 ? 1 : -1;
-      acumulado = 0;
-      emCooldown = true;
-      setMesAtual((m) => (indo > 0 ? addMonths(m, 1) : subMonths(m, 1)));
-      window.scrollTo(0, 0);
-      timeoutCooldown = setTimeout(() => {
-        emCooldown = false;
-      }, COOLDOWN_MS);
-    }
-
-    window.addEventListener("wheel", aoRolar, { passive: true });
+    obsTopo.observe(elTopo);
+    obsFim.observe(elFim);
     return () => {
-      window.removeEventListener("wheel", aoRolar);
-      clearTimeout(timeoutCooldown);
+      obsTopo.disconnect();
+      obsFim.disconnect();
     };
-  }, [modalAberto]);
+  }, [carregando]);
+
+  // Depois de prependar um mês no topo, corrige o scroll pela diferença de
+  // altura antes/depois — sem isso a página "pularia" porque o conteúdo novo
+  // empurra tudo que já estava visível pra baixo. Roda em layout effect (antes
+  // do navegador pintar a tela) pra não piscar.
+  useLayoutEffect(() => {
+    if (scrollAncoraRef.current !== null) {
+      const alturaAntes = scrollAncoraRef.current;
+      const alturaDepois = document.documentElement.scrollHeight;
+      window.scrollBy(0, alturaDepois - alturaAntes);
+      scrollAncoraRef.current = null;
+      setTimeout(() => {
+        carregandoTopoRef.current = false;
+      }, 300);
+    }
+  }, [mesesRenderizados]);
+
+  // Rola até a seção do mês pedido por irParaMes() assim que ela existir no
+  // DOM (pode precisar esperar um render extra se o mês teve que ser
+  // adicionado à lista primeiro).
+  useEffect(() => {
+    if (!mesParaFoco) return;
+    const el = secaoRefs.current.get(mesParaFoco);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      setMesParaFoco(null);
+    }
+  }, [mesParaFoco, mesesRenderizados]);
+
+  // Primeira carga: pula direto pro mês atual (sem isso a página abriria
+  // mostrando o primeiro dos meses de buffer, hoje - 2).
+  useEffect(() => {
+    if (carregando) return;
+    const el = secaoRefs.current.get(chaveMes(startOfMonth(new Date())));
+    el?.scrollIntoView({ behavior: "auto", block: "start" });
+  }, [carregando]);
+
+  function irParaMes(mesAlvo: Date) {
+    const alvo = startOfMonth(mesAlvo);
+    const chave = chaveMes(alvo);
+
+    setMesesRenderizados((atual) => {
+      if (atual.some((m) => chaveMes(m) === chave)) return atual;
+      const primeiro = atual[0];
+      const ultimo = atual[atual.length - 1];
+      if (isBefore(alvo, primeiro)) {
+        const extras: Date[] = [];
+        for (let m = alvo; isBefore(m, primeiro); m = addMonths(m, 1)) extras.push(m);
+        scrollAncoraRef.current = document.documentElement.scrollHeight;
+        return [...extras, ...atual];
+      }
+      const extras: Date[] = [];
+      for (let m = addMonths(ultimo, 1); !isAfter(m, alvo); m = addMonths(m, 1)) extras.push(m);
+      return [...atual, ...extras];
+    });
+
+    setMesParaFoco(chave);
+  }
 
   const postsFiltrados = useMemo(() => {
     return posts.filter((post) => {
@@ -430,7 +516,7 @@ export default function PaginaCalendario() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setMesAtual((m) => subMonths(m, 1))}
+            onClick={() => irParaMes(subMonths(mesAtual, 1))}
             className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
             aria-label="Mês anterior"
           >
@@ -440,7 +526,7 @@ export default function PaginaCalendario() {
             {format(mesAtual, "MMMM yyyy", { locale: ptBR })}
           </h1>
           <button
-            onClick={() => setMesAtual((m) => addMonths(m, 1))}
+            onClick={() => irParaMes(addMonths(mesAtual, 1))}
             className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
             aria-label="Próximo mês"
           >
@@ -448,7 +534,7 @@ export default function PaginaCalendario() {
           </button>
           {!isSameMonth(mesAtual, new Date()) && (
             <button
-              onClick={() => setMesAtual(new Date())}
+              onClick={() => irParaMes(new Date())}
               className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-sm text-zinc-400 hover:bg-zinc-900"
             >
               Hoje
@@ -480,17 +566,38 @@ export default function PaginaCalendario() {
         <p className="py-12 text-center text-sm text-zinc-600">Carregando...</p>
       ) : (
         <DndContext sensors={sensors} onDragEnd={aoFinalizarArraste}>
-          <CalendarGrid
-            mesAtual={mesAtual}
-            posts={postsFiltrados}
-            etiquetas={etiquetas}
-            onClickPost={abrirEdicaoPost}
-            onNovoPost={abrirNovoPost}
-            onToggleStatus={alternarStatusPublicado}
-            onContextMenuPost={(e, post) =>
-              setMenuContexto({ x: e.clientX, y: e.clientY, post })
-            }
-          />
+          <div className="flex flex-col gap-8">
+            <div ref={sentinelTopoRef} className="h-px shrink-0" aria-hidden />
+            {mesesRenderizados.map((mes) => {
+              const chave = chaveMes(mes);
+              return (
+                <div
+                  key={chave}
+                  data-mes={chave}
+                  ref={(el) => {
+                    if (el) secaoRefs.current.set(chave, el);
+                    else secaoRefs.current.delete(chave);
+                  }}
+                >
+                  <h2 className="mb-2 text-sm font-semibold capitalize text-zinc-500">
+                    {format(mes, "MMMM yyyy", { locale: ptBR })}
+                  </h2>
+                  <CalendarGrid
+                    mesAtual={mes}
+                    posts={postsFiltrados}
+                    etiquetas={etiquetas}
+                    onClickPost={abrirEdicaoPost}
+                    onNovoPost={abrirNovoPost}
+                    onToggleStatus={alternarStatusPublicado}
+                    onContextMenuPost={(e, post) =>
+                      setMenuContexto({ x: e.clientX, y: e.clientY, post })
+                    }
+                  />
+                </div>
+              );
+            })}
+            <div ref={sentinelFimRef} className="h-px shrink-0" aria-hidden />
+          </div>
         </DndContext>
       )}
 

@@ -16,6 +16,7 @@ export default function DayCell({
   onNovoPost,
   onToggleStatus,
   onContextMenuPost,
+  interativo = true,
 }: {
   dataStr: string;
   numeroDia: number;
@@ -27,8 +28,17 @@ export default function DayCell({
   onNovoPost: (data: string) => void;
   onToggleStatus: (post: Post) => void;
   onContextMenuPost: (e: MouseEvent, post: Post) => void;
+  // No calendário contínuo (vários meses empilhados, ver app/page.tsx), o mesmo
+  // dia de padding (início/fim de semana fora do mês) aparece nesta grade E como
+  // dia "de verdade" na seção do mês vizinho. Registrar o mesmo id de droppable
+  // duas vezes faria a segunda instância sobrescrever a referência de nó da
+  // primeira no registro do dnd-kit (mesmo bug de Map-por-id da Sessão 36, mas
+  // pro droppable em vez do draggable) — por isso o dia de padding usa um id
+  // próprio e fica desativado como alvo de drop.
+  interativo?: boolean;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: dataStr });
+  const idDrop = interativo ? dataStr : `${dataStr}__pad`;
+  const { setNodeRef, isOver } = useDroppable({ id: idDrop, disabled: !interativo });
 
   return (
     <div

@@ -70,22 +70,28 @@ export default function CalendarGrid({
         <div className="grid grid-cols-7">
           {dias.map((dia) => {
             const dataStr = format(dia, "yyyy-MM-dd");
-            const postsDoDia = posts
-              .filter((p) => p.data === dataStr)
-              .sort((a, b) => a.ordem - b.ordem);
+            const foraDoMes = !isSameMonth(dia, mesAtual);
+            // Dias de padding (fora do mês) não recebem posts nem viram alvo de
+            // drop aqui — o mesmo dia já aparece "de verdade" (interativo, com
+            // posts) na seção do mês vizinho, no calendário contínuo. Ver
+            // DayCell.tsx pro motivo (colisão de id no dnd-kit).
+            const postsDoDia = foraDoMes
+              ? []
+              : posts.filter((p) => p.data === dataStr).sort((a, b) => a.ordem - b.ordem);
             return (
               <DayCell
                 key={dataStr}
                 dataStr={dataStr}
                 numeroDia={dia.getDate()}
-                foraDoMes={!isSameMonth(dia, mesAtual)}
-                ehHoje={isSameDay(dia, hoje)}
+                foraDoMes={foraDoMes}
+                ehHoje={!foraDoMes && isSameDay(dia, hoje)}
                 posts={postsDoDia}
                 etiquetas={etiquetas}
                 onClickPost={onClickPost}
                 onNovoPost={onNovoPost}
                 onToggleStatus={onToggleStatus}
                 onContextMenuPost={onContextMenuPost}
+                interativo={!foraDoMes}
               />
             );
           })}
