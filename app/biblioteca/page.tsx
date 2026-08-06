@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { Post } from "@/lib/types";
-import { LABEL_TIPO } from "@/lib/postStyles";
 
 function nomeBase(titulo: string): string {
   return titulo.replace(/^(stories|feed)\s*[-:]?\s*/i, "").trim();
@@ -126,63 +125,20 @@ export default function PaginaBiblioteca() {
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Produtos · {produtos.length}
           </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {produtos.map((grupo) => {
-              const temNovo = grupo.posts.some((p) => p.novo_produto);
-              const temVideo = grupo.posts.some((p) => p.video_pronto);
-              const tipo = grupo.posts[0].tipo;
-              const categoria = grupo.posts.find((p) => p.categoria)?.categoria;
-              return (
-                <div
-                  key={grupo.nome}
-                  className="relative flex flex-col gap-3 rounded-lg border border-zinc-700 bg-zinc-800/60 p-4 transition hover:border-zinc-600"
-                >
-                  {temNovo && (
-                    <span className="absolute -right-2 -top-2 rounded-full border border-zinc-600 bg-zinc-900 px-1.5 py-0.5 text-[9px] font-medium text-zinc-400">
-                      NOVO
+          <div className="flex flex-col divide-y divide-zinc-800/80">
+            {produtos.map((grupo) => (
+              <div key={grupo.nome} className="flex items-start justify-between gap-6 py-3">
+                <p className="text-sm font-medium text-zinc-100">{grupo.nome}</p>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  {grupo.posts.map((post) => (
+                    <span key={post.id} className="text-xs text-zinc-500">
+                      {format(parseISO(post.data), "dd/MM/yyyy")}
+                      {post.categoria ? ` · ${post.categoria}` : ""}
                     </span>
-                  )}
-
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold leading-snug text-zinc-100">
-                      {grupo.nome}
-                    </p>
-                    <span
-                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                        tipo === "lancamento"
-                          ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                          : "border-oliva/30 bg-oliva/10 text-oliva"
-                      }`}
-                    >
-                      {LABEL_TIPO[tipo]}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-                    <span>
-                      {grupo.posts.length} {grupo.posts.length === 1 ? "post" : "posts"}
-                    </span>
-                    {categoria && <span>· {categoria}</span>}
-                    {temVideo && (
-                      <span className="rounded bg-badge-video px-1.5 py-0.5 text-[9px] font-semibold text-white">
-                        ✓ vídeo pronto
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {grupo.posts.map((post) => (
-                      <span
-                        key={post.id}
-                        className="rounded-md bg-zinc-900 px-2 py-1 text-[11px] text-zinc-400"
-                      >
-                        {format(parseISO(post.data), "dd/MM/yyyy")}
-                      </span>
-                    ))}
-                  </div>
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </section>
       )}
