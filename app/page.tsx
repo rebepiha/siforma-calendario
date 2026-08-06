@@ -83,6 +83,86 @@ export default function PaginaCalendario() {
     carregarEtiquetas();
   }, []);
 
+  // Scroll até o fim/topo da página troca de mês (como clicar em →/←), sem
+  // mudar o formato "um mês por vez" — só o gatilho passa a ser o scroll.
+  // Não conta wheel events que ainda podem ser absorvidos por um contêiner
+  // rolável interno (ex: quadrado de um dia muito cheio, ver DayCell.tsx),
+  // pra não sequestrar o scroll de quem só quer ver os posts extras daquele
+  // dia. Desativado enquanto o modal está aberto, mesmo padrão do Ctrl+Z.
+  useEffect(() => {
+    if (modalAberto) return;
+
+    const LIMIAR_BORDA = 4;
+    const LIMIAR_ACUMULADO = 60;
+    const COOLDOWN_MS = 700;
+
+    let acumulado = 0;
+    let emCooldown = false;
+    let timeoutCooldown: ReturnType<typeof setTimeout> | undefined;
+
+    function encontrarAncestralRolavel(alvo: EventTarget | null): HTMLElement | null {
+      let node = alvo instanceof HTMLElement ? alvo : null;
+      while (node && node !== document.body) {
+        const estilo = getComputedStyle(node);
+        if (
+          (estilo.overflowY === "auto" || estilo.overflowY === "scroll") &&
+          node.scrollHeight > node.clientHeight
+        ) {
+          return node;
+        }
+        node = node.parentElement;
+      }
+      return null;
+    }
+
+    function aoRolar(e: WheelEvent) {
+      if (emCooldown || e.deltaY === 0) return;
+
+      const ancestral = encontrarAncestralRolavel(e.target);
+      if (ancestral) {
+        const podeRolarNaDirecao =
+          e.deltaY > 0
+            ? ancestral.scrollTop + ancestral.clientHeight < ancestral.scrollHeight - LIMIAR_BORDA
+            : ancestral.scrollTop > LIMIAR_BORDA;
+        if (podeRolarNaDirecao) {
+          acumulado = 0;
+          return;
+        }
+      }
+
+      const scrollY = window.scrollY;
+      const noFim =
+        scrollY + window.innerHeight >= document.documentElement.scrollHeight - LIMIAR_BORDA;
+      const noTopo = scrollY <= LIMIAR_BORDA;
+
+      if (e.deltaY > 0 && noFim) {
+        acumulado = Math.max(0, acumulado) + e.deltaY;
+      } else if (e.deltaY < 0 && noTopo) {
+        acumulado = Math.min(0, acumulado) + e.deltaY;
+      } else {
+        acumulado = 0;
+        return;
+      }
+
+      if (Math.abs(acumulado) <= LIMIAR_ACUMULADO) return;
+
+      const indo = acumulado > 0 ? 1 : -1;
+      acumulado = 0;
+      emCooldown = true;
+      setMesAtual((m) => (indo > 0 ? addMonths(m, 1) : subMonths(m, 1)));
+      window.scrollTo(0, 0);
+      timeoutCooldown = setTimeout(() => {
+        emCooldown = false;
+      }, COOLDOWN_MS);
+    }
+
+    window.addEventListener("wheel", aoRolar, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", aoRolar);
+      clearTimeout(timeoutCooldown);
+    };
+  }, [modalAberto]);
+
   const postsFiltrados = useMemo(() => {
     return posts.filter((post) => {
       if (filtros.canal !== "todos" && post.canal !== filtros.canal) return false;
