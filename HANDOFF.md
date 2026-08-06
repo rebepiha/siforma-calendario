@@ -34,10 +34,16 @@
   já renderizado na seção do mês vizinho — mesmo bug de Map-por-id do dnd-kit que a
   Sessão 36 já corrigiu uma vez (aqui pro `useDroppable`, não o `useDraggable`).
   Corrigido com um prop `interativo` novo em `DayCell.tsx`: dias de padding usam um id
-  de droppable próprio e desativado, e não recebem mais posts (`CalendarGrid.tsx` passa
-  `posts={[]}` pra eles) — continuam clicáveis (criam post na data certa) mas **não são
-  mais alvo de drop**; pra mover um post pra aquela data, precisa usar o dia real na
-  seção do mês vizinho. Testado só com wheel de mouse/trackpad em viewport larga (via
+  de droppable próprio e desativado. **Primeira versão desse fix zerava
+  `posts={[]}` pros dias de padding (escondia o conteúdo todo) — o usuário reportou
+  a regressão com print (Sessão 42, "quero que aqui apareça o conteúdo também") e foi
+  corrigido na mesma sessão**: `CalendarGrid.tsx` volta a passar os posts reais de
+  todo dia (dentro ou fora do mês), e `DayCell.tsx` propaga `interativo` pro
+  `PostCard` como a prop `arrastavel` (mesmo mecanismo de id próprio +
+  `disabled: true` que a Sessão 36 já usa pra lista mobile) — os cards nos dias de
+  padding mostram o conteúdo de novo, só não são mais arrastáveis nem alvo de drop;
+  pra mover um post pra aquela data, precisa usar o dia real na seção do mês
+  vizinho. Testado só com wheel de mouse/trackpad em viewport larga (via
   Playwright) — sem teste de swipe de touch em celular. As sentinelas de scroll
   infinito e o `IntersectionObserver` de mês em destaque ficam no nível da página (em
   `app/page.tsx`, por fora do `CalendarGrid`), não dentro do bloco `sm:block`/
@@ -669,6 +675,76 @@ Se isso acontecer com frequência, vale reconsiderar a opção (1) descartada
 acima (tabela `produtos` de verdade com seletor no modal, em vez de campo de
 texto livre) — mas não implementada agora porque não foi pedido e é bem
 mais trabalho.
+
+**Pedido 2** (mesma sessão, depois de eu perguntar sobre a tabela de produtos):
+usuário pediu pra eu criar mesmo a tabela `produtos` de verdade (ver mais
+abaixo, "Pedido 3", pra essa parte). Antes de implementar, publiquei um
+Artifact com os 73 grupos de posts tipo produto/lançamento (qualquer
+etiqueta/status, não só o que a Biblioteca mostra) pedindo pro usuário
+revisar quais eram duplicatas de verdade antes de eu migrar dado histórico
+às cegas. O usuário apontou que eu tinha escopado errado: **"a biblioteca é
+só de feed, stories não entra"** — a lista de 73 grupos incluía posts com
+etiqueta Stories (ou nenhuma etiqueta), que nunca aparecem na Biblioteca de
+qualquer forma. Recalculei escopando certo (etiqueta Feed + status
+publicado, exatamente a query que `app/biblioteca/page.tsx` usa) e o
+resultado real é **18 grupos, 18 posts** — bem menor, e dos quais só os 2
+pares já corrigidos no Pedido 1 eram duplicata. Ou seja: o problema
+*reportado* já estava 100% resolvido; os outros ~55 grupos ambíguos da
+lista grande (Rotary, OPK Perfect Camarão, SI Ocean/Si Ocean mecanismo,
+Coplanar, etc.) não aparecem na Biblioteca hoje porque são posts de Stories
+ou ainda não publicados — não é um bug visível agora. Perguntei se o
+usuário ainda queria a tabela de produtos dado isso (com a opção "parar por
+aqui" recomendada) — ele confirmou que queria seguir mesmo assim, pensando
+no futuro (quando esses posts de Stories também ganharem versão Feed
+publicada). **Artifact publicado**:
+https://claude.ai/code/artifact/241991ef-0c0e-4e27-9148-efa7691817aa — lista
+completa dos 73 grupos com classificação heurística (produto provável/
+não-produto) e possíveis relacionados por palavra-chave, com aviso explícito
+de que a heurística erra (ela sinaliza "Rotary aluminio" perto de "Si Rotary
+Easy", que o usuário já confirmou serem produtos diferentes). Continua
+disponível pra revisão futura, não foi usado pra migrar nada ainda.
+
+**Pedido 3** (mesma sessão): depois de eu propor o plano da tabela de
+produtos (schema + backfill só dos 16 casos seguros + seletor no modal +
+Biblioteca com fallback) e antes de eu começar a implementar, o usuário
+interrompeu com um print do Calendário Editorial mostrando os dias 27-31
+(fora do mês, no início da grade de agosto) **completamente vazios**, sem
+posts — "quero que aqui apareça o conteúdo também". Isso é uma regressão
+direta do scroll contínuo (Sessão 41, Pedido 2): pra evitar duplicar id no
+dnd-kit entre o dia de padding e o mesmo dia "de verdade" no mês vizinho, eu
+tinha zerado `posts={[]}` pros dias de padding inteiros, em vez de só
+desativar a interatividade deles. **Corrigido sem reintroduzir o bug**,
+reaproveitando o mesmo padrão que a Sessão 36 já usa pra lista mobile
+duplicar `PostCard` sem colidir id: `DayCell.tsx` agora propaga o prop
+`interativo` pro `PostCard` como `arrastavel={interativo}` (em vez de só
+controlar o próprio `useDroppable` do dia); `CalendarGrid.tsx` voltou a
+passar os posts reais (`postsDoDia`) pra todo dia, dentro ou fora do mês —
+a condicional que zerava posts pra `foraDoMes` foi removida. Como
+`PostCard.tsx` já usa um id próprio (`` `${id}__estatico` ``) e
+`disabled: true` nos hooks de dnd-kit quando `arrastavel={false}` (mecanismo
+que já existia desde a Sessão 36), os cards nos dias de padding voltam a
+mostrar o conteúdo real mas continuam não-arrastáveis e não-clicáveis como
+alvo de drop — só o dia real no mês vizinho aceita isso.
+
+**Testes**: `tsc --noEmit`/`npm run build`/`npm run lint` limpos. Playwright
+contra o dev server: contei as células de dia de agosto por altura fixa
+(`.h-\[140px\]`, não pela classe `opacity-60` — essa também é usada em
+posts publicados, deu falso positivo na primeira tentativa de contagem) e
+confirmei as 11 células de padding de agosto, todas as 11 com pelo menos um
+card dentro; screenshot confirma visualmente (dias 27-31 de julho, no topo
+da grade de agosto, mostrando "Feed: SI20 FH-S", "Stories - Newsletter",
+"Feed: SI Ocean" etc.). Testei arrastar um card real (sem erro) e arrastar
+um card de um dia de padding (também sem erro — o `arrastavel={false}`
+desativa o drag mas não quebra o clique/mouse down nele). Nenhum erro de
+console em nenhum teste.
+
+**Pendente**: a tabela de produtos de verdade (Pedido 2/3 acima) — plano
+proposto e aprovado pelo usuário, mas **ainda não implementada**: falta (1)
+migration da tabela `produtos` + coluna `posts.produto_id`, (2) backfill dos
+16 produtos já confirmados, (3) seletor de Produto no `PostModal.tsx`, (4)
+Biblioteca agrupando por `produto_id` com fallback pro método de texto atual
+pros posts não migrados. Retomar isso na próxima sessão se o usuário não
+tiver mudado de ideia.
 
 ### Sessão 41 — 2026-08-05
 
