@@ -12,6 +12,25 @@
 
 ## Estado atual (resumo rápido)
 
+- **Calendário Editorial: rolar a página até o fim/topo troca de mês automaticamente**
+  (ver Sessão 41). Continua mostrando um mês por vez (não é scroll contínuo estilo
+  Google Calendar, com vários meses emendados — opção descartada pelo usuário por ser
+  bem mais trabalho e o usuário preferiu o comportamento mais simples/previsível).
+  Implementado como um listener de `wheel` em `window` dentro de `app/page.tsx`: só
+  conta o gesto quando a página já está no fim (`deltaY > 0`) ou no topo (`deltaY < 0`)
+  — se ainda dá pra rolar na direção do gesto (incluindo rolar internamente dentro do
+  quadrado de um dia muito cheio, que tem scroll próprio, ver `DayCell.tsx`), o listener
+  ignora o evento e deixa o scroll normal acontecer, sem trocar de mês. Acumula
+  `deltaY` até passar de um limiar (60) pra evitar trocar de mês com qualquer tremor
+  de scroll, e entra em cooldown de 700ms depois de trocar (evita passar vários meses
+  de uma vez só num gesto de scroll contínuo/inércia de trackpad). Ao trocar de mês,
+  a página volta pro topo automaticamente (`window.scrollTo(0, 0)`), pra sempre mostrar
+  o mês novo desde o início. Desativado enquanto o modal de post está aberto, mesmo
+  padrão do Ctrl+Z. **Testado só com wheel de mouse/trackpad** (via Playwright,
+  `page.mouse.wheel` numa posição real da viewport) — não tem suporte a swipe de touch
+  em celular; como a grade desktop já não aparece em telas estreitas (ver bullet da
+  lista mobile mais abaixo), isso não afeta a versão mobile, que é só uma lista vertical
+  sem essa troca automática de mês por scroll.
 - **Tarefas de Marketing, vista Calendário desktop: cada dia reserva ~150px de espaço
   vazio abaixo da última tarefa** (ver Sessão 40, Pedidos 3 e 4 — Pedido 3 tentou
   esticar a grade dinamicamente até o fim da página via `app/layout.tsx`/`flex-1`, o
@@ -118,28 +137,42 @@
   arriscaria mostrar informação desatualizada pra equipe. **Sem notificações
   push** — não foi pedido nessa rodada (precisaria de mais infraestrutura:
   permissão do usuário + um backend pra disparar).
-- **Biblioteca** (ver Sessões 30, 31 e 32): 5ª aba no `TopNav`, rota `/biblioteca`.
-  **Não é uma tabela nova** — busca direto de `posts` no Supabase com
-  `status = 'publicado'`, sem cadastro manual (decisão tomada perguntando ao
-  usuário, diferente do Banco de Ideias que é `localStorage`). **Restrita a
-  `canal = 'instagram'`** (Sessão 31, a pedido do usuário — filtro fixo direto
-  na query Supabase, não é um `<select>` de canal; LinkedIn/YouTube nunca
-  aparecem aqui, mesmo que tenham posts publicados). Duas seções: "Produtos já
-  postados" (posts com `tipo` `produto` ou `lancamento`, agrupados pelo título —
-  `nomeBaseProduto()` em `app/biblioteca/page.tsx` remove um prefixo
-  `Stories`/`Feed` do início do título antes de agrupar, pra não separar
-  "Stories - X" de "Feed: X" como produtos diferentes; funciona só por
-  correspondência exata do nome resultante, sem fuzzy matching) e "Outros
-  conteúdos publicados" (tipo `nao_produto`/`evento`, lista plana). Busca por
-  título (no header, ao lado do `<h1>`). `<select>` de ordem ("Postado há menos
-  tempo"/"Postado há mais tempo", Sessão 31) que ordena tanto os posts dentro de
-  cada produto quanto os PRÓPRIOS grupos de produto entre si (pelo post mais
-  relevante de cada grupo — o mais recente quando a ordem é "menos tempo", o
-  mais antigo quando é "mais tempo") e a lista de "outros" — **fica ao lado do
-  título "Produtos já postados" (Sessão 32, reposicionado a pedido do usuário —
-  antes estava no header ao lado da busca)**, mesmo controlando as duas seções.
-  Sem filtro de tipo/etiqueta — não pedido. Puramente leitura (clicar num post
-  da Biblioteca não abre nada — pra editar, é preciso ir no Calendário
+- **Biblioteca** (ver Sessões 30, 31, 32, 39 e 41 — a doc deste bloco estava
+  desatualizada até a Sessão 41, que corrigiu pra refletir mudanças da Sessão 39
+  que nunca tinham sido registradas aqui): 5ª aba no `TopNav`, rota
+  `/biblioteca`. **Não é uma tabela nova** — busca direto de `posts` no
+  Supabase, sem cadastro manual (diferente do Banco de Ideias que é
+  `localStorage`). Desde a Sessão 39, a query busca por **etiqueta "Feed"**
+  (não mais por `canal = 'instagram'` fixo como na Sessão 31 — na prática hoje
+  todo post com essa etiqueta ainda é Instagram, mas o filtro em si mudou de
+  critério) + `status = 'publicado'`. Não tem mais duas seções — a seção
+  "Outros conteúdos publicados" foi removida (Sessão 39); só existe "Produtos",
+  e só entram posts `tipo` `produto` ou `lancamento` (eventos/não-produto ficam
+  de fora). **Desde a Sessão 41, também exclui especificamente posts tipo
+  `lancamento` cujo título (depois de tirar o prefixo Stories/Feed) começa com
+  "Lançamentos de"** (regex `/^lançamentos? de\b/i` em `app/biblioteca/page.tsx`)
+  — é um resumo mensal recorrente (ex: "Feed: Lançamentos de julho (o que
+  tivemos de novidades?)"), não um produto único; os outros 5 posts tipo
+  `lancamento` da leva atual (E-Motion, E-Motion Slim, Porta Invisível em
+  Alumínio slim, Perfect Pivot Brises 360 Central Slim, Coplanar 2 Portas) são
+  produtos reais sendo lançados e continuam aparecendo normalmente — decisão
+  confirmada com o usuário na Sessão 41, não é uma regra óbvia do código, então
+  se aparecer um post de resumo mensal com título fora desse padrão no futuro
+  ele não vai ser pego por essa regex. Posts são agrupados pelo título —
+  `nomeBase()` em `app/biblioteca/page.tsx` remove um prefixo `Stories`/`Feed`
+  do início antes de agrupar, pra não separar "Stories - X" de "Feed: X" como
+  produtos diferentes; funciona só por correspondência exata do nome
+  resultante, sem fuzzy matching. **Desde a Sessão 41, exibição é uma grade de
+  cards** (`grid sm:grid-cols-2 xl:grid-cols-3`, antes era uma lista de texto
+  em linhas) — cada card mostra nome do produto, badge de tipo (Produto/verde
+  oliva ou Lançamento/âmbar, via `LABEL_TIPO` de `lib/postStyles.ts`), contagem
+  de posts, categoria (do primeiro post do grupo que tiver uma), badge "✓ vídeo
+  pronto" se algum post do grupo tem `video_pronto`, badge "NOVO" (mesmo
+  estilo do `PostCard.tsx` do Calendário) se algum post tem `novo_produto`, e
+  um chip por data em que foi postado. Busca por título e `<select>` de ordem
+  ("Postado há menos/mais tempo") continuam no header, do jeito que já
+  estavam. Sem filtro de tipo/etiqueta na UI — não pedido. Puramente leitura
+  (clicar num card não abre nada — pra editar, é preciso ir no Calendário
   Editorial).
 - **Banco de Ideias: cards clicáveis, edição completa, exclusão e "Enviar pro
   calendário"** (ver Sessão 29): clicar num card abre `IdeiaModal.tsx` (título,
@@ -517,6 +550,118 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 41 — 2026-08-05
+
+**Pedido**: três pedidos numa mensagem só — (1) no Calendário Editorial, poder
+scrollar pra baixo/cima e o mês trocar automaticamente; (2) na Biblioteca, só
+deveria entrar produtos; (3) "visibilidade melhor" na Biblioteca também.
+
+**Investigação antes de mexer em código**: antes de implementar, li o `HANDOFF.md`
+inteiro (Estado atual, Pendências, e a última entrada — Sessão 40) e confirmei que o
+repo local estava limpo e igual ao `origin/main` (sem sinal de sessão paralela, ver
+risco documentado na Sessão 8). Ao investigar o pedido 2, descobri que
+`app/biblioteca/page.tsx` **já não batia com o que o "Estado atual" descrevia**: a
+doc (desde a Sessão 32) falava de duas seções ("Produtos já postados" + "Outros
+conteúdos publicados") e filtro fixo por `canal = 'instagram'`, mas o código já
+tinha só uma seção de produtos e filtrava por etiqueta "Feed" — mudanças feitas na
+Sessão 39 (commits `1b3b2a9`/`b47bf1f`/`8e6ebfa`, 2026-07-14) que nunca ganharam uma
+entrada correspondente no HANDOFF. Ou seja, o pedido 2 já estava tecnicamente
+resolvido antes desta sessão começar. Corrigi a doc desatualizada como parte desta
+sessão (ver bullet da Biblioteca em "Estado atual", reescrito do zero).
+
+Consultei a Supabase (só leitura, via REST direto com o anon key) pra ver a
+composição real dos dados antes de decidir o que fazer: dos 27 posts publicados com
+etiqueta Feed, 13 são tipo `produto`, 6 são `lancamento`, 6 `evento` e 2
+`nao_produto` — o código já excluía `evento`/`nao_produto` do que aparece na
+Biblioteca. Perguntei ao usuário (via pergunta de múltipla escolha) se isso já
+resolvia o pedido ou se "só produtos" também deveria excluir os 6 de tipo
+`lancamento`; ele pediu pra ver a lista antes de decidir. Listei os 6 títulos — a
+maioria eram produtos reais sendo lançados (E-Motion, Porta Invisível em Alumínio
+slim, Perfect Pivot Brises 360 Central Slim, E-Motion Slim, Coplanar 2 Portas), só
+um era um resumo mensal ("Feed: Lançamentos de julho (o que tivemos de
+novidades?)"). Usuário escolheu manter os 5 produtos e excluir só o resumo.
+
+**O que foi feito**:
+
+1. **Scroll troca o mês automaticamente** (`app/page.tsx`): novo `useEffect` com um
+   listener de `wheel` em `window`. Só conta o gesto quando a página já está no fim
+   (rolando pra baixo) ou no topo (rolando pra cima); se o alvo do evento está dentro
+   de um contêiner com scroll interno que ainda pode rolar naquela direção (ex: o
+   quadrado de um dia muito cheio, `overflow-y-auto` em `DayCell.tsx`), ignora e
+   deixa o scroll interno acontecer — evita sequestrar o scroll de quem só quer ver
+   os posts extras de um dia cheio. Acumula `deltaY` até passar de 60 (evita trocar
+   de mês com qualquer tremor) e entra em cooldown de 700ms depois de trocar (evita
+   pular vários meses de uma vez com a inércia de um trackpad). Ao trocar, volta a
+   página pro topo (`window.scrollTo(0, 0)`) pra sempre mostrar o mês novo desde o
+   início. Desativado enquanto o modal de post está aberto (`useEffect` com
+   `[modalAberto]` nas deps, mesmo padrão do Ctrl+Z). Antes de implementar, perguntei
+   ao usuário se ele queria esse comportamento (um mês por vez, scroll só como
+   gatilho pra trocar) ou scroll contínuo estilo Google Calendar (vários meses
+   emendados na tela) — escolheu a primeira opção, bem mais simples.
+
+2. **Biblioteca — exclusão do resumo mensal** (`app/biblioteca/page.tsx`): dentro do
+   loop que monta os grupos de produto, um novo filtro exclui posts tipo
+   `lancamento` cujo título (depois de tirar o prefixo Stories/Feed via `nomeBase()`)
+   bate com a regex `/^lançamentos? de\b/i` — pega "Lançamentos de julho (...)" sem
+   pegar "E-Motion Slim" ou os outros produtos reais. **Isso é uma heurística sobre
+   o padrão de nome, não uma lista fixa de IDs** — decisão deliberada, já que só
+   existe uma instância desse post até agora (posted 01/08/2026) mas o padrão de
+   nome ("Lançamentos de <mês>") sugere que é recorrente mensalmente; se a equipe
+   criar um post de resumo mensal com título fora desse padrão no futuro, ele não
+   vai ser pego automaticamente — precisaria ajustar a regex ou adicionar uma
+   segunda heurística.
+
+3. **Biblioteca — cards com mais detalhes** (`app/biblioteca/page.tsx`): a lista de
+   texto (nome + datas empilhadas à direita) virou uma grade de cards
+   (`grid sm:grid-cols-2 xl:grid-cols-3 gap-4`). Cada card mostra: nome do produto,
+   badge de tipo no canto (Produto = verde oliva, Lançamento = âmbar, usando
+   `LABEL_TIPO` de `lib/postStyles.ts`, que já existia mas não era usado aqui),
+   contagem de posts ("N post(s)"), categoria (do primeiro post do grupo que tiver
+   uma — grupos raramente têm categorias diferentes entre si, não tratei esse caso
+   separadamente), badge "✓ vídeo pronto" (reaproveitando a cor `bg-badge-video` que
+   o `PostCard.tsx` do Calendário já usa) se algum post do grupo tem `video_pronto`,
+   badge "NOVO" (mesmo estilo do `PostCard.tsx`) se algum post tem `novo_produto`, e
+   um chip por data em que o produto foi postado. Perguntei ao usuário o que
+   "visibilidade melhor" queria dizer (cards com mais detalhes vs. mesma lista só
+   mais legível vs. outra coisa) — escolheu cards com mais detalhes.
+
+**Testes**: `tsc --noEmit`, `npm run build` e `npm run lint` limpos (lint mantém só
+os 2 problemas pré-existentes de `app/site/page.tsx`, já documentados desde a Sessão
+40, não relacionados a esta sessão). Testado no navegador via Playwright contra o
+dev server local (só leitura/navegação — nenhuma escrita no Supabase, mesma cautela
+de sempre por não ter banco de dev separado):
+- `chromium-cli` não estava disponível no ambiente; o download automático do
+  Chromium do Playwright (`npx playwright install chromium`) falhou com "Playwright
+  does not support chromium on mac13-arm64" (versão do Playwright resolvida via npx,
+  1.62.1, não tem build de Chromium pra macOS 13). Contornado apontando o
+  `chromium.launch()` pro Google Chrome já instalado na máquina via
+  `{ channel: 'chrome' }` — funcionou normalmente. Fica registrado aqui caso uma
+  sessão futura precise de Playwright de novo e tope com o mesmo erro.
+- Scroll: confirmei com `page.mouse.wheel` (evento real de mouse, não só
+  `dispatchEvent` sintético) numa posição válida da viewport — rolar pra baixo no
+  fim da página trocou "agosto 2026" → "setembro 2026"; rolar pra cima no topo
+  voltou pra "agosto 2026". Primeira tentativa de teste usou uma posição de mouse
+  calculada a partir do bounding box da grade que ficou fora da viewport (`y`
+  negativo, porque a grade já tinha rolado pra fora da tela) — os wheel events não
+  tinham efeito nenhum; não era bug do listener, era erro do script de teste. Corrigi
+  usando uma posição fixa no centro da viewport.
+- Biblioteca: screenshot em tela cheia confirma os cards renderizando com todos os
+  campos esperados (nome, badge de tipo, contagem, categoria quando existe, badge de
+  vídeo, badge NOVO quando aplicável, chips de data); confirmei via
+  `page.locator("text=Lançamentos de julho").count()` que esse post não aparece em
+  lugar nenhum da página (resultado 0); contagem de badges "Produto" (14) e
+  "Lançamento" (5) bate com o esperado (13 produtos, mais 1 grupo que também virou
+  Lançamento — provavelmente dois posts do mesmo produto com tipos diferentes
+  agrupados juntos, ou um produto com título repetido — não investiguei o caso
+  específico por não ser relevante ao pedido; 5 lançamentos = os 6 originais menos o
+  resumo excluído). Nenhum erro de console.
+
+**Pendente**: nada dos três pedidos. Note pra sessões futuras: a heurística de
+exclusão do resumo mensal (item 2 acima) é baseada em padrão de nome, não em uma
+característica estrutural do dado — se render frágil no futuro (post de resumo com
+nome diferente, ou um produto real cujo nome comece coincidentemente com "Lançamentos
+de"), vai precisar de ajuste manual na regex de `app/biblioteca/page.tsx`.
 
 ### Sessão 40 — 2026-07-21
 
