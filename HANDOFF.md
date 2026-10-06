@@ -697,6 +697,16 @@ Biblioteca).
 - Produto "Variotec" renomeado pra **Hawa Variotec** (pedido do usuário,
   direto na tabela `produtos`). Rotary aluminio já estava em SI Rotary 35.
 
+- Usuário mandou print com o modal antigo (aba não recarregada depois do
+  deploy) e pediu que o **Título continue sugerindo produtos, mas só os da
+  Biblioteca**. O datalist `produtos-cadastrados` (mesma lista
+  `sugestoesProdutos`) agora fica ligado ao campo Título também, sempre
+  (não só pra tipo produto); escolher uma sugestão no Título preenche o
+  campo Produto se ele estiver vazio. `autoComplete="off"` nos dois campos
+  pra o navegador não misturar histórico de digitação (ex: "dobr") com as
+  sugestões. Testado: 32 opções, "dobr" → só "Dobradiças 3D invisíveis".
+  O preenchimento automático do Produto não foi testado no navegador.
+
 **Pendente**: erro de lint pré-existente em `app/site/page.tsx:183`
 (`prefer-const`), não mexi.
 

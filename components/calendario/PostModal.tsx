@@ -167,10 +167,26 @@ export default function PostModal({
             </label>
             <input
               value={valores.titulo}
-              onChange={(e) => campo("titulo", e.target.value)}
+              onChange={(e) => {
+                const titulo = e.target.value;
+                campo("titulo", titulo);
+                // Escolheu um produto da Biblioteca na sugestão do título:
+                // preenche o campo Produto junto, se ainda estiver vazio.
+                const sugestao = sugestoesProdutos.find(
+                  (nome) => nome.toLowerCase() === titulo.trim().toLowerCase()
+                );
+                if (sugestao && !nomeProduto.trim()) setNomeProduto(sugestao);
+              }}
               placeholder="Nome do produto ou tema do post"
+              list="produtos-cadastrados"
+              autoComplete="off"
               className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
+            <datalist id="produtos-cadastrados">
+              {sugestoesProdutos.map((nome) => (
+                <option key={nome} value={nome} />
+              ))}
+            </datalist>
           </div>
 
           <div>
@@ -230,13 +246,9 @@ export default function PostModal({
                 onChange={(e) => setNomeProduto(e.target.value)}
                 placeholder="Buscar produto existente ou digitar um novo"
                 list="produtos-cadastrados"
+                autoComplete="off"
                 className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               />
-              <datalist id="produtos-cadastrados">
-                {sugestoesProdutos.map((nome) => (
-                  <option key={nome} value={nome} />
-                ))}
-              </datalist>
               <p className="mt-1 text-[11px] text-zinc-500">
                 Escolha um produto já cadastrado sempre que existir — evita duplicar o mesmo
                 produto com nomes diferentes na Biblioteca. Um nome que não bate com nenhum
