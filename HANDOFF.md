@@ -13,13 +13,27 @@
 ## Estado atual (resumo rápido)
 
 - **Biblioteca agora usa a tabela `produtos`** (Sessão 43; migration
-  `0008_produtos.sql` rodada em produção): agrupa por `posts.produto_id`;
-  posts sem vínculo entram no grupo do produto de mesmo nome, ou caem no
-  agrupamento antigo por texto (`ALIASES_PRODUTO`). Botão "Mover" / clique
-  direito em cada produto abre `MoverModal.tsx` pra juntar grupos (com
-  Ctrl+Z). Modal de post tem campo **Produto** (datalist dos cadastrados;
-  nome novo cria produto ao salvar). Ver Sessão 43 — o bullet da Biblioteca
-  mais abaixo descreve o estado pré-tabela.
+  `0008_produtos.sql` rodada em produção): regra de agrupamento única em
+  `grupoBiblioteca()` (`lib/nomesProdutos.ts`) — agrupa por
+  `posts.produto_id`; post sem vínculo entra no produto cadastrado de mesmo
+  nome, senão cai no agrupamento por texto (`ALIASES_PRODUTO`). Botão
+  "Mover" / clique direito em cada produto abre `MoverModal.tsx` pra juntar
+  grupos ou mover só alguns posts (com Ctrl+Z). Ordenação ("Mais
+  recentes"/"Mais antigos") usa a data do **último** post de cada produto.
+  32 produtos ao fim da Sessão 43. O bullet da Biblioteca mais abaixo
+  descreve o estado pré-tabela.
+- **Modal de post: sugestões de produto = só os produtos da Biblioteca**
+  (Sessão 43). O mesmo datalist (`sugestoesProdutos`, calculado em
+  `app/page.tsx` com `entraNaBiblioteca()` + `grupoBiblioteca()`) aparece no
+  campo **Título** e no campo **Produto** (este só pra tipo
+  produto/lançamento). Escolher no Título preenche o Produto se vazio. Nome
+  de produto novo no campo Produto cria a linha em `produtos` ao salvar.
+- **Tarefas fixas seg–sex até 31/dez/2026** (Sessão 43): "Atendimento nas
+  redes sociais + painel admin", "Mandar mensagem novos seguidores",
+  "Atualizar tabela de leads", "Subir stories" (Victoria, média), inseridas
+  como linhas comuns — **não é recorrência automática**. Feriados nacionais
+  (12/out, 2/nov, 20/nov, 25/dez) sem as fixas e com uma tarefa "Feriado –
+  <nome>". Posts placeholder "Stories" cobrem todo dia até **31/out/2026**.
 - **Calendário Editorial: scroll contínuo estilo Google Calendar, vários meses
   empilhados** (ver Sessão 41, Pedido 2 — substitui completamente uma primeira versão
   mais simples do Pedido 1, "rolar até a borda troca de mês", que só durou até o
@@ -510,6 +524,18 @@
 
 ## Pendências / próximos passos conhecidos
 
+- **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
+  só até 31/out/2026; tarefas fixas seg–sex só até 31/dez/2026. Depois
+  disso precisa inserir de novo (via REST, mesmo padrão — ver Sessão 43).
+  Feriados estaduais/municipais não considerados.
+- **Biblioteca/produtos** (Sessão 43): preenchimento automático do campo
+  Produto ao escolher sugestão no Título não foi testado no navegador.
+  Post "Stories - Perfect Pocket" (10/ago, `012b32f0`) sem `produto_id`
+  (não confirmado; não aparece na Biblioteca). Produtos órfãos (sem posts)
+  podem ficar na tabela depois de "mover" — inofensivo, não aparecem nas
+  sugestões. Não existe tela pra renomear/excluir produto — hoje é feito
+  direto no banco (ou movendo os posts pra um nome novo).
+- Erro de lint pré-existente em `app/site/page.tsx:183` (`prefer-const`).
 - Nenhuma pendência crítica — o app está funcional e no ar, cobrindo os 4 requisitos
   (Calendário Editorial, Tarefas de Marketing, Tarefas Site, Banco de Ideias/Biblioteca).
 - **Calendário Editorial (scroll contínuo, Sessão 41)**: não testado em viewport
@@ -612,7 +638,9 @@ A entrada da Sessão 42 dizia "ainda não implementada" — na prática o códig
 foi escrito (passa no `tsc`) mas não testado nem commitado, e **a migration não
 foi rodada em produção** (confirmado via REST: tabela `produtos` e coluna
 `posts.produto_id` não existem). Esse código **não pode ir pro ar antes da
-migration**, senão quebra a Biblioteca/modal. Continua não commitado.
+migration**, senão quebra a Biblioteca/modal. (Mais tarde nesta sessão o
+usuário rodou a migration e tudo foi testado e commitado — ver abaixo,
+commit `9ec589f`.)
 
 **Pedido**: revisar a Biblioteca, produtos similares que deveriam ser o mesmo.
 Listei os 37 grupos atuais (etiqueta Feed + publicado) e 7 candidatos a
