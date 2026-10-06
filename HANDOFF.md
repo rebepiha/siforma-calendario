@@ -732,6 +732,8 @@ Biblioteca).
   nacionais pulados** (a pedido, depois): removidas as 16 dessas tarefas em
   12/out, 2/nov, 20/nov e 25/dez (esses dias não tinham outras tarefas).
   Total final: 222. Feriados estaduais/municipais não foram considerados.
+  Nesses 4 dias foi criada uma tarefa marcador "Feriado – <nome>" (sem
+  responsável, prioridade baixa, a_fazer) em Tarefas de Marketing.
 
 **Pendente**: erro de lint pré-existente em `app/site/page.tsx:183`
 (`prefer-const`), não mexi.
