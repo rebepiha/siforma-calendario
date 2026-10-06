@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { Post, Produto } from "@/lib/types";
-import { nomeCanonicoProduto } from "@/lib/nomesProdutos";
+import { grupoBiblioteca, nomeCanonicoProduto } from "@/lib/nomesProdutos";
 import { useUndoStack } from "@/lib/useUndoStack";
 import MoverModal, { DestinoMover, GrupoBiblioteca as Grupo } from "@/components/biblioteca/MoverModal";
 
@@ -66,34 +66,14 @@ export default function PaginaBiblioteca() {
         ? b.data.localeCompare(a.data)
         : a.data.localeCompare(b.data);
 
-    const nomePorProdutoId = new Map(produtos.map((p) => [p.id, p.nome]));
-    const produtoPorNome = new Map(produtos.map((p) => [p.nome.toLowerCase(), p]));
     const mapa = new Map<string, Grupo>();
 
     for (const post of posts) {
-      if (post.tipo !== "produto" && post.tipo !== "lancamento") continue;
-
-      // Post já vinculado a um produto de verdade (Sessão 42): agrupa por
-      // produto_id, sem depender do texto do título — nunca duplica mesmo
-      // que o título seja diferente. Posts sem produto_id (ainda não
-      // migrados) continuam agrupando pelo método antigo, por texto.
-      // Post sem produto_id cujo nome bate com um produto cadastrado entra no
-      // grupo desse produto — senão "Submarine" vinculado e "Submarine" ainda
-      // não vinculado apareceriam como dois grupos com o mesmo nome.
-      const produtoId =
-        post.produto_id ?? produtoPorNome.get(nomeCanonicoProduto(post.titulo).toLowerCase())?.id;
-      const nome = produtoId
-        ? (nomePorProdutoId.get(produtoId) ?? nomeCanonicoProduto(post.titulo))
-        : nomeCanonicoProduto(post.titulo);
-      // "Lançamentos de <mês> (...)" é um resumo mensal recorrente (ex: "Feed:
-      // Lançamentos de julho"), não um produto único — não deve virar uma
-      // entrada na Biblioteca mesmo sendo tipo "lancamento".
-      if (/^lançamentos? de\b/i.test(nome)) continue;
-
-      const chave = produtoId ? `id:${produtoId}` : `texto:${nome.toLowerCase()}`;
-      const g = mapa.get(chave);
+      const grupo = grupoBiblioteca(post, produtos);
+      if (!grupo) continue;
+      const g = mapa.get(grupo.chave);
       if (g) g.posts.push(post);
-      else mapa.set(chave, { chave, nome, posts: [post] });
+      else mapa.set(grupo.chave, { ...grupo, posts: [post] });
     }
 
     const grupos = Array.from(mapa.values());

@@ -27,6 +27,7 @@ export default function PostModal({
   dataPadrao,
   etiquetas,
   produtos,
+  sugestoesProdutos,
   onFechar,
   onSalvar,
   onExcluir,
@@ -40,6 +41,7 @@ export default function PostModal({
   dataPadrao: string;
   etiquetas: Etiqueta[];
   produtos: Produto[];
+  sugestoesProdutos: string[];
   onFechar: () => void;
   onSalvar: (id: string | null, valores: NovoPost, etiquetaIds: string[]) => Promise<void>;
   onExcluir: (id: string) => Promise<void>;
@@ -231,8 +233,8 @@ export default function PostModal({
                 className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               />
               <datalist id="produtos-cadastrados">
-                {produtos.map((p) => (
-                  <option key={p.id} value={p.nome} />
+                {sugestoesProdutos.map((nome) => (
+                  <option key={nome} value={nome} />
                 ))}
               </datalist>
               <p className="mt-1 text-[11px] text-zinc-500">

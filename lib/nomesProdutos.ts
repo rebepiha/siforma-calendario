@@ -1,3 +1,5 @@
+import { Post, Produto } from "./types";
+
 export function nomeBaseProduto(titulo: string): string {
   return titulo.replace(/^(stories|feed)\s*[-:]?\s*/i, "").trim();
 }
@@ -25,4 +27,33 @@ const ALIASES_PRODUTO: Record<string, string> = {
 export function nomeCanonicoProduto(titulo: string): string {
   const nome = nomeBaseProduto(titulo);
   return ALIASES_PRODUTO[nome.toLowerCase()] ?? nome;
+}
+
+// Grupo da Biblioteca a que um post pertence (ou null se não entra nela por
+// tipo/nome). Usado pela própria Biblioteca e pelas sugestões do campo
+// Produto no modal de post, pra as duas listas nunca divergirem.
+// Post vinculado agrupa por produto_id; sem vínculo, entra no produto
+// cadastrado de mesmo nome (senão "Submarine" vinculado e não vinculado
+// virariam dois grupos); senão agrupa só pelo nome canônico do título.
+export function grupoBiblioteca(
+  post: Post,
+  produtos: Produto[]
+): { chave: string; nome: string } | null {
+  if (post.tipo !== "produto" && post.tipo !== "lancamento") return null;
+  const canonico = nomeCanonicoProduto(post.titulo);
+  const produto = post.produto_id
+    ? produtos.find((p) => p.id === post.produto_id)
+    : produtos.find((p) => p.nome.toLowerCase() === canonico.toLowerCase());
+  const nome = produto?.nome ?? canonico;
+  // "Lançamentos de <mês> (...)" é um resumo mensal recorrente, não um produto.
+  if (!nome || /^lançamentos? de\b/i.test(nome)) return null;
+  const produtoId = post.produto_id ?? produto?.id;
+  return { chave: produtoId ? `id:${produtoId}` : `texto:${nome.toLowerCase()}`, nome };
+}
+
+// A Biblioteca só mostra posts publicados com a etiqueta Feed.
+export function entraNaBiblioteca(post: Post, etiquetaFeedId: string | undefined): boolean {
+  return (
+    post.status === "publicado" && !!etiquetaFeedId && post.etiqueta_ids.includes(etiquetaFeedId)
+  );
 }

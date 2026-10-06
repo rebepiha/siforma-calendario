@@ -684,6 +684,16 @@ Biblioteca).
   ("Pocket 160" → Perfect Pocket Wood). `npm run build` ok. Biblioteca final:
   **32 produtos**.
 
+- **Pedido: sugestões do campo Produto (modal de post) só com produtos da
+  Biblioteca.** Antes listava a tabela `produtos` inteira (incluía produtos
+  só de Stories, etc.). Extraí a regra de agrupamento pra
+  `grupoBiblioteca()` + `entraNaBiblioteca()` em `lib/nomesProdutos.ts`
+  (usada pela Biblioteca **e** pelo `sugestoesProdutos` em `app/page.tsx`),
+  pras duas listas nunca divergirem. Testado: 32 grupos na Biblioteca = 32
+  opções no datalist, mesmos nomes. Escolher um nome que ainda é grupo só
+  por texto (ex: "Alinhador de Porta") cria o produto ao salvar o post — e
+  pela regra de nome igual, ele se junta ao grupo existente.
+
 **Pendente**: erro de lint pré-existente em `app/site/page.tsx:183`
 (`prefer-const`), não mexi.
 

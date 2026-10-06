@@ -22,6 +22,7 @@ import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
 import { Etiqueta, NovoPost, Post, Produto } from "@/lib/types";
 import { useUndoStack } from "@/lib/useUndoStack";
+import { entraNaBiblioteca, grupoBiblioteca } from "@/lib/nomesProdutos";
 import { mesmosValores } from "@/lib/mesmosValores";
 import CalendarGrid from "@/components/calendario/CalendarGrid";
 import PostModal from "@/components/calendario/PostModal";
@@ -281,6 +282,19 @@ export default function PaginaCalendario() {
     const publicados = doMes.filter((p) => p.status === "publicado").length;
     return { total: doMes.length, publicados };
   }, [posts, mesAtual]);
+
+  // Sugestões do campo Produto no modal: só os produtos que aparecem na
+  // Biblioteca (mesma regra de agrupamento, ver lib/nomesProdutos.ts).
+  const sugestoesProdutos = useMemo(() => {
+    const feedId = etiquetas.find((e) => e.nome === "Feed")?.id;
+    const nomes = new Set<string>();
+    for (const post of posts) {
+      if (!entraNaBiblioteca(post, feedId)) continue;
+      const grupo = grupoBiblioteca(post, produtos);
+      if (grupo) nomes.add(grupo.nome);
+    }
+    return Array.from(nomes).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [posts, produtos, etiquetas]);
 
   function abrirNovoPost(data: string) {
     setPostSelecionado(null);
@@ -633,6 +647,7 @@ export default function PaginaCalendario() {
           dataPadrao={dataParaNovoPost}
           etiquetas={etiquetas}
           produtos={produtos}
+          sugestoesProdutos={sugestoesProdutos}
           onFechar={() => setModalAberto(false)}
           onSalvar={salvarPost}
           onExcluir={excluirPost}
