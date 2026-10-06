@@ -593,6 +593,47 @@
 
 ## Histórico de sessões
 
+### Sessão 43 — 2026-10-06
+
+**Início**: encontrei trabalho **não commitado** da Sessão 42 (tabela `produtos`):
+`supabase/migrations/0008_produtos.sql` + mudanças em `PostModal.tsx`,
+`app/page.tsx`, `app/biblioteca/page.tsx`, `lib/nomesProdutos.ts`, `lib/types.ts`.
+A entrada da Sessão 42 dizia "ainda não implementada" — na prática o código
+foi escrito (passa no `tsc`) mas não testado nem commitado, e **a migration não
+foi rodada em produção** (confirmado via REST: tabela `produtos` e coluna
+`posts.produto_id` não existem). Esse código **não pode ir pro ar antes da
+migration**, senão quebra a Biblioteca/modal. Continua não commitado.
+
+**Pedido**: revisar a Biblioteca, produtos similares que deveriam ser o mesmo.
+Listei os 37 grupos atuais (etiqueta Feed + publicado) e 7 candidatos a
+duplicata. Respostas do usuário:
+- "Perfect Pocket" (18/set) e "Perfect Pocket Slim (feira)" (10/ago) →
+  **Perfect Pocket Slim**; "Pocket 160" (4/out) e "OPK Perfect Pocket Wood"
+  (10/jun) → **Perfect Pocket Wood**.
+- "Perfect Pivot Brises 360 Central Slim" → **Perfect Pivot Brises 360**.
+- **Diferentes** (não unificar): OPK Telescópico wood × Slim; OPK Perfect
+  Camarão × Camarão C/V 40; Coplanar 2 Portas × SI Coplanar hawa × Hawa
+  Concepta III; Rotary aluminio × SI Rotary 35 × Si Rotary Easy; E-Motion Slim
+  × E-Motion Wood.
+
+**Feito**: commit `af8769f` (feito num worktree separado a partir do HEAD pra
+não misturar com o trabalho não commitado) adiciona 6 entradas em
+`ALIASES_PRODUTO` — incluindo `"perfect pivot brises"` (post de Stories de
+11/set, só afeta o autocomplete). Pushado pro `main` (auto-deploy). Biblioteca
+cai de 37 pra 34 produtos. Também atualizei o backfill da `0008_produtos.sql`
+(não commitada) pra refletir as mesmas decisões: "Perfect Pivot Brises 360"
+(+ post 60e38027), "Perfect Pocket Wood" (+ 7bee88a0) e novo "Perfect Pocket
+Slim" (a05e79b8, 012235d1) — 17 produtos. O post de Stories "Stories -
+Perfect Pocket" (10/ago, 012b32f0) ficou fora do backfill por não ter sido
+confirmado (o alias por nome o agrupa como Slim, mas Stories nem aparece na
+Biblioteca).
+
+**Pendente**: (1) usuário rodar `0008_produtos.sql` no SQL Editor, depois
+testar/commitar o código da tabela `produtos`; (2) "Agradecimento" (14/set,
+tipo produto/lançamento) e "Perfect Portas Indv" (14/ago) aparecem na
+Biblioteca mas talvez não sejam produtos — perguntado, sem resposta ainda;
+(3) erro de lint pré-existente em `app/site/page.tsx:183` (`prefer-const`).
+
 ### Sessão 42 — 2026-08-06
 
 **Pedido**: usuário reportou que produtos duplicados apareciam na Biblioteca
