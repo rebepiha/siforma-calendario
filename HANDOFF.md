@@ -728,8 +728,10 @@ Biblioteca).
   existiam nesses dias (13, 14, 15/out e 6/nov) tiveram `ordem` +4. Dias
   7–9/out já tinham sido montados à mão pela Victoria (com as fixas): só
   acrescentei "Subir stories" no fim de 7 e 9/out. Não é recorrência
-  automática — depois de 31/dez precisa inserir de novo. Feriados não foram
-  pulados (12/out, 2/nov, 20/nov, 25/dez caem em dia útil).
+  automática — depois de 31/dez precisa inserir de novo. **Feriados
+  nacionais pulados** (a pedido, depois): removidas as 16 dessas tarefas em
+  12/out, 2/nov, 20/nov e 25/dez (esses dias não tinham outras tarefas).
+  Total final: 222. Feriados estaduais/municipais não foram considerados.
 
 **Pendente**: erro de lint pré-existente em `app/site/page.tsx:183`
 (`prefer-const`), não mexi.
