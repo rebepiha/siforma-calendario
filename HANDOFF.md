@@ -694,6 +694,9 @@ Biblioteca).
   por texto (ex: "Alinhador de Porta") cria o produto ao salvar o post — e
   pela regra de nome igual, ele se junta ao grupo existente.
 
+- Produto "Variotec" renomeado pra **Hawa Variotec** (pedido do usuário,
+  direto na tabela `produtos`). Rotary aluminio já estava em SI Rotary 35.
+
 **Pendente**: erro de lint pré-existente em `app/site/page.tsx:183`
 (`prefer-const`), não mexi.
 
