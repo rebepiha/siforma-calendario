@@ -78,7 +78,16 @@ export default function PaginaBiblioteca() {
 
     const grupos = Array.from(mapa.values());
     grupos.forEach((g) => g.posts.sort(ord));
-    grupos.sort((a, b) => ord(a.posts[0], b.posts[0]));
+    // Ordena os produtos pela data do post mais recente de cada um (a última
+    // vez que o produto foi postado), nos dois sentidos — em "Mais antigos",
+    // um produto antigo que voltou a ser postado não fica no topo.
+    const ultimaData = (g: Grupo) =>
+      g.posts.reduce((max, p) => (p.data > max ? p.data : max), "");
+    grupos.sort((a, b) =>
+      maisRecentesPrimeiro
+        ? ultimaData(b).localeCompare(ultimaData(a))
+        : ultimaData(a).localeCompare(ultimaData(b))
+    );
 
     return { grupos };
   }, [posts, maisRecentesPrimeiro, produtos]);

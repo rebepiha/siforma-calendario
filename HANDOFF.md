@@ -707,6 +707,12 @@ Biblioteca).
   sugestões. Testado: 32 opções, "dobr" → só "Dobradiças 3D invisíveis".
   O preenchimento automático do Produto não foi testado no navegador.
 
+- **Ordenação da Biblioteca**: produtos agora são ordenados pela data do
+  post **mais recente** de cada um, nos dois sentidos ("Mais antigos" =
+  produtos postados há mais tempo pela última vez). Antes, em "Mais antigos",
+  usava o primeiro post — "Alinhador de Porta" (3/jun e 20/set) aparecia em
+  2º. Agora fica em 24º.
+
 **Pendente**: erro de lint pré-existente em `app/site/page.tsx:183`
 (`prefer-const`), não mexi.
 
