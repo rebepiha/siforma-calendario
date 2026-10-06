@@ -20,8 +20,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
-import { Etiqueta, NovoPost, Post } from "@/lib/types";
-import { nomesProdutosExistentes } from "@/lib/nomesProdutos";
+import { Etiqueta, NovoPost, Post, Produto } from "@/lib/types";
 import { useUndoStack } from "@/lib/useUndoStack";
 import { mesmosValores } from "@/lib/mesmosValores";
 import CalendarGrid from "@/components/calendario/CalendarGrid";
@@ -51,6 +50,7 @@ export default function PaginaCalendario() {
   const [mesParaFoco, setMesParaFoco] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosState>({
@@ -117,9 +117,20 @@ export default function PaginaCalendario() {
     }
   }
 
+  async function carregarProdutos() {
+    const { data, error } = await supabase
+      .from("produtos")
+      .select("*")
+      .order("nome", { ascending: true });
+    if (!error && data) {
+      setProdutos(data as Produto[]);
+    }
+  }
+
   useEffect(() => {
     carregarPosts();
     carregarEtiquetas();
+    carregarProdutos();
   }, []);
 
   // Qual mês está "em destaque" no cabeçalho conforme o usuário rola a
@@ -271,12 +282,6 @@ export default function PaginaCalendario() {
     return { total: doMes.length, publicados };
   }, [posts, mesAtual]);
 
-  // Sugestões de autocompletar no campo Título do modal — mostra nomes de
-  // produto já usados em posts existentes, pra reduzir a chance de alguém
-  // criar sem querer uma variação de nome nova pro mesmo produto (ver
-  // lib/nomesProdutos.ts e Sessão 42 do HANDOFF).
-  const sugestoesProdutos = useMemo(() => nomesProdutosExistentes(posts), [posts]);
-
   function abrirNovoPost(data: string) {
     setPostSelecionado(null);
     setDataParaNovoPost(data);
@@ -300,6 +305,7 @@ export default function PaginaCalendario() {
       status: post.status,
       copy: post.copy,
       observacoes: post.observacoes,
+      produto_id: post.produto_id,
     };
   }
 
@@ -440,6 +446,18 @@ export default function PaginaCalendario() {
     if (error || !data) throw error;
     setEtiquetas((atual) => [...atual, data as Etiqueta]);
     return data as Etiqueta;
+  }
+
+  async function criarProduto(nome: string): Promise<Produto> {
+    const { data, error } = await supabase
+      .from("produtos")
+      .insert({ nome })
+      .select()
+      .single();
+    if (error || !data) throw error;
+    const produto = data as Produto;
+    setProdutos((atual) => [...atual, produto].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")));
+    return produto;
   }
 
   async function editarEtiqueta(id: string, nome: string, cor: string) {
@@ -614,7 +632,7 @@ export default function PaginaCalendario() {
           post={postSelecionado}
           dataPadrao={dataParaNovoPost}
           etiquetas={etiquetas}
-          sugestoesProdutos={sugestoesProdutos}
+          produtos={produtos}
           onFechar={() => setModalAberto(false)}
           onSalvar={salvarPost}
           onExcluir={excluirPost}
@@ -622,6 +640,7 @@ export default function PaginaCalendario() {
           onCriarEtiqueta={criarEtiqueta}
           onEditarEtiqueta={editarEtiqueta}
           onExcluirEtiqueta={excluirEtiqueta}
+          onCriarProduto={criarProduto}
         />
       )}
 

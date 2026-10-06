@@ -22,9 +22,16 @@ export interface Post {
   observacoes: string | null;
   etiqueta_ids: string[];
   ordem: number;
+  produto_id: string | null;
 }
 
 export type NovoPost = Omit<Post, "id" | "etiqueta_ids" | "ordem">;
+
+export interface Produto {
+  id: string;
+  nome: string;
+  criado_em: string;
+}
 
 export interface Etiqueta {
   id: string;

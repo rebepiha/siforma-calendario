@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Canal, Etiqueta, NovoPost, Post, StatusPost, TipoPost } from "@/lib/types";
+import { Canal, Etiqueta, NovoPost, Post, Produto, StatusPost, TipoPost } from "@/lib/types";
 import { LABEL_CANAL, LABEL_STATUS, LABEL_TIPO } from "@/lib/postStyles";
 import { corTextoContraste } from "@/lib/etiquetaCores";
 import EtiquetaPicker from "./EtiquetaPicker";
@@ -18,6 +18,7 @@ function valoresIniciais(dataPadrao: string): NovoPost {
     status: "pendente",
     copy: "",
     observacoes: "",
+    produto_id: null,
   };
 }
 
@@ -25,7 +26,7 @@ export default function PostModal({
   post,
   dataPadrao,
   etiquetas,
-  sugestoesProdutos,
+  produtos,
   onFechar,
   onSalvar,
   onExcluir,
@@ -33,11 +34,12 @@ export default function PostModal({
   onCriarEtiqueta,
   onEditarEtiqueta,
   onExcluirEtiqueta,
+  onCriarProduto,
 }: {
   post: Post | null;
   dataPadrao: string;
   etiquetas: Etiqueta[];
-  sugestoesProdutos: string[];
+  produtos: Produto[];
   onFechar: () => void;
   onSalvar: (id: string | null, valores: NovoPost, etiquetaIds: string[]) => Promise<void>;
   onExcluir: (id: string) => Promise<void>;
@@ -45,6 +47,7 @@ export default function PostModal({
   onCriarEtiqueta: (nome: string, cor: string) => Promise<Etiqueta>;
   onEditarEtiqueta: (id: string, nome: string, cor: string) => Promise<void>;
   onExcluirEtiqueta: (id: string) => Promise<void>;
+  onCriarProduto: (nome: string) => Promise<Produto>;
 }) {
   const [valores, setValores] = useState<NovoPost>(
     post
@@ -59,10 +62,18 @@ export default function PostModal({
           status: post.status,
           copy: post.copy ?? "",
           observacoes: post.observacoes ?? "",
+          produto_id: post.produto_id,
         }
       : valoresIniciais(dataPadrao)
   );
   const [etiquetaIds, setEtiquetaIds] = useState<string[]>(post?.etiqueta_ids ?? []);
+  // Campo de texto do Produto — separado de `valores.produto_id` porque a
+  // pessoa pode digitar o nome de um produto que ainda não existe; só vira
+  // um produto_id de verdade (existente ou recém-criado) no momento de
+  // salvar, ver `salvar()`.
+  const [nomeProduto, setNomeProduto] = useState(
+    () => produtos.find((p) => p.id === post?.produto_id)?.nome ?? ""
+  );
   const [pickerAberto, setPickerAberto] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
@@ -83,10 +94,26 @@ export default function PostModal({
     );
   }
 
+  // Um produto só faz sentido pra post tipo produto/lançamento — pra
+  // qualquer outro tipo, produto_id fica sempre null (mesmo que o campo
+  // tenha algo digitado de antes de trocar o tipo).
+  const produtoAplicavel = valores.tipo === "produto" || valores.tipo === "lancamento";
+
+  async function resolverProdutoId(): Promise<string | null> {
+    if (!produtoAplicavel) return null;
+    const nome = nomeProduto.trim();
+    if (!nome) return null;
+    const existente = produtos.find((p) => p.nome.toLowerCase() === nome.toLowerCase());
+    if (existente) return existente.id;
+    const novo = await onCriarProduto(nome);
+    return novo.id;
+  }
+
   async function salvar() {
     if (!valores.titulo.trim()) return;
     setSalvando(true);
     try {
+      const produto_id = await resolverProdutoId();
       await onSalvar(
         post?.id ?? null,
         {
@@ -94,6 +121,7 @@ export default function PostModal({
           categoria: valores.categoria?.trim() ? valores.categoria : null,
           copy: valores.copy?.trim() ? valores.copy : null,
           observacoes: valores.observacoes?.trim() ? valores.observacoes : null,
+          produto_id,
         },
         etiquetaIds
       );
@@ -139,20 +167,8 @@ export default function PostModal({
               value={valores.titulo}
               onChange={(e) => campo("titulo", e.target.value)}
               placeholder="Nome do produto ou tema do post"
-              list="produtos-existentes"
               className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
             />
-            <datalist id="produtos-existentes">
-              {sugestoesProdutos.map((nome) => (
-                <option key={nome} value={nome} />
-              ))}
-            </datalist>
-            {(valores.tipo === "produto" || valores.tipo === "lancamento") && (
-              <p className="mt-1 text-[11px] text-zinc-500">
-                Dica: comece a digitar pra ver produtos já cadastrados e evitar criar um
-                nome novo pro mesmo produto.
-              </p>
-            )}
           </div>
 
           <div>
@@ -201,6 +217,31 @@ export default function PostModal({
               </select>
             </div>
           </div>
+
+          {produtoAplicavel && (
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-400">
+                Produto
+              </label>
+              <input
+                value={nomeProduto}
+                onChange={(e) => setNomeProduto(e.target.value)}
+                placeholder="Buscar produto existente ou digitar um novo"
+                list="produtos-cadastrados"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+              />
+              <datalist id="produtos-cadastrados">
+                {produtos.map((p) => (
+                  <option key={p.id} value={p.nome} />
+                ))}
+              </datalist>
+              <p className="mt-1 text-[11px] text-zinc-500">
+                Escolha um produto já cadastrado sempre que existir — evita duplicar o mesmo
+                produto com nomes diferentes na Biblioteca. Um nome que não bate com nenhum
+                produto existente cria um produto novo ao salvar.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-400">

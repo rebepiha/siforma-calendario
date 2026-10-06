@@ -12,6 +12,14 @@
 
 ## Estado atual (resumo rápido)
 
+- **Biblioteca agora usa a tabela `produtos`** (Sessão 43; migration
+  `0008_produtos.sql` rodada em produção): agrupa por `posts.produto_id`;
+  posts sem vínculo entram no grupo do produto de mesmo nome, ou caem no
+  agrupamento antigo por texto (`ALIASES_PRODUTO`). Botão "Mover" / clique
+  direito em cada produto abre `MoverModal.tsx` pra juntar grupos (com
+  Ctrl+Z). Modal de post tem campo **Produto** (datalist dos cadastrados;
+  nome novo cria produto ao salvar). Ver Sessão 43 — o bullet da Biblioteca
+  mais abaixo descreve o estado pré-tabela.
 - **Calendário Editorial: scroll contínuo estilo Google Calendar, vários meses
   empilhados** (ver Sessão 41, Pedido 2 — substitui completamente uma primeira versão
   mais simples do Pedido 1, "rolar até a borda troca de mês", que só durou até o
@@ -519,6 +527,8 @@
   Pedido 2), vale reconsiderar uma tabela `produtos` de verdade em vez desse dicionário
   manual — avaliado e descartado na Sessão 42 por ser bem mais trabalho sem necessidade
   comprovada ainda.
+  **Atualização Sessão 43: a tabela `produtos` foi implementada** — o
+  dicionário virou só fallback pra posts não vinculados.
 - **Arquivos de Metas e Progresso ainda existem** (`app/metas/` e `components/metas/`)
   mas a aba foi removida do nav. Usuário não confirmou se quer apagar os arquivos — deixados
   no repo sem referência ativa até uma sessão futura pedir a limpeza.
@@ -628,11 +638,54 @@ Perfect Pocket" (10/ago, 012b32f0) ficou fora do backfill por não ter sido
 confirmado (o alias por nome o agrupa como Slim, mas Stories nem aparece na
 Biblioteca).
 
-**Pendente**: (1) usuário rodar `0008_produtos.sql` no SQL Editor, depois
-testar/commitar o código da tabela `produtos`; (2) "Agradecimento" (14/set,
-tipo produto/lançamento) e "Perfect Portas Indv" (14/ago) aparecem na
-Biblioteca mas talvez não sejam produtos — perguntado, sem resposta ainda;
-(3) erro de lint pré-existente em `app/site/page.tsx:183` (`prefer-const`).
+**Continuação (mesma sessão)**:
+- "Agradecimento" (5/jul e 14/set) estava com `tipo = produto` → mudei pra
+  `nao_produto` direto no banco (a pedido: "agradecimento pode tirar").
+  "Perfect Portas Indv" é produto (usuário confirmou), fica.
+- Usuário rodou `0008_produtos.sql` no SQL Editor (primeira tentativa deu
+  `syntax error at or near "supabase"` — tinha colado o caminho do arquivo
+  em vez do conteúdo; usei `pbcopy < arquivo` pra pôr o SQL no clipboard).
+  Confirmado via REST: 17 produtos, 31 posts vinculados.
+- **Pedido: "mover" na Biblioteca** (pôr um produto no mesmo grupo de outro).
+  Novo `components/biblioteca/MoverModal.tsx`: abre pelo botão "Mover" ao
+  lado do nome (aparece no hover no desktop, sempre visível no celular) ou
+  clique direito na linha. Checkbox por post (dá pra mover só parte do
+  grupo), busca, lista de todos os grupos como destino, e "+ Criar produto
+  X" se o nome digitado não existir. Mover = `update posts set produto_id`.
+  Se o destino é um grupo só-por-texto, cria (ou reaproveita pelo nome) o
+  produto e **vincula também os posts do destino**, senão ficariam dois
+  grupos com o mesmo nome. Ctrl+Z desfaz (restaura o `produto_id` anterior
+  de cada post; o produto criado continua existindo, inofensivo).
+- **Bug achado no teste e corrigido**: depois da migration, a Biblioteca foi
+  de 33 pra 41 — posts vinculados (agrupados por `id:`) e posts do mesmo
+  produto ainda sem `produto_id` (agrupados por `texto:`) viravam dois
+  grupos com o mesmo nome (ex: Submarine 24/jul vinculado, 13/set não).
+  Corrigido em `app/biblioteca/page.tsx`: post sem `produto_id` cujo nome
+  canônico bate (case-insensitive) com o nome de um produto cadastrado entra
+  no grupo desse produto.
+- A busca da Biblioteca agora filtra **grupos** (nome do grupo ou título de
+  algum post) depois de agrupar todos os posts — antes filtrava posts antes
+  de agrupar; mudou porque o modal de mover precisa de todos os grupos.
+- Pedidos de dados no meio do caminho (feitos direto no banco):
+  "Respiro (Fotos Variotec)" → produto novo **Variotec** (posts 9/ago Feed e
+  10/ago); "Rotary aluminio" → produto renomeado pra **SI Rotary 35** e
+  vinculados SI Rotary 35 (27/ago) e Rotary aluminio (2/out) — note que na
+  primeira revisão o usuário tinha dito que eram diferentes, depois mudou.
+  Produto "OPK Perfect Camarão (explicativo)" (nome da Sessão 42) renomeado
+  pra **OPK Perfect Camarão** — o post vinculado tinha esse título, e o de
+  5/out ficou separado; agora vinculado também. Migration `0008` atualizada
+  com os nomes finais (Camarão, SI Rotary 35) pra re-executar não
+  recriar os nomes antigos. Produto "Libra H11" foi criado pelo meu teste
+  automatizado (mover + Ctrl+Z) — deixei, é um produto real e não atrapalha.
+- **Testes** (Playwright + Chrome do sistema, `playwright-core` instalado só
+  no scratchpad, não no projeto): mover grupo texto→grupo id e texto→texto
+  (cria produto), ambos com Ctrl+Z, contagem volta certa, zero erros de
+  console. Modal de post do Calendário mostra o campo Produto preenchido
+  ("Pocket 160" → Perfect Pocket Wood). `npm run build` ok. Biblioteca final:
+  **32 produtos**.
+
+**Pendente**: erro de lint pré-existente em `app/site/page.tsx:183`
+(`prefer-const`), não mexi.
 
 ### Sessão 42 — 2026-08-06
 
