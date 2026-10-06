@@ -720,6 +720,17 @@ Biblioteca).
   não mexi). Inseridos direto via REST (fora do Ctrl+Z do app). Confirmado:
   26 dias com Stories, sem duplicata.
 
+- **Tarefas fixas de marketing (seg–sex)**: "Atendimento nas redes sociais +
+  painel admin", "Mandar mensagem novos seguidores", "Atualizar tabela de
+  leads", "Subir stories" — 238 linhas em `tarefas` inseridas via REST pra
+  todo dia útil de 7/out a 31/dez/2026 (Victoria, média, a_fazer). Dias
+  vazios/esparsos: as 4 com `ordem` 0–3 no topo, e as 6 tarefas que já
+  existiam nesses dias (13, 14, 15/out e 6/nov) tiveram `ordem` +4. Dias
+  7–9/out já tinham sido montados à mão pela Victoria (com as fixas): só
+  acrescentei "Subir stories" no fim de 7 e 9/out. Não é recorrência
+  automática — depois de 31/dez precisa inserir de novo. Feriados não foram
+  pulados (12/out, 2/nov, 20/nov, 25/dez caem em dia útil).
+
 **Pendente**: erro de lint pré-existente em `app/site/page.tsx:183`
 (`prefer-const`), não mexi.
 
