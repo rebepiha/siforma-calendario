@@ -15,6 +15,12 @@ export function nomeBaseProduto(titulo: string): string {
 const ALIASES_PRODUTO: Record<string, string> = {
   "si porta invisível": "Porta Invisível em Alumínio (slim)",
   "e-motion (video editado)": "E-Motion Slim",
+  "perfect pocket": "Perfect Pocket Slim",
+  "perfect pocket slim (feira)": "Perfect Pocket Slim",
+  "opk perfect pocket wood": "Perfect Pocket Wood",
+  "pocket 160": "Perfect Pocket Wood",
+  "perfect pivot brises": "Perfect Pivot Brises 360",
+  "perfect pivot brises 360 central slim": "Perfect Pivot Brises 360",
 };
 
 export function nomeCanonicoProduto(titulo: string): string {
