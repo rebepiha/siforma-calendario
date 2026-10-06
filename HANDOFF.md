@@ -713,6 +713,13 @@ Biblioteca).
   usava o primeiro post — "Alinhador de Porta" (3/jun e 20/set) aparecia em
   2º. Agora fica em 24º.
 
+- **Stories todo dia até o fim de outubro**: criados 21 posts placeholder
+  (mesmo padrão dos existentes: título "Stories", Instagram, tipo produto,
+  status pendente, etiqueta Stories, `ordem` = último do dia) nos dias 6–31/out
+  que ainda não tinham Stories (8, 10, 12, 13, 15 já tinham, com conteúdo —
+  não mexi). Inseridos direto via REST (fora do Ctrl+Z do app). Confirmado:
+  26 dias com Stories, sem duplicata.
+
 **Pendente**: erro de lint pré-existente em `app/site/page.tsx:183`
 (`prefer-const`), não mexi.
 
