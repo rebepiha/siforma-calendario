@@ -649,8 +649,9 @@ uma página incompleta. `tsc` ok, pushado pro `main` (deploy automático).
 Outras tabelas estão longe do limite (posts 286, tarefas_site 40, produtos
 21, etiquetas 8). Não foi testado no navegador.
 
-**Pendente**: há tarefas de teste da usuária ("ccc", "cccc", "ccccc", 13–16/out)
-que ela pode querer apagar. Se `posts` passar de 1000, vale o mesmo fix em
+**Pendente**: as 4 tarefas de teste da usuária ("ccc", "cccc" ×2, "ccccc", 13–16/out)
+foram apagadas via REST a pedido dela (total agora 1072).
+Se `posts` passar de 1000, vale o mesmo fix em
 `app/page.tsx` e na Biblioteca.
 
 ### Sessão 43 — 2026-10-06
