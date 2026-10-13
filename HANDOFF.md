@@ -524,6 +524,8 @@
 
 ## Pendências / próximos passos conhecidos
 
+- **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
+  carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
 - **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
   só até 31/out/2026; tarefas fixas seg–sex só até 31/dez/2026. Depois
   disso precisa inserir de novo (via REST, mesmo padrão — ver Sessão 43).
@@ -628,6 +630,28 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 44 — 2026-10-13
+
+**Pedido**: "as tarefas que eu estou colocando não estão ficando salvas".
+
+**Causa**: as tarefas *eram* salvas, mas não carregavam. `tarefas` chegou a
+1076 linhas (as 222 fixas da Sessão 43 passaram o total de 1000), e o
+Supabase/PostgREST devolve no máximo 1000 linhas por consulta. Como
+`carregarTarefas()` ordena por `criado_em` ascendente, as 76 mais novas
+(incluindo tudo que a Victoria criou hoje) ficavam de fora ao recarregar a
+página. Além disso, `salvarTarefa()` ignora erros em silêncio (não era o caso
+aqui, mas dificulta o diagnóstico).
+
+**Feito**: commit `6027c18` — `carregarTarefas()` em `app/tarefas/page.tsx`
+busca em páginas de 1000 com `.range()` (ordem `criado_em`, `id`) até vir
+uma página incompleta. `tsc` ok, pushado pro `main` (deploy automático).
+Outras tabelas estão longe do limite (posts 286, tarefas_site 40, produtos
+21, etiquetas 8). Não foi testado no navegador.
+
+**Pendente**: há tarefas de teste da usuária ("ccc", "cccc", "ccccc", 13–16/out)
+que ela pode querer apagar. Se `posts` passar de 1000, vale o mesmo fix em
+`app/page.tsx` e na Biblioteca.
 
 ### Sessão 43 — 2026-10-06
 
