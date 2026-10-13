@@ -12,6 +12,9 @@
 
 ## Estado atual (resumo rápido)
 
+- **Tarefas de Marketing carrega em páginas de 1000** (Sessão 44, commit
+  `6027c18`): `tarefas` passou de 1000 linhas e as mais novas sumiam ao
+  recarregar. Duplicadas e testes de 13–16/out apagados. Total: 1046 tarefas.
 - **Biblioteca agora usa a tabela `produtos`** (Sessão 43; migration
   `0008_produtos.sql` rodada em produção): regra de agrupamento única em
   `grupoBiblioteca()` (`lib/nomesProdutos.ts`) — agrupa por
