@@ -49,16 +49,27 @@ export default function PaginaTarefas() {
 
   async function carregarTarefas() {
     setCarregando(true);
-    const { data, error } = await supabase
-      .from("tarefas")
-      .select("*")
-      .order("criado_em", { ascending: true });
-    if (error) {
-      setErro(error.message);
-    } else {
-      setTarefas(data as Tarefa[]);
-      setErro(null);
+    // O Supabase devolve no máximo 1000 linhas por consulta — busca em páginas
+    // até vir uma página incompleta, senão as tarefas mais novas somem.
+    const TAMANHO_PAGINA = 1000;
+    const todas: Tarefa[] = [];
+    for (let inicio = 0; ; inicio += TAMANHO_PAGINA) {
+      const { data, error } = await supabase
+        .from("tarefas")
+        .select("*")
+        .order("criado_em", { ascending: true })
+        .order("id", { ascending: true })
+        .range(inicio, inicio + TAMANHO_PAGINA - 1);
+      if (error) {
+        setErro(error.message);
+        setCarregando(false);
+        return;
+      }
+      todas.push(...(data as Tarefa[]));
+      if (data.length < TAMANHO_PAGINA) break;
     }
+    setTarefas(todas);
+    setErro(null);
     setCarregando(false);
   }
 
