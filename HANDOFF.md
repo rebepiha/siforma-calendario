@@ -651,6 +651,11 @@ Outras tabelas estão longe do limite (posts 286, tarefas_site 40, produtos
 
 **Pendente**: as 4 tarefas de teste da usuária ("ccc", "cccc" ×2, "ccccc", 13–16/out)
 foram apagadas via REST a pedido dela (total agora 1072).
+Depois, a pedido ("apague os duplicados no mesmo dia dessa semana"), apaguei
+26 tarefas duplicadas de 13–16/out (mesmo título + dia + responsável). Elas
+foram recriadas pela Victoria por volta das 16h, quando as tarefas pareciam
+não salvar. Mantive a cópia mais antiga de cada grupo. Backup das apagadas no
+scratchpad da sessão (`tarefas_duplicadas_apagadas.json`). Total: 1046.
 Se `posts` passar de 1000, vale o mesmo fix em
 `app/page.tsx` e na Biblioteca.
 
