@@ -529,6 +529,8 @@
 
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
+- **Tarefas de análise** (Sessão 45: concorrência 2x/mês, site e redes no
+  fim do mês) também só até 31/dez/2026 — estender junto com as fixas.
 - **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
   só até 31/out/2026; tarefas fixas seg–sex só até 31/dez/2026. Depois
   disso precisa inserir de novo (via REST, mesmo padrão — ver Sessão 43).
@@ -657,6 +659,21 @@ telescopico wood 09/11→11/11. Backup do estado anterior no scratchpad da sess�
 
 **Confirmado** pela usuária ("isso"): era isso mesmo, só o feed do Instagram,
 cada post para a data do seguinte.
+
+**Pedido 2** — incorporar nas Tarefas: análise da concorrência 2x/mês (começando
+semana que vem), análise do site 1x/mês no fim do mês como fechamento, análise
+do desempenho nas redes sociais 1x/mês.
+
+**Feito**: 10 linhas inseridas em `tarefas` via REST (Victoria, média, A Fazer,
+`ordem` depois das tarefas que já existiam no dia), até 31/dez/2026 (mesmo
+horizonte das tarefas fixas, **não é recorrência automática**):
+- "Análise da concorrência": regra 1ª e 3ª terça do mês → 20/10, 17/11, 01/12,
+  15/12. Em novembro a 1ª ficou na tarefa que já existia ("Analise da
+  concorrencia ", 06/11, criada pela Victoria), em vez de criar 03/11.
+- "Análise do site (fechamento do mês)" e "Análise do desempenho nas redes
+  sociais": as duas no último dia útil do mês → 30/10, 30/11, 31/12. Redes
+  sociais no fechamento foi escolha minha (usuária não disse o dia).
+IDs criados no scratchpad (`tarefas_analises_criadas.json`). Total de tarefas: 1059.
 
 ### Sessão 44 — 2026-10-13
 
