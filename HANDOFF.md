@@ -531,6 +531,14 @@
 
 ## Pendências / próximos passos conhecidos
 
+- **Feed de novembro depois de 11/11 está vazio** (Sessão 45): a usuária pediu
+  pra desfazer a sugestão automática (9 produtos "postados há mais tempo").
+  Esperar ela dizer como quer preencher.
+- **Catálogo de produtos ainda não foi cadastrado** (Sessão 45): a ferramenta
+  existe ("+ Produtos" na Biblioteca), falta a lista.
+- **Tudo que foi programado na Sessão 45 vai só até 31/dez/2026** (YouTube,
+  LinkedIn, Stories, tarefas de análise, fixas). A única exceção é a análise
+  de redes sociais de 04/01/2027. Em janeiro precisa estender tudo junto.
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
 - **Placeholders YouTube/LinkedIn** (Sessão 45: YouTube longo qui + shorts dom +
@@ -643,6 +651,16 @@
 ## Histórico de sessões
 
 ### Sessão 45 — 2026-10-15
+
+**Resumo da sessão** (os detalhes estão nos pedidos abaixo): Diferencial da Siforma
+movido para 21/10, com o feed empurrado; tarefas de análise (concorrência
+quinzenal às sextas desde 16/10, site no último dia útil, redes no 1º dia útil
+do mês seguinte); feriado 19/10 sem fixas; 31/12 esvaziado para 30/12;
+YouTube (longo qui, shorts dom + seg/ter) e LinkedIn (a cada 5 dias) até
+31/12; Stories dia sim dia não em nov–dez; tentativa de completar o feed de
+novembro **desfeita**; Biblioteca ganhou catálogo ("+ Produtos", "Sem posts
+publicados", Excluir) e Renomear, que atualiza os títulos no Calendário.
+Commits de código: `e6fdb3f`, `46c25d5` (no ar, deploy conferido).
 
 **Pedido**: "coloque o post do dia 11/11 diferencial no lugar do rotary easy dia
 21/10, jogando todos os posts para frente de forma respectiva".
