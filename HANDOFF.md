@@ -529,8 +529,8 @@
 
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
-- **Placeholders YouTube/LinkedIn** (Sessão 45: YouTube 1 longo + 2 shorts/semana
-  em dias variados, LinkedIn a cada 5 dias) só até 31/dez/2026.
+- **Placeholders YouTube/LinkedIn** (Sessão 45: YouTube longo qui + shorts dom +
+  shorts seg/ter alternando; LinkedIn a cada 5 dias) só até 31/dez/2026.
 - **Tarefas de análise** (Sessão 45: concorrência sexta sim/sexta não desde 16/10, site no último dia
   útil do mês, redes no 1º dia útil do mês seguinte) também só até 31/dez/2026 — estender junto com as fixas.
 - **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
@@ -747,6 +747,15 @@ Stories `9159913f` em `post_etiquetas`), dia sim dia não de **02/11 a 30/12**
 vazios). Interpretei "coloque" como completar o que faltava, não afinar
 outubro. **Confirmado pela usuária: outubro fica diário como está.** IDs em
 `posts_stories_criados.json` (scratchpad).
+
+**Pedido 10** — "priorize quinta e domingo para youtube".
+**Feito**: os 31 placeholders YouTube do Pedido 8 (conferidos intocados)
+foram apagados e recriados. Toda semana de 19/10 a 31/12 tem **quinta =
+YouTube (longo)**, **domingo = YouTube (shorts)** e mais um shorts que alterna
+entre **segunda e terça** (seg na semana de 19/10, ter na seguinte e assim por
+diante). Escolhi o longo na quinta e o shorts no domingo, e a usuária não
+especificou. 32 posts. LinkedIn (a cada 5 dias) não mudou.
+`posts_yt_li_criados.json` atualizado com os IDs atuais.
 
 ### Sessão 44 — 2026-10-13
 
