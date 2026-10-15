@@ -758,28 +758,13 @@ especificou. 32 posts. LinkedIn (a cada 5 dias) não mudou.
 `posts_yt_li_criados.json` atualizado com os IDs atuais.
 
 **Pedido 11** — "considere os próximos posts no feed e me ajude a completar
-novembro com os postados há mais tempo".
-**Método**: mesma regra da Biblioteca (publicado + etiqueta Feed, agrupado
-como `grupoBiblioteca()`, reimplementado em Python só pra consulta). Ordenei
-pela data do **último post publicado** e pulei os produtos que já têm post de
-feed agendado a partir de 15/10, incluindo "Porta Invisível" (16/10), que é
-o mesmo produto de "Porta Invisível em Alumínio (slim)".
-**Feito**: 9 posts de feed (instagram, produto, pendente, etiqueta Feed,
-`ordem` 0, com os outros posts do dia empurrados +1), mantendo o ritmo de
-~2 em 2 dias depois de 11/11. Último post publicado de cada um entre
-parênteses:
-13/11 Linha Pivot Superior (bocreio) (22/07) · 15/11 SI20 FH-S (27/07) ·
-17/11 Hawa Variotec (09/08) · 19/11 Folding Concepta 25 II (12/08) ·
-21/11 Perfect Portas Indv (14/08) · 23/11 SI 160 HM-S (19/08) ·
-25/11 SI Coplanar hawa (25/08) · 27/11 OPK Perfect Pivot (30/08) ·
-29/11 Camarão C/V 40 (06/09).
-`produto_id` preenchido onde existe linha em `produtos` (Linha Pivot,
-SI20, Hawa Variotec, OPK Perfect Pivot). Os outros ficam sem vínculo, e o
-fallback por nome cuida do agrupamento. IDs em `posts_feed_nov_criados.json`.
-**Pontos levantados para a usuária**: "Feed: Pivot 100kg" (18/10) pode ser o
-mesmo que OPK Perfect Pivot; Folding Concepta 25 II e Camarão C/V 40 são da
-mesma família de Folding Concepta (09/10) e OPK Perfect Camarão (05/10),
-postados há pouco; Perfect Portas Indv pode não ser um produto.
+novembro com os postados há mais tempo". Criei 9 posts de feed de 13 a
+29/11 (produtos com último post publicado mais antigo, pela regra da
+Biblioteca). **Desfeito a pedido** ("desconsidere, volte um passo e tire
+esses posts"): os 9 posts e as etiquetas foram apagados, e o `ordem` dos
+outros posts desses dias voltou ao que era. O feed de novembro continua
+terminando em 11/11 e **segue pendente** de completar, se ela pedir de outro
+jeito.
 
 ### Sessão 44 — 2026-10-13
 
