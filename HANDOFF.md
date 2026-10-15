@@ -529,7 +529,7 @@
 
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
-- **Tarefas de análise** (Sessão 45: concorrência 1ª e 3ª sexta, site no último dia
+- **Tarefas de análise** (Sessão 45: concorrência sexta sim/sexta não desde 16/10, site no último dia
   útil do mês, redes no 1º dia útil do mês seguinte) também só até 31/dez/2026 — estender junto com as fixas.
 - **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
   só até 31/out/2026; tarefas fixas seg–sex só até 31/dez/2026. Depois
@@ -703,6 +703,13 @@ vigente, redes sociais no 1º dia útil do mês seguinte.
   A de 30/10 (`e5347b00`) **tinha sido apagada pelo app** por alguém entre os
   Pedidos 4 e 5 (não fui eu). Recriei em **03/11** (2/11 é Finados), id
   `ef761b32`.
+
+**Pedido 6** — "a analise da concorrencia precisa ser a cada 2 semanas".
+**Feito**: sexta sim, sexta não, a partir de 16/10: 16/10, 30/10 (criada,
+`8390ff40`), 13/11, 27/11, 11/12 e 24/12 (25/12 é Natal, então ficou na
+quinta). Linhas existentes movidas: a da Victoria (06/11, `00fd91f6`, sem
+descrição) foi para 13/11 e teve o título padronizado para "Análise da
+concorrência"; 19/11→27/11, 04/12→11/12, 18/12→24/12.
 
 ### Sessão 44 — 2026-10-13
 
