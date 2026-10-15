@@ -283,8 +283,9 @@ export default function PaginaCalendario() {
     return { total: doMes.length, publicados };
   }, [posts, mesAtual]);
 
-  // Sugestões do campo Produto no modal: só os produtos que aparecem na
-  // Biblioteca (mesma regra de agrupamento, ver lib/nomesProdutos.ts).
+  // Sugestões do campo Produto no modal: os produtos que aparecem na
+  // Biblioteca (mesma regra de agrupamento, ver lib/nomesProdutos.ts) mais o
+  // catálogo cadastrado na tabela `produtos` (inclui os ainda sem post).
   const sugestoesProdutos = useMemo(() => {
     const feedId = etiquetas.find((e) => e.nome === "Feed")?.id;
     const nomes = new Set<string>();
@@ -293,6 +294,7 @@ export default function PaginaCalendario() {
       const grupo = grupoBiblioteca(post, produtos);
       if (grupo) nomes.add(grupo.nome);
     }
+    for (const produto of produtos) nomes.add(produto.nome);
     return Array.from(nomes).sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [posts, produtos, etiquetas]);
 

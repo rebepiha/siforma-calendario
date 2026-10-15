@@ -16,6 +16,9 @@ export default function PaginaBiblioteca() {
   const [maisRecentesPrimeiro, setMaisRecentesPrimeiro] = useState(true);
   const [grupoMovendo, setGrupoMovendo] = useState<Grupo | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [adicionando, setAdicionando] = useState(false);
+  const [textoNovos, setTextoNovos] = useState("");
+  const [salvandoNovos, setSalvandoNovos] = useState(false);
   const { registrarAcao } = useUndoStack(grupoMovendo === null);
 
   useEffect(() => {
@@ -105,6 +108,73 @@ export default function PaginaBiblioteca() {
     );
   }, [grupos, busca]);
 
+  // Catálogo: produtos cadastrados que ainda não têm nenhum post publicado no
+  // feed (nenhum grupo da Biblioteca aponta pra eles). Quando um post desse
+  // produto for publicado, ele sai daqui e entra na lista principal sozinho.
+  const produtosSemPosts = useMemo(() => {
+    const ids = new Set(grupos.map((g) => g.chave));
+    const nomes = new Set(grupos.map((g) => g.nome.toLowerCase()));
+    const b = busca.trim().toLowerCase();
+    return produtos
+      .filter((p) => !ids.has(`id:${p.id}`) && !nomes.has(p.nome.toLowerCase()))
+      .filter((p) => !b || p.nome.toLowerCase().includes(b))
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  }, [grupos, produtos, busca]);
+
+  // Um produto por linha; ignora linhas vazias e nomes já cadastrados
+  // (sem diferenciar maiúsculas, mesma regra do resto do app).
+  async function adicionarProdutos() {
+    const existentes = new Set(produtos.map((p) => p.nome.toLowerCase()));
+    const nomes: string[] = [];
+    for (const linha of textoNovos.split("\n")) {
+      const nome = linha.trim();
+      if (!nome || existentes.has(nome.toLowerCase())) continue;
+      existentes.add(nome.toLowerCase());
+      nomes.push(nome);
+    }
+    setErro(null);
+    if (nomes.length === 0) {
+      setTextoNovos("");
+      setAdicionando(false);
+      return;
+    }
+    setSalvandoNovos(true);
+    const { data, error } = await supabase
+      .from("produtos")
+      .insert(nomes.map((nome) => ({ nome })))
+      .select();
+    setSalvandoNovos(false);
+    if (error || !data) {
+      setErro("Não foi possível adicionar os produtos. Tente de novo.");
+      return;
+    }
+    const criados = data as Produto[];
+    setProdutos((atual) => [...atual, ...criados]);
+    setTextoNovos("");
+    setAdicionando(false);
+
+    const ids = criados.map((p) => p.id);
+    registrarAcao(async () => {
+      await supabase.from("produtos").delete().in("id", ids);
+      setProdutos((atual) => atual.filter((p) => !ids.includes(p.id)));
+    });
+  }
+
+  async function excluirProduto(produto: Produto) {
+    setErro(null);
+    const { error } = await supabase.from("produtos").delete().eq("id", produto.id);
+    if (error) {
+      // Chave estrangeira: algum post (ainda não publicado) aponta pra ele.
+      setErro(`"${produto.nome}" está ligado a um post agendado e não pode ser excluído.`);
+      return;
+    }
+    setProdutos((atual) => atual.filter((p) => p.id !== produto.id));
+    registrarAcao(async () => {
+      const { data } = await supabase.from("produtos").insert(produto).select().single();
+      if (data) setProdutos((atual) => [...atual, data as Produto]);
+    });
+  }
+
   async function atualizarProdutoId(ids: string[], produtoId: string | null) {
     const { error } = await supabase.from("posts").update({ produto_id: produtoId }).in("id", ids);
     if (error) throw error;
@@ -177,6 +247,12 @@ export default function PaginaBiblioteca() {
             placeholder="Buscar..."
             className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
           />
+          <button
+            onClick={() => setAdicionando((v) => !v)}
+            className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-zinc-100"
+          >
+            + Produtos
+          </button>
           <select
             value={maisRecentesPrimeiro ? "recentes" : "antigos"}
             onChange={(e) => setMaisRecentesPrimeiro(e.target.value === "recentes")}
@@ -190,42 +266,99 @@ export default function PaginaBiblioteca() {
 
       {erro && <p className="text-sm text-red-400">{erro}</p>}
 
+      {adicionando && (
+        <div className="flex flex-col gap-2 rounded-md border border-zinc-800 bg-zinc-900 p-3">
+          <label className="text-xs text-zinc-400">
+            Cole os produtos do catálogo, um por linha. Nomes já cadastrados são ignorados.
+          </label>
+          <textarea
+            value={textoNovos}
+            onChange={(e) => setTextoNovos(e.target.value)}
+            rows={6}
+            autoFocus
+            className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+            placeholder={"SI Rotary 35\nOPK Perfect Pivot\n..."}
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setAdicionando(false);
+                setTextoNovos("");
+              }}
+              className="rounded-md px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-200"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={adicionarProdutos}
+              disabled={salvandoNovos || !textoNovos.trim()}
+              className="rounded-md bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-900 hover:bg-white disabled:opacity-50"
+            >
+              {salvandoNovos ? "Adicionando..." : "Adicionar"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {carregando ? (
         <p className="py-12 text-center text-sm text-zinc-600">Carregando...</p>
-      ) : gruposVisiveis.length === 0 ? (
+      ) : gruposVisiveis.length === 0 && produtosSemPosts.length === 0 ? (
         <p className="py-12 text-center text-sm text-zinc-600">Nenhum conteúdo encontrado.</p>
       ) : (
+        gruposVisiveis.length > 0 && (
+          <section>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Produtos · {gruposVisiveis.length}
+            </h2>
+            <div className="flex flex-col divide-y divide-zinc-800/80">
+              {gruposVisiveis.map((grupo) => (
+                <div
+                  key={grupo.chave}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setGrupoMovendo(grupo);
+                  }}
+                  className="group flex items-start justify-between gap-6 py-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-zinc-100">{grupo.nome}</p>
+                    <button
+                      onClick={() => setGrupoMovendo(grupo)}
+                      className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                    >
+                      Mover
+                    </button>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    {grupo.posts.map((post) => (
+                      <span key={post.id} className="text-xs text-zinc-500">
+                        {format(parseISO(post.data), "dd/MM/yyyy")}
+                        {post.categoria ? ` · ${post.categoria}` : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )
+      )}
+
+      {!carregando && produtosSemPosts.length > 0 && (
         <section>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Produtos · {gruposVisiveis.length}
+            Sem posts publicados · {produtosSemPosts.length}
           </h2>
           <div className="flex flex-col divide-y divide-zinc-800/80">
-            {gruposVisiveis.map((grupo) => (
-              <div
-                key={grupo.chave}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setGrupoMovendo(grupo);
-                }}
-                className="group flex items-start justify-between gap-6 py-3"
-              >
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-zinc-100">{grupo.nome}</p>
-                  <button
-                    onClick={() => setGrupoMovendo(grupo)}
-                    className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
-                  >
-                    Mover
-                  </button>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  {grupo.posts.map((post) => (
-                    <span key={post.id} className="text-xs text-zinc-500">
-                      {format(parseISO(post.data), "dd/MM/yyyy")}
-                      {post.categoria ? ` · ${post.categoria}` : ""}
-                    </span>
-                  ))}
-                </div>
+            {produtosSemPosts.map((produto) => (
+              <div key={produto.id} className="group flex items-center justify-between gap-6 py-3">
+                <p className="text-sm text-zinc-300">{produto.nome}</p>
+                <button
+                  onClick={() => excluirProduto(produto)}
+                  className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-red-300 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                >
+                  Excluir
+                </button>
               </div>
             ))}
           </div>

@@ -12,6 +12,9 @@
 
 ## Estado atual (resumo rápido)
 
+- **Biblioteca tem catálogo** (Sessão 45): botão "+ Produtos" (colar um por
+  linha) e seção "Sem posts publicados" com Excluir. Sugestões do modal de
+  post incluem todo o catálogo (`produtos`).
 - **Tarefas de Marketing carrega em páginas de 1000** (Sessão 44, commit
   `6027c18`): `tarefas` passou de 1000 linhas e as mais novas sumiam ao
   recarregar. Duplicadas e testes de 13–16/out apagados. Total: 1046 tarefas.
@@ -542,8 +545,8 @@
   Post "Stories - Perfect Pocket" (10/ago, `012b32f0`) sem `produto_id`
   (não confirmado; não aparece na Biblioteca). Produtos órfãos (sem posts)
   podem ficar na tabela depois de "mover" — inofensivo, não aparecem nas
-  sugestões. Não existe tela pra renomear/excluir produto — hoje é feito
-  direto no banco (ou movendo os posts pra um nome novo).
+  sugestões. Não existe tela pra renomear produto. Excluir só existe para produtos
+  sem post publicado (seção "Sem posts publicados" da Biblioteca, Sessão 45).
 - Erro de lint pré-existente em `app/site/page.tsx:183` (`prefer-const`).
 - Nenhuma pendência crítica — o app está funcional e no ar, cobrindo os 4 requisitos
   (Calendário Editorial, Tarefas de Marketing, Tarefas Site, Banco de Ideias/Biblioteca).
@@ -765,6 +768,36 @@ esses posts"): os 9 posts e as etiquetas foram apagados, e o `ordem` dos
 outros posts desses dias voltou ao que era. O feed de novembro continua
 terminando em 11/11 e **segue pendente** de completar, se ela pedir de outro
 jeito.
+
+**Pedido 12** — "quero acrescentar no site uma lista de produtos, linkada com a
+biblioteca". Perguntei onde e quais. Respostas: **dentro da Biblioteca**,
+**catálogo completo** (inclusive produtos nunca postados).
+**Feito** (código):
+- `app/biblioteca/page.tsx`: botão **"+ Produtos"** abre um textarea, um nome
+  por linha. Insere em `produtos` ignorando linhas vazias e nomes já
+  existentes (sem diferenciar maiúsculas, inclusive duplicados dentro do
+  próprio texto colado). Nova seção **"Sem posts publicados · N"** abaixo da
+  lista principal, com os produtos cadastrados que nenhum grupo da Biblioteca
+  usa (nem por `id:` nem por nome), em ordem alfabética e filtrados pela busca.
+  Quando um post desse produto for publicado com etiqueta Feed, ele sai dessa
+  seção e entra na lista principal automaticamente. Cada linha tem
+  **"Excluir"** (no hover); se algum post agendado aponta pro produto (FK
+  `posts.produto_id`), o erro vira a mensagem "está ligado a um post agendado".
+  Adicionar e excluir entram no Ctrl+Z (`useUndoStack`). Excluir desfeito
+  reinsere com o mesmo id.
+- `app/page.tsx`: `sugestoesProdutos` (datalist dos campos Título/Produto do
+  modal de post) agora inclui **todos** os nomes de `produtos`, além dos grupos
+  da Biblioteca. Isso muda a decisão da Sessão 43 ("só os da Biblioteca"),
+  porque o catálogo precisa ser escolhível ao criar post. Efeito colateral:
+  produtos órfãos (sobra de "Mover") também aparecem como sugestão, mas agora
+  aparecem também em "Sem posts publicados" e podem ser excluídos ali.
+- Testado com Playwright contra o dev server (banco de produção!): colar
+  "ZZ Teste Catalogo" + nome existente + duplicado → só 1 criado, seção
+  aparece; Excluir → some; Ctrl+Z → volta; Ctrl+Z → some; banco conferido sem
+  sobra. Zero erros de console. `tsc` e `eslint` ok. Hoje a seção "Sem posts"
+  está vazia: os 22 produtos da tabela têm posts publicados.
+**Pendente**: a usuária colar o catálogo completo (ou me passar a lista). Não
+existe renomear produto pela UI. Não há campos extras (marca, link do site).
 
 ### Sessão 44 — 2026-10-13
 
