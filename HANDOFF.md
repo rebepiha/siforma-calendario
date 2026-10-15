@@ -529,6 +529,8 @@
 
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
+- **Placeholders YouTube/LinkedIn** (Sessão 45: ter shorts, qua LinkedIn, qui
+  longo, sáb shorts) só até 31/dez/2026.
 - **Tarefas de análise** (Sessão 45: concorrência sexta sim/sexta não desde 16/10, site no último dia
   útil do mês, redes no 1º dia útil do mês seguinte) também só até 31/dez/2026 — estender junto com as fixas.
 - **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
@@ -710,6 +712,21 @@ vigente, redes sociais no 1º dia útil do mês seguinte.
 quinta). Linhas existentes movidas: a da Victoria (06/11, `00fd91f6`, sem
 descrição) foi para 13/11 e teve o título padronizado para "Análise da
 concorrência"; 19/11→27/11, 04/12→11/12, 18/12→24/12.
+
+**Pedido 7** — Calendário: YouTube 1 longo + 2 shorts por semana; LinkedIn 1
+post por semana (ou a cada 5 dias).
+**Feito**: padrão semanal fixo de **19/10 a 31/12/2026**: **terça** "YouTube
+(shorts)", **quarta** "LinkedIn", **quinta** "YouTube (longo)", **sábado**
+"YouTube (shorts)". Todos são placeholders (`tipo produto`, `pendente`, sem
+etiqueta, `ordem` depois dos posts do dia), no mesmo formato dos que já
+existiam. Os 6 placeholders YouTube/LinkedIn pendentes que existiam a partir
+de 19/10 (21/10 shorts+LinkedIn, 24/10 longo, 27/10 shorts, 29/10 LinkedIn,
+31/10 shorts) foram apagados, já que não tinham conteúdo, e recriados no
+padrão. 43 posts criados. Backup em `posts_yt_li_antes.json` e IDs em
+`posts_yt_li_criados.json` (scratchpad). A semana de 12–18/10 já tinha 1 longo
+e 2 shorts e não foi mexida. Escolhi semanal (quarta), não "a cada 5 dias".
+Nenhum dia do padrão cai em feriado nacional até dezembro. Total de posts:
+~323, ainda longe do limite de 1000.
 
 ### Sessão 44 — 2026-10-13
 
