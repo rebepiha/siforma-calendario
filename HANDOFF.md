@@ -530,7 +530,7 @@
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
 - **Tarefas de análise** (Sessão 45: concorrência 1ª e 3ª sexta, site e redes no
-  fim do mês) também só até 31/dez/2026 — estender junto com as fixas.
+  fim do mês; dezembro em 30/12) também só até 31/dez/2026 — estender junto com as fixas.
 - **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
   só até 31/out/2026; tarefas fixas seg–sex só até 31/dez/2026. Depois
   disso precisa inserir de novo (via REST, mesmo padrão — ver Sessão 43).
@@ -681,6 +681,17 @@ IDs criados no scratchpad (`tarefas_analises_criadas.json`). Total de tarefas: 1
 `ordem`, não recriadas): 20/10→16/10, 17/11→19/11 (3ª sexta é 20/11, feriado
 da Consciência Negra, então ficou na quinta), 01/12→04/12, 15/12→18/12. A de
 06/11 que a Victoria já tinha criado é a 1ª sexta de novembro e continua igual.
+
+**Pedido 4** — "dia 19/10 é feriado, tirar as tarefas desse dia. tire tudo do
+dia 31/12 tambem, passe pra 30".
+**Feito** (backup no scratchpad, `tarefas_19out_31dez_backup.json`):
+- 19/10: apagadas as 4 tarefas fixas e criada uma tarefa "Feriado" (sem nome,
+  porque a usuária não disse qual é; as outras se chamam "Feriado – <nome>").
+  Os posts de 19/10 (SI Sailing 15, Email 14, Stories) **não foram mexidos**,
+  porque o pedido era só das tarefas.
+- 31/12: as 4 fixas foram apagadas, não movidas, porque 30/12 já tem as mesmas
+  4 e mover ia duplicar. As 2 análises de fechamento foram para 30/12 (ordem 4
+  e 5). 31/12 ficou vazio. Total de tarefas: 1052.
 
 ### Sessão 44 — 2026-10-13
 
