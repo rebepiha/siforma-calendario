@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { Post, Produto } from "@/lib/types";
-import { grupoBiblioteca, nomeCanonicoProduto } from "@/lib/nomesProdutos";
+import { grupoBiblioteca, nomeCanonicoProduto, tituloRenomeado } from "@/lib/nomesProdutos";
 import { useUndoStack } from "@/lib/useUndoStack";
 import MoverModal, { DestinoMover, GrupoBiblioteca as Grupo } from "@/components/biblioteca/MoverModal";
 
@@ -19,7 +19,12 @@ export default function PaginaBiblioteca() {
   const [adicionando, setAdicionando] = useState(false);
   const [textoNovos, setTextoNovos] = useState("");
   const [salvandoNovos, setSalvandoNovos] = useState(false);
-  const { registrarAcao } = useUndoStack(grupoMovendo === null);
+  // Renomear: chave do grupo (ou `id:<produto>` na seção sem posts) em edição.
+  const [renomeando, setRenomeando] = useState<string | null>(null);
+  const [nomeEditado, setNomeEditado] = useState("");
+  // Esc cancela; sem isso o blur ao desmontar o campo poderia salvar.
+  const renomeCancelado = useRef(false);
+  const { registrarAcao } = useUndoStack(grupoMovendo === null && renomeando === null);
 
   useEffect(() => {
     async function carregar() {
@@ -175,6 +180,134 @@ export default function PaginaBiblioteca() {
     });
   }
 
+  function comecarRenomear(chave: string, nome: string) {
+    renomeCancelado.current = false;
+    setRenomeando(chave);
+    setNomeEditado(nome);
+  }
+
+  // Renomeia o produto e os títulos dos posts dele no Calendário (todos os
+  // posts, não só os publicados: agendados e Stories também). Grupo só por
+  // texto (sem linha em `produtos`) ganha o produto com o nome novo, e os
+  // posts passam a apontar pra ele, mesmo padrão do Mover.
+  async function renomear(chave: string, antigo: string, postsGrupo: Post[]) {
+    const novo = nomeEditado.trim();
+    setRenomeando(null);
+    if (renomeCancelado.current) return;
+    renomeCancelado.current = true;
+    if (!novo || novo === antigo) return;
+    setErro(null);
+
+    const produtoAtual = chave.startsWith("id:")
+      ? produtos.find((p) => p.id === chave.slice(3))
+      : produtos.find((p) => p.nome.toLowerCase() === antigo.toLowerCase());
+    const outro = produtos.find(
+      (p) => p.nome.toLowerCase() === novo.toLowerCase() && p.id !== produtoAtual?.id
+    );
+    if (outro) {
+      setErro(`Já existe um produto "${outro.nome}". Use "Mover" para juntar os dois.`);
+      return;
+    }
+
+    try {
+      // Posts do produto no banco inteiro: vinculados pelo id, mais os sem
+      // vínculo que a Biblioteca agrupa nele pelo nome.
+      const [porId, porNome] = await Promise.all([
+        produtoAtual
+          ? supabase.from("posts").select("*").eq("produto_id", produtoAtual.id)
+          : Promise.resolve({ data: [], error: null }),
+        supabase.from("posts").select("*").ilike("titulo", `%${antigo}%`),
+      ]);
+      if (porId.error || porNome.error) throw porId.error ?? porNome.error;
+      const candidatos = new Map<string, Post>();
+      for (const p of [...postsGrupo, ...((porId.data ?? []) as Post[]), ...((porNome.data ?? []) as Post[])]) {
+        const doGrupo =
+          (produtoAtual && p.produto_id === produtoAtual.id) ||
+          (!p.produto_id &&
+            grupoBiblioteca(p, produtos)?.nome.toLowerCase() === antigo.toLowerCase());
+        if (doGrupo) candidatos.set(p.id, p);
+      }
+
+      let produto: Produto;
+      if (produtoAtual) {
+        const { error } = await supabase.from("produtos").update({ nome: novo }).eq("id", produtoAtual.id);
+        if (error) throw error;
+        produto = { ...produtoAtual, nome: novo };
+      } else {
+        const { data, error } = await supabase.from("produtos").insert({ nome: novo }).select().single();
+        if (error || !data) throw error;
+        produto = data as Produto;
+      }
+
+      const anteriores = Array.from(candidatos.values()).map((p) => ({
+        id: p.id,
+        titulo: p.titulo,
+        produto_id: p.produto_id,
+      }));
+      const novos = anteriores.map((p) => ({
+        id: p.id,
+        titulo: tituloRenomeado(p.titulo, antigo, novo),
+        produto_id: produto.id,
+      }));
+      await Promise.all(
+        novos.map((p) =>
+          supabase.from("posts").update({ titulo: p.titulo, produto_id: p.produto_id }).eq("id", p.id)
+        )
+      );
+
+      const aplicar = (lista: { id: string; titulo: string; produto_id: string | null }[]) => {
+        const porPost = new Map(lista.map((p) => [p.id, p]));
+        setPosts((atual) =>
+          atual.map((p) => {
+            const m = porPost.get(p.id);
+            return m ? { ...p, titulo: m.titulo, produto_id: m.produto_id } : p;
+          })
+        );
+      };
+      aplicar(novos);
+      setProdutos((atual) =>
+        produtoAtual ? atual.map((p) => (p.id === produto.id ? produto : p)) : [...atual, produto]
+      );
+
+      registrarAcao(async () => {
+        await Promise.all(
+          anteriores.map((p) =>
+            supabase.from("posts").update({ titulo: p.titulo, produto_id: p.produto_id }).eq("id", p.id)
+          )
+        );
+        if (produtoAtual) {
+          await supabase.from("produtos").update({ nome: produtoAtual.nome }).eq("id", produtoAtual.id);
+          setProdutos((atual) => atual.map((p) => (p.id === produtoAtual.id ? produtoAtual : p)));
+        } else {
+          await supabase.from("produtos").delete().eq("id", produto.id);
+          setProdutos((atual) => atual.filter((p) => p.id !== produto.id));
+        }
+        aplicar(anteriores);
+      });
+    } catch {
+      setErro("Não foi possível renomear. Tente de novo.");
+    }
+  }
+
+  function campoRenomear(chave: string, antigo: string, postsGrupo: Post[]) {
+    return (
+      <input
+        autoFocus
+        value={nomeEditado}
+        onChange={(e) => setNomeEditado(e.target.value)}
+        onBlur={() => renomear(chave, antigo, postsGrupo)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+          if (e.key === "Escape") {
+            renomeCancelado.current = true;
+            setRenomeando(null);
+          }
+        }}
+        className="min-w-0 rounded-md border border-zinc-600 bg-zinc-800 px-2 py-1 text-sm text-zinc-100 focus:border-zinc-400 focus:outline-none"
+      />
+    );
+  }
+
   async function atualizarProdutoId(ids: string[], produtoId: string | null) {
     const { error } = await supabase.from("posts").update({ produto_id: produtoId }).in("id", ids);
     if (error) throw error;
@@ -321,7 +454,17 @@ export default function PaginaBiblioteca() {
                   className="group flex items-start justify-between gap-6 py-3"
                 >
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-zinc-100">{grupo.nome}</p>
+                    {renomeando === grupo.chave ? (
+                      campoRenomear(grupo.chave, grupo.nome, grupo.posts)
+                    ) : (
+                      <p className="text-sm font-medium text-zinc-100">{grupo.nome}</p>
+                    )}
+                    <button
+                      onClick={() => comecarRenomear(grupo.chave, grupo.nome)}
+                      className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                    >
+                      Renomear
+                    </button>
                     <button
                       onClick={() => setGrupoMovendo(grupo)}
                       className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
@@ -352,7 +495,19 @@ export default function PaginaBiblioteca() {
           <div className="flex flex-col divide-y divide-zinc-800/80">
             {produtosSemPosts.map((produto) => (
               <div key={produto.id} className="group flex items-center justify-between gap-6 py-3">
-                <p className="text-sm text-zinc-300">{produto.nome}</p>
+                <div className="flex items-center gap-2">
+                  {renomeando === `id:${produto.id}` ? (
+                    campoRenomear(`id:${produto.id}`, produto.nome, [])
+                  ) : (
+                    <p className="text-sm text-zinc-300">{produto.nome}</p>
+                  )}
+                  <button
+                    onClick={() => comecarRenomear(`id:${produto.id}`, produto.nome)}
+                    className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                  >
+                    Renomear
+                  </button>
+                </div>
                 <button
                   onClick={() => excluirProduto(produto)}
                   className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-red-300 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"

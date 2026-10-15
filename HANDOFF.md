@@ -12,8 +12,9 @@
 
 ## Estado atual (resumo rápido)
 
-- **Biblioteca tem catálogo** (Sessão 45): botão "+ Produtos" (colar um por
-  linha) e seção "Sem posts publicados" com Excluir. Sugestões do modal de
+- **Biblioteca tem catálogo e renomear** (Sessão 45): botão "+ Produtos"
+  (colar um por linha), seção "Sem posts publicados" com Excluir, e
+  "Renomear" em todo produto, que atualiza os títulos dos posts no Calendário. Sugestões do modal de
   post incluem todo o catálogo (`produtos`).
 - **Tarefas de Marketing carrega em páginas de 1000** (Sessão 44, commit
   `6027c18`): `tarefas` passou de 1000 linhas e as mais novas sumiam ao
@@ -545,8 +546,8 @@
   Post "Stories - Perfect Pocket" (10/ago, `012b32f0`) sem `produto_id`
   (não confirmado; não aparece na Biblioteca). Produtos órfãos (sem posts)
   podem ficar na tabela depois de "mover" — inofensivo, não aparecem nas
-  sugestões. Não existe tela pra renomear produto. Excluir só existe para produtos
-  sem post publicado (seção "Sem posts publicados" da Biblioteca, Sessão 45).
+  sugestões. Renomear produto existe na Biblioteca e atualiza os títulos no Calendário
+  (Sessão 45). Excluir só existe para produtos sem post publicado.
 - Erro de lint pré-existente em `app/site/page.tsx:183` (`prefer-const`).
 - Nenhuma pendência crítica — o app está funcional e no ar, cobrindo os 4 requisitos
   (Calendário Editorial, Tarefas de Marketing, Tarefas Site, Banco de Ideias/Biblioteca).
@@ -797,7 +798,37 @@ biblioteca". Perguntei onde e quais. Respostas: **dentro da Biblioteca**,
   sobra. Zero erros de console. `tsc` e `eslint` ok. Hoje a seção "Sem posts"
   está vazia: os 22 produtos da tabela têm posts publicados.
 **Pendente**: a usuária colar o catálogo completo (ou me passar a lista). Não
-existe renomear produto pela UI. Não há campos extras (marca, link do site).
+há campos extras (marca, link do site).
+
+**Pedido 13** — "quero poder editar o nome dos produtos já cadastrados na
+biblioteca. se eu alterar o nome na biblioteca pode alterar automático no
+calendário".
+**Feito** (código):
+- Botão **"Renomear"** (no hover, ao lado de "Mover") em cada produto da
+  Biblioteca e na seção "Sem posts publicados". Abre um campo no lugar do
+  nome: Enter ou clicar fora salva, Esc cancela (ref `renomeCancelado`, pra o
+  blur ao desmontar não salvar).
+- `renomear()` em `app/biblioteca/page.tsx`: busca no banco **todos** os
+  posts do produto, não só os publicados de Feed: os com
+  `produto_id = produto` mais os sem vínculo que `grupoBiblioteca()` agrupa
+  nele pelo nome (candidatos via `ilike('%antigo%')` + posts do grupo
+  carregados). Atualiza `produtos.nome`; grupo só por texto ganha uma linha
+  nova em `produtos`. Atualiza `titulo` e `produto_id` de cada post, que
+  ficam vinculados por id a partir daí. Nome igual ao de **outro** produto →
+  erro "Use Mover para juntar". Ctrl+Z restaura nome, títulos e
+  `produto_id` anteriores (e apaga o produto criado, no caso de texto).
+- `tituloRenomeado()` em `lib/nomesProdutos.ts`: título que é só o nome (ou
+  um alias), com prefixo "Stories - "/"Feed: " ou sem → prefixo + nome novo.
+  Senão troca só o trecho com o nome antigo ("Reels SI Ocean bastidores" →
+  "Reels Ocean bastidores"). Título sem o nome antigo não muda.
+- O Calendário lê os títulos do banco, então a mudança aparece lá ao
+  abrir/recarregar a página (não é ao vivo numa aba já aberta).
+- Testado com Playwright no banco de produção, com backup
+  (`rename_backup.json`): Esc não salva; "Si Rotary Easy" (grupo por id,
+  com post agendado 23/10) e "SI 100 Magnético" (grupo só texto, com post
+  agendado 26/10) renomeados → títulos e vínculos no banco certos,
+  inclusive dos agendados; 2× Ctrl+Z → banco idêntico ao backup (produto
+  criado apagado, `produto_id` de volta a null). Zero erros de console.
 
 ### Sessão 44 — 2026-10-13
 

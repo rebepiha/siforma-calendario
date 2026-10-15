@@ -57,3 +57,18 @@ export function entraNaBiblioteca(post: Post, etiquetaFeedId: string | undefined
     post.status === "publicado" && !!etiquetaFeedId && post.etiqueta_ids.includes(etiquetaFeedId)
   );
 }
+
+// Título de um post depois de renomear o produto de `antigo` pra `novo`.
+// Título que é só o nome do produto (ou um alias dele), com ou sem prefixo
+// "Stories - "/"Feed: ", vira prefixo + novo nome. Senão, troca só o trecho
+// com o nome antigo e mantém o resto. Sem o nome antigo, o título não muda.
+export function tituloRenomeado(titulo: string, antigo: string, novo: string): string {
+  if (nomeCanonicoProduto(titulo).toLowerCase() === antigo.toLowerCase()) {
+    const base = nomeBaseProduto(titulo);
+    const prefixo = titulo.slice(0, titulo.toLowerCase().lastIndexOf(base.toLowerCase()));
+    return prefixo + novo;
+  }
+  const i = titulo.toLowerCase().indexOf(antigo.toLowerCase());
+  if (i === -1) return titulo;
+  return titulo.slice(0, i) + novo + titulo.slice(i + antigo.length);
+}
