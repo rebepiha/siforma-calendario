@@ -634,6 +634,30 @@
 
 ## Histórico de sessões
 
+### Sessão 45 — 2026-10-15
+
+**Pedido**: "coloque o post do dia 11/11 diferencial no lugar do rotary easy dia
+21/10, jogando todos os posts para frente de forma respectiva".
+
+**Interpretação**: só a sequência de posts de feed do Instagram (canal
+`instagram`, título que não começa com "Stories") de 21/out a 11/nov, 13 posts.
+Cada post foi pra **data do próximo post da sequência**, e não um número fixo de
+dias, pra manter o ritmo de publicação já planejado. YouTube, LinkedIn, Email e
+Stories não foram mexidos. Cada post movido herdou o `ordem` do post que ocupava
+aquela data.
+
+**Feito** (via REST PATCH em `posts`, só `data` e `ordem`):
+Diferencial da Siforma 11/11→21/10; Si Rotary Easy 21/10→23/10; E-Motion Slim
+23/10→25/10; SI 100 Magnético 25/10→26/10; OPK Perfect Synchro 26/10→28/10;
+SI Ocean 28/10→30/10; OPK Perfect Telescópico Slim 30/10→01/11; SI Engate
+Comfort 01/11→02/11; Submarine 02/11→04/11; Dobradiças 3D invisíveis
+04/11→06/11; respiro 06/11→08/11; SI Rotary 35 08/11→09/11; OPK perfect
+telescopico wood 09/11→11/11. Backup do estado anterior no scratchpad da sessão
+(`posts_antes_rotacao.json`). Nenhuma mudança de código.
+
+**Pendente**: a usuária confirmar que era isso (e não deslocar YouTube/LinkedIn
+etc. junto, nem empurrar um número fixo de dias).
+
 ### Sessão 44 — 2026-10-13
 
 **Pedido**: "as tarefas que eu estou colocando não estão ficando salvas".
