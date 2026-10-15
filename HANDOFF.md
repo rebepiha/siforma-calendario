@@ -655,8 +655,8 @@ Comfort 01/11→02/11; Submarine 02/11→04/11; Dobradiças 3D invisíveis
 telescopico wood 09/11→11/11. Backup do estado anterior no scratchpad da sessão
 (`posts_antes_rotacao.json`). Nenhuma mudança de código.
 
-**Pendente**: a usuária confirmar que era isso (e não deslocar YouTube/LinkedIn
-etc. junto, nem empurrar um número fixo de dias).
+**Confirmado** pela usuária ("isso"): era isso mesmo, só o feed do Instagram,
+cada post para a data do seguinte.
 
 ### Sessão 44 — 2026-10-13
 
