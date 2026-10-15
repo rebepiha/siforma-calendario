@@ -745,8 +745,7 @@ ainda intocados) foram apagados e recriados com **dias variando**:
 Stories `9159913f` em `post_etiquetas`), dia sim dia não de **02/11 a 30/12**
 (continua o 31/10). Outubro **ficou diário** como estava (16 a 31/10, todos
 vazios). Interpretei "coloque" como completar o que faltava, não afinar
-outubro. Se a usuária quiser outubro dia sim dia não também, é só apagar os
-dias alternados (todos são placeholders vazios). IDs em
+outubro. **Confirmado pela usuária: outubro fica diário como está.** IDs em
 `posts_stories_criados.json` (scratchpad).
 
 ### Sessão 44 — 2026-10-13
