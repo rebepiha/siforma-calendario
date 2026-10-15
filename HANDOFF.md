@@ -36,7 +36,7 @@
   "Atualizar tabela de leads", "Subir stories" (Victoria, média), inseridas
   como linhas comuns — **não é recorrência automática**. Feriados nacionais
   (12/out, 2/nov, 20/nov, 25/dez) sem as fixas e com uma tarefa "Feriado –
-  <nome>". Posts placeholder "Stories" cobrem todo dia até **31/out/2026**.
+  <nome>". Posts placeholder "Stories": todo dia até 31/out, depois dia sim dia não até **30/dez/2026** (Sessão 45).
 - **Calendário Editorial: scroll contínuo estilo Google Calendar, vários meses
   empilhados** (ver Sessão 41, Pedido 2 — substitui completamente uma primeira versão
   mais simples do Pedido 1, "rolar até a borda troca de mês", que só durou até o
@@ -534,7 +534,7 @@
 - **Tarefas de análise** (Sessão 45: concorrência sexta sim/sexta não desde 16/10, site no último dia
   útil do mês, redes no 1º dia útil do mês seguinte) também só até 31/dez/2026 — estender junto com as fixas.
 - **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
-  só até 31/out/2026; tarefas fixas seg–sex só até 31/dez/2026. Depois
+  até 31/dez/2026 (diário em out, dia sim dia não nov–dez, Sessão 45); tarefas fixas seg–sex só até 31/dez/2026. Depois
   disso precisa inserir de novo (via REST, mesmo padrão — ver Sessão 43).
   Feriados estaduais/municipais não considerados.
 - **Biblioteca/produtos** (Sessão 43): preenchimento automático do campo
@@ -739,6 +739,15 @@ ainda intocados) foram apagados e recriados com **dias variando**:
 - Feriado não é evitado (a usuária confirmou que pode). 46 posts, de 20/10 a
   30/12. A última semana (28/12–3/1) só tem o shorts de 29/12, porque o resto
   cairia depois de 31/12. IDs em `posts_yt_li_criados.json` (sobrescrito).
+
+**Pedido 9** — "coloque story dia sim dia nao ate final do ano".
+**Feito**: 30 placeholders "Stories" (instagram, produto, pendente, etiqueta
+Stories `9159913f` em `post_etiquetas`), dia sim dia não de **02/11 a 30/12**
+(continua o 31/10). Outubro **ficou diário** como estava (16 a 31/10, todos
+vazios). Interpretei "coloque" como completar o que faltava, não afinar
+outubro. Se a usuária quiser outubro dia sim dia não também, é só apagar os
+dias alternados (todos são placeholders vazios). IDs em
+`posts_stories_criados.json` (scratchpad).
 
 ### Sessão 44 — 2026-10-13
 
