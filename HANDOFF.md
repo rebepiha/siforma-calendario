@@ -529,8 +529,8 @@
 
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
-- **Placeholders YouTube/LinkedIn** (Sessão 45: ter shorts, qua LinkedIn, qui
-  longo, sáb shorts) só até 31/dez/2026.
+- **Placeholders YouTube/LinkedIn** (Sessão 45: YouTube 1 longo + 2 shorts/semana
+  em dias variados, LinkedIn a cada 5 dias) só até 31/dez/2026.
 - **Tarefas de análise** (Sessão 45: concorrência sexta sim/sexta não desde 16/10, site no último dia
   útil do mês, redes no 1º dia útil do mês seguinte) também só até 31/dez/2026 — estender junto com as fixas.
 - **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
@@ -727,6 +727,18 @@ padrão. 43 posts criados. Backup em `posts_yt_li_antes.json` e IDs em
 e 2 shorts e não foi mexida. Escolhi semanal (quarta), não "a cada 5 dias".
 Nenhum dia do padrão cai em feriado nacional até dezembro. Total de posts:
 ~323, ainda longe do limite de 1000.
+
+**Pedido 8** — "pode variar os dias" / "posts podem cair no feriado, é só
+deixar programado". **Feito**: os 43 placeholders do Pedido 7 (conferidos
+ainda intocados) foram apagados e recriados com **dias variando**:
+- YouTube: cada semana (seg–dom) tem shorts, longo e shorts nessa ordem, com
+  dias que mudam num rodízio de 6 combinações: (ter,qui,sáb), (seg,qua,sex),
+  (qua,sex,dom), (seg,qui,sáb), (ter,sex,dom), (seg,qua,sáb).
+- LinkedIn: **a cada 5 dias** a partir de 21/10 (21/10, 26/10, 31/10, 05/11…
+  30/12).
+- Feriado não é evitado (a usuária confirmou que pode). 46 posts, de 20/10 a
+  30/12. A última semana (28/12–3/1) só tem o shorts de 29/12, porque o resto
+  cairia depois de 31/12. IDs em `posts_yt_li_criados.json` (sobrescrito).
 
 ### Sessão 44 — 2026-10-13
 
