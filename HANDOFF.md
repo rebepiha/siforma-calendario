@@ -529,7 +529,7 @@
 
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
-- **Tarefas de análise** (Sessão 45: concorrência 2x/mês, site e redes no
+- **Tarefas de análise** (Sessão 45: concorrência 1ª e 3ª sexta, site e redes no
   fim do mês) também só até 31/dez/2026 — estender junto com as fixas.
 - **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
   só até 31/out/2026; tarefas fixas seg–sex só até 31/dez/2026. Depois
@@ -674,6 +674,13 @@ horizonte das tarefas fixas, **não é recorrência automática**):
   sociais": as duas no último dia útil do mês → 30/10, 30/11, 31/12. Redes
   sociais no fechamento foi escolha minha (usuária não disse o dia).
 IDs criados no scratchpad (`tarefas_analises_criadas.json`). Total de tarefas: 1059.
+
+**Pedido 3** — "bota a analise de concorrencia começando essa sexta ja".
+**Feito**: regra da concorrência virou **1ª e 3ª sexta do mês**, começando
+16/10. As 4 linhas criadas no Pedido 2 foram movidas (PATCH em `prazo` e
+`ordem`, não recriadas): 20/10→16/10, 17/11→19/11 (3ª sexta é 20/11, feriado
+da Consciência Negra, então ficou na quinta), 01/12→04/12, 15/12→18/12. A de
+06/11 que a Victoria já tinha criado é a 1ª sexta de novembro e continua igual.
 
 ### Sessão 44 — 2026-10-13
 
