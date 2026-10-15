@@ -529,8 +529,8 @@
 
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
-- **Tarefas de análise** (Sessão 45: concorrência 1ª e 3ª sexta, site e redes no
-  fim do mês; dezembro em 30/12) também só até 31/dez/2026 — estender junto com as fixas.
+- **Tarefas de análise** (Sessão 45: concorrência 1ª e 3ª sexta, site no último dia
+  útil do mês, redes no 1º dia útil do mês seguinte) também só até 31/dez/2026 — estender junto com as fixas.
 - **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
   só até 31/out/2026; tarefas fixas seg–sex só até 31/dez/2026. Depois
   disso precisa inserir de novo (via REST, mesmo padrão — ver Sessão 43).
@@ -692,6 +692,17 @@ dia 31/12 tambem, passe pra 30".
 - 31/12: as 4 fixas foram apagadas, não movidas, porque 30/12 já tem as mesmas
   4 e mover ia duplicar. As 2 análises de fechamento foram para 30/12 (ordem 4
   e 5). 31/12 ficou vazio. Total de tarefas: 1052.
+
+**Pedido 5** — perguntou o padrão da concorrência e pediu: site no fim do mês
+vigente, redes sociais no 1º dia útil do mês seguinte.
+- Padrão da concorrência explicado: 1ª e 3ª sexta do mês, **não** "a cada 2
+  semanas" exato (intervalo de 2 ou 3 semanas). Nada mudou.
+- Site: já estava no último dia útil (30/10, 30/11, 30/12). Não mudou.
+- Redes sociais (analisa o mês anterior): 30/11→**01/12** e 30/12→**04/01/2027**
+  (1/jan é feriado, 2–3 fim de semana; é a única tarefa depois de 31/dez).
+  A de 30/10 (`e5347b00`) **tinha sido apagada pelo app** por alguém entre os
+  Pedidos 4 e 5 (não fui eu). Recriei em **03/11** (2/11 é Finados), id
+  `ef761b32`.
 
 ### Sessão 44 — 2026-10-13
 
