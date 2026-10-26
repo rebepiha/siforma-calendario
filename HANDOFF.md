@@ -650,6 +650,23 @@
 
 ## Histórico de sessões
 
+### Sessão 46 — 2026-10-26
+
+**Pedido**: "na biblioteca, porta invisivel esta aparecendo 2x".
+
+**Causa**: o post de feed de 16/10 "Porta Invisível " (id `b8e2c991`) estava
+com `produto_id` nulo, e o nome dele não é igual ao do produto cadastrado
+("Porta Invisível em Alumínio (slim)", id `84435525`) nem a nenhum alias em
+`ALIASES_PRODUTO`. Então `grupoBiblioteca()` criou para ele um grupo por texto,
+`texto:porta invisível`, separado do grupo `id:84435525`.
+
+**Feito**: PATCH em `posts` com `produto_id = 84435525…` só nesse post. O título
+não mudou. Nenhuma mudança de código. Os outros posts "invisível" já estavam
+vinculados ou batiam pelo nome (Dobradiças 3D invisíveis).
+
+**Para o futuro**: se um produto voltar a aparecer duplicado, procure o post sem
+`produto_id` com nome diferente e vincule pelo botão "Mover" da Biblioteca.
+
 ### Sessão 45 — 2026-10-15
 
 **Resumo da sessão** (os detalhes estão nos pedidos abaixo): Diferencial da Siforma
