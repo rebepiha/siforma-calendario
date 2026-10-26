@@ -12,6 +12,8 @@
 
 ## Estado atual (resumo rápido)
 
+- **Biblioteca mostra posts de feed programados com data em verde** (Sessão 46).
+  Produto sem data verde está fora do radar. A seção do catálogo agora se chama "Sem posts no feed".
 - **Biblioteca tem catálogo e renomear** (Sessão 45): botão "+ Produtos"
   (colar um por linha), seção "Sem posts publicados" com Excluir, e
   "Renomear" em todo produto, que atualiza os títulos dos posts no Calendário. Sugestões do modal de
@@ -671,6 +673,20 @@ Porta Invisível", "Porta Invisível em Alumínio (slim)" etc.). Backup dos tít
 antigos em `porta_invisivel_antes.json` (scratchpad da sessão). O alias
 `"si porta invisível"` em `ALIASES_PRODUTO` ainda aponta para o nome antigo.
 Isso não faz mal porque todos os posts estão vinculados por `produto_id`.
+
+**Pedido 3**: "quero que os posts programados ja no calendario entrem na
+biblioteca com data em verde para eu conseguir visualizar na lista os que nao
+estao no radar". **Feito** (`app/biblioteca/page.tsx`): a Biblioteca continua
+mostrando só posts com a etiqueta Feed, mas agora de **qualquer status**. Antes
+eram só os publicados. Datas de posts não publicados (pendente, em produção,
+agendado) aparecem em verde (`text-emerald-400`, tooltip "Programado"), com a
+legenda "Data em verde = programado" ao lado do título "Produtos". A ordenação
+pela data do último post agora conta os programados também, então em "Mais
+recentes" quem tem post programado fica no topo e quem está fora do radar fica
+mais abaixo. A seção do catálogo virou **"Sem posts no feed"**, porque produto
+com post só programado agora vai para a lista principal. `entraNaBiblioteca()`
+(sugestões do modal no Calendário) **não mudou**: continua só com publicados.
+No momento havia 8 posts de feed programados, de 28/10 a 16/11.
 
 **Para o futuro**: se um produto voltar a aparecer duplicado, procure o post sem
 `produto_id` com nome diferente e vincule pelo botão "Mover" da Biblioteca.

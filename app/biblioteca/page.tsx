@@ -53,10 +53,11 @@ export default function PaginaBiblioteca() {
         return;
       }
 
+      // Publicados e também os programados (qualquer outro status), que
+      // aparecem com a data em verde: produto sem data verde está fora do radar.
       const { data } = await supabase
         .from("posts")
         .select("*")
-        .eq("status", "publicado")
         .in("id", ids)
         .order("data", { ascending: false });
 
@@ -113,9 +114,10 @@ export default function PaginaBiblioteca() {
     );
   }, [grupos, busca]);
 
-  // Catálogo: produtos cadastrados que ainda não têm nenhum post publicado no
-  // feed (nenhum grupo da Biblioteca aponta pra eles). Quando um post desse
-  // produto for publicado, ele sai daqui e entra na lista principal sozinho.
+  // Catálogo: produtos cadastrados que ainda não têm nenhum post no feed,
+  // publicado ou programado (nenhum grupo da Biblioteca aponta pra eles).
+  // Quando um post desse produto for criado no feed, ele sai daqui e entra
+  // na lista principal sozinho.
   const produtosSemPosts = useMemo(() => {
     const ids = new Set(grupos.map((g) => g.chave));
     const nomes = new Set(grupos.map((g) => g.nome.toLowerCase()));
@@ -440,8 +442,11 @@ export default function PaginaBiblioteca() {
       ) : (
         gruposVisiveis.length > 0 && (
           <section>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            <h2 className="mb-3 flex items-baseline gap-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
               Produtos · {gruposVisiveis.length}
+              <span className="font-normal normal-case tracking-normal text-emerald-400">
+                Data em verde = programado
+              </span>
             </h2>
             <div className="flex flex-col divide-y divide-zinc-800/80">
               {gruposVisiveis.map((grupo) => (
@@ -474,7 +479,11 @@ export default function PaginaBiblioteca() {
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     {grupo.posts.map((post) => (
-                      <span key={post.id} className="text-xs text-zinc-500">
+                      <span
+                        key={post.id}
+                        title={post.status === "publicado" ? undefined : "Programado"}
+                        className={`text-xs ${post.status === "publicado" ? "text-zinc-500" : "text-emerald-400"}`}
+                      >
                         {format(parseISO(post.data), "dd/MM/yyyy")}
                         {post.categoria ? ` · ${post.categoria}` : ""}
                       </span>
@@ -490,7 +499,7 @@ export default function PaginaBiblioteca() {
       {!carregando && produtosSemPosts.length > 0 && (
         <section>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Sem posts publicados · {produtosSemPosts.length}
+            Sem posts no feed · {produtosSemPosts.length}
           </h2>
           <div className="flex flex-col divide-y divide-zinc-800/80">
             {produtosSemPosts.map((produto) => (
