@@ -664,6 +664,14 @@ com `produto_id` nulo, e o nome dele não é igual ao do produto cadastrado
 não mudou. Nenhuma mudança de código. Os outros posts "invisível" já estavam
 vinculados ou batiam pelo nome (Dobradiças 3D invisíveis).
 
+**Pedido 2**: "deixe so como porta invisivel". **Feito**: produto `84435525`
+renomeado para **"Porta Invisível"** e os títulos dos 5 posts vinculados
+padronizados ("Porta Invisível" / "Stories - Porta Invisível"; antes eram "SI
+Porta Invisível", "Porta Invisível em Alumínio (slim)" etc.). Backup dos títulos
+antigos em `porta_invisivel_antes.json` (scratchpad da sessão). O alias
+`"si porta invisível"` em `ALIASES_PRODUTO` ainda aponta para o nome antigo.
+Isso não faz mal porque todos os posts estão vinculados por `produto_id`.
+
 **Para o futuro**: se um produto voltar a aparecer duplicado, procure o post sem
 `produto_id` com nome diferente e vincule pelo botão "Mover" da Biblioteca.
 
