@@ -688,6 +688,13 @@ com post só programado agora vai para a lista principal. `entraNaBiblioteca()`
 (sugestões do modal no Calendário) **não mudou**: continua só com publicados.
 No momento havia 8 posts de feed programados, de 28/10 a 16/11.
 
+**Pedido 4**: "troque porta invisivel por SI Oculto (Porta Invisivel)". **Feito**
+via REST: produto `84435525` renomeado para **"SI Oculto (Porta Invisível)"** e os
+6 posts vinculados passaram a se chamar "SI Oculto (Porta Invisível)" / "Stories - SI
+Oculto (Porta Invisível)". Isso inclui um post de 11/11 que alguém criou pelo app
+durante a sessão. Não havia post sem vínculo com "porta invisível" no título.
+Deploy do Pedido 3 conferido no ar (a legenda "Data em verde" está no bundle de produção).
+
 **Para o futuro**: se um produto voltar a aparecer duplicado, procure o post sem
 `produto_id` com nome diferente e vincule pelo botão "Mover" da Biblioteca.
 
