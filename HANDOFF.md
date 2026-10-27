@@ -45,7 +45,7 @@
   "Atualizar tabela de leads", "Subir stories" (Victoria, média), inseridas
   como linhas comuns — **não é recorrência automática**. Feriados nacionais
   (12/out, 2/nov, 20/nov, 25/dez) sem as fixas e com uma tarefa "Feriado –
-  <nome>". Posts placeholder "Stories": todo dia até 31/out, depois dia sim dia não até **30/dez/2026** (Sessão 45).
+  <nome>". Posts placeholder "Stories": **todo dia até 31/dez/2026** (Sessão 46).
 - **Calendário Editorial: scroll contínuo estilo Google Calendar, vários meses
   empilhados** (ver Sessão 41, Pedido 2 — substitui completamente uma primeira versão
   mais simples do Pedido 1, "rolar até a borda troca de mês", que só durou até o
@@ -728,6 +728,13 @@ posição na tela e o índice do drop sempre batem. Só muda a exibição: os va
 `ordem` no banco não foram alterados. Arrastar continua reordenando dentro de cada
 bloco. Se alguém soltar um YouTube acima de um Instagram, ele volta para depois
 dos Instagram. `tsc`/`eslint` ok.
+
+**Pedido 8**: "coloque card de story td dia ate o fim do ano". **Feito** via REST:
+30 placeholders "Stories" nos dias que faltavam, os ímpares de 01/11 a **31/12**.
+Formato igual aos existentes: instagram, produto, pendente, etiqueta Stories
+`9159913f`, `ordem` depois dos posts do dia. Agora os 67 dias de 26/10 a 31/12 têm
+Stories, todos os dias. IDs em `posts_stories_diario_criados.json` (scratchpad).
+Total de posts: ~408.
 
 **Para o futuro**: se um produto voltar a aparecer duplicado, procure o post sem
 `produto_id` com nome diferente e vincule pelo botão "Mover" da Biblioteca.
