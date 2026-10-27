@@ -13,6 +13,7 @@ import {
 import type { MouseEvent } from "react";
 import { ptBR } from "date-fns/locale";
 import { Etiqueta, Post } from "@/lib/types";
+import { compararPostsDoDia } from "@/lib/postStyles";
 import DayCell from "./DayCell";
 import PostCard from "./PostCard";
 
@@ -51,7 +52,7 @@ export default function CalendarGrid({
       const dataStr = format(dia, "yyyy-MM-dd");
       const postsDoDia = posts
         .filter((p) => p.data === dataStr)
-        .sort((a, b) => a.ordem - b.ordem);
+        .sort(compararPostsDoDia);
       return { dia, dataStr, postsDoDia };
     })
     .filter(({ postsDoDia }) => postsDoDia.length > 0);
@@ -80,7 +81,7 @@ export default function CalendarGrid({
             // mobile desde a Sessão 36).
             const postsDoDia = posts
               .filter((p) => p.data === dataStr)
-              .sort((a, b) => a.ordem - b.ordem);
+              .sort(compararPostsDoDia);
             return (
               <DayCell
                 key={dataStr}

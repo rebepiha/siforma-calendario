@@ -24,6 +24,7 @@ import { Etiqueta, NovoPost, Post, Produto } from "@/lib/types";
 import { useUndoStack } from "@/lib/useUndoStack";
 import { entraNaBiblioteca, grupoBiblioteca } from "@/lib/nomesProdutos";
 import { mesmosValores } from "@/lib/mesmosValores";
+import { compararPostsDoDia } from "@/lib/postStyles";
 import CalendarGrid from "@/components/calendario/CalendarGrid";
 import PostModal from "@/components/calendario/PostModal";
 import Filtros, { FiltrosState } from "@/components/calendario/Filtros";
@@ -509,7 +510,7 @@ export default function PaginaCalendario() {
   }
 
   function ordenarGrupoPosts(lista: Post[]) {
-    return [...lista].sort((a, b) => a.ordem - b.ordem);
+    return [...lista].sort(compararPostsDoDia);
   }
 
   function aoFinalizarArraste(evento: DragEndEvent) {

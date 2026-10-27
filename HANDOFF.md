@@ -12,6 +12,7 @@
 
 ## Estado atual (resumo rápido)
 
+- **Calendário: Instagram sempre é o primeiro card do dia** (Sessão 46, `compararPostsDoDia` em `lib/postStyles.ts`).
 - **Mover o grupo inteiro na Biblioteca exclui o produto de origem** (Sessão 46).
   Os Stories e outros posts dele vão junto para o destino. Ctrl+Z desfaz.
 - **Biblioteca mostra posts de feed programados com data em verde** (Sessão 46).
@@ -717,6 +718,16 @@ alguns posts forem movidos, a origem continua existindo. Origem só por texto n�
 tem linha para excluir. Ctrl+Z reinsere o produto com o mesmo id e só depois
 devolve os `produto_id` antigos. `tsc` e `eslint` ok. **Não testado clicando no
 navegador.**
+
+**Pedido 7**: "deixe sempre o instagram como primeiro card no calendario".
+**Feito**: novo `compararPostsDoDia()` em `lib/postStyles.ts`. Coloca `canal ===
+"instagram"` primeiro (Feed e Stories) e, depois, ordena pelo `ordem` salvo. É
+usado nos dois `.sort` do `CalendarGrid.tsx` (grade e lista mobile) e em
+`ordenarGrupoPosts()` do `app/page.tsx`, que calcula o índice do arraste. Assim a
+posição na tela e o índice do drop sempre batem. Só muda a exibição: os valores de
+`ordem` no banco não foram alterados. Arrastar continua reordenando dentro de cada
+bloco. Se alguém soltar um YouTube acima de um Instagram, ele volta para depois
+dos Instagram. `tsc`/`eslint` ok.
 
 **Para o futuro**: se um produto voltar a aparecer duplicado, procure o post sem
 `produto_id` com nome diferente e vincule pelo botão "Mover" da Biblioteca.
