@@ -657,6 +657,17 @@
 
 ### Sessão 46 — 2026-10-26
 
+**Resumo da sessão** (detalhes nos pedidos abaixo): Porta Invisível duplicada na
+Biblioteca corrigida (post sem vínculo) e produto renomeado para **"SI Oculto (Porta
+Invisível)"**. Biblioteca agora mostra os posts de feed **programados com data em
+verde**, e a seção do catálogo virou "Sem posts no feed". Corrigido o vínculo errado
+do "Camarão C/V 40/80" (22/11), que estava no E-Motion Wood. **Mover o grupo
+inteiro agora exclui o produto de origem.** No Calendário, **Instagram é sempre o
+primeiro card do dia**. **Stories todo dia até 31/12.** Commits de código:
+`4deb17e`, `6e52670`, `af2454b`. Tudo no ar, com deploy Vercel
+conferido. **Pendente de teste manual**: o "Mover" que exclui a origem, com Ctrl+Z,
+ainda não foi testado clicando no navegador.
+
 **Pedido**: "na biblioteca, porta invisivel esta aparecendo 2x".
 
 **Causa**: o post de feed de 16/10 "Porta Invisível " (id `b8e2c991`) estava
