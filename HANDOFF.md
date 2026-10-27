@@ -12,6 +12,8 @@
 
 ## Estado atual (resumo rápido)
 
+- **Mover o grupo inteiro na Biblioteca exclui o produto de origem** (Sessão 46).
+  Os Stories e outros posts dele vão junto para o destino. Ctrl+Z desfaz.
 - **Biblioteca mostra posts de feed programados com data em verde** (Sessão 46).
   Produto sem data verde está fora do radar. A seção do catálogo agora se chama "Sem posts no feed".
 - **Biblioteca tem catálogo e renomear** (Sessão 45): botão "+ Produtos"
@@ -704,6 +706,17 @@ Produto são independentes. **Feito**, por escolha da usuária ("Só desligar"):
 `produto_id = null` nesse post. Agora ele forma um grupo próprio pelo título,
 "Camarão C/V 40/80", separado de "OPK Perfect Camarão" e de "Camarão C/V 40"
 (06/09). Nenhuma mudança de código.
+
+**Pedido 6**: "quando eu mover um produto para outro, exclua o que ficou pra
+tras". **Feito** (`mover()` em `app/biblioteca/page.tsx`): quando o grupo de
+origem é um produto cadastrado (`id:`) e **todos** os posts dele foram movidos,
+os outros posts do Calendário ainda ligados a esse produto (Stories, posts fora do
+feed) também passam para o destino. Depois o produto de origem é excluído de
+`produtos`. Isso é obrigatório: a FK `posts.produto_id` não tem cascade. Se só
+alguns posts forem movidos, a origem continua existindo. Origem só por texto não
+tem linha para excluir. Ctrl+Z reinsere o produto com o mesmo id e só depois
+devolve os `produto_id` antigos. `tsc` e `eslint` ok. **Não testado clicando no
+navegador.**
 
 **Para o futuro**: se um produto voltar a aparecer duplicado, procure o post sem
 `produto_id` com nome diferente e vincule pelo botão "Mover" da Biblioteca.

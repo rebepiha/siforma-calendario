@@ -358,9 +358,42 @@ export default function PaginaBiblioteca() {
       }
 
       await atualizarProdutoId(afetados.map((p) => p.id), produtoId);
+
+      // Moveu o grupo inteiro: o produto de origem ficou para trás e é
+      // excluído. Antes, os outros posts dele no Calendário (Stories,
+      // posts fora do feed) vão para o destino, senão a chave estrangeira
+      // impede a exclusão.
+      let produtoExcluido: Produto | undefined;
+      let restantesIds: string[] = [];
+      const origem = grupoMovendo;
+      if (
+        origem?.chave.startsWith("id:") &&
+        origem.chave.slice(3) !== produtoId &&
+        postsAMover.length === origem.posts.length
+      ) {
+        const origemId = origem.chave.slice(3);
+        const { data: restantes, error } = await supabase
+          .from("posts")
+          .select("id")
+          .eq("produto_id", origemId);
+        if (error) throw error;
+        restantesIds = (restantes ?? []).map((r: { id: string }) => r.id);
+        if (restantesIds.length > 0) await atualizarProdutoId(restantesIds, produtoId);
+        const { error: erroExcluir } = await supabase.from("produtos").delete().eq("id", origemId);
+        if (erroExcluir) throw erroExcluir;
+        produtoExcluido = produtos.find((p) => p.id === origemId);
+        setProdutos((atual) => atual.filter((p) => p.id !== origemId));
+      }
       setGrupoMovendo(null);
 
       registrarAcao(async () => {
+        // O produto volta primeiro: os posts precisam dele pra apontar de novo.
+        if (produtoExcluido) {
+          const produto = produtoExcluido;
+          await supabase.from("produtos").insert(produto);
+          setProdutos((atual) => [...atual, produto]);
+          if (restantesIds.length > 0) await atualizarProdutoId(restantesIds, produto.id);
+        }
         for (const [anterior, ids] of anteriores) {
           await atualizarProdutoId(ids, anterior);
         }
