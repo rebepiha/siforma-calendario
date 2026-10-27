@@ -695,6 +695,16 @@ Oculto (Porta Invisível)". Isso inclui um post de 11/11 que alguém criou pelo 
 durante a sessão. Não havia post sem vínculo com "porta invisível" no título.
 Deploy do Pedido 3 conferido no ar (a legenda "Data em verde" está no bundle de produção).
 
+**Pedido 5**: "porque o emotion wood aparece dias 16 e 22 de nov se no calendario
+esta so dia 16". **Causa**: o post de 22/11 "Camarão C/V 40/80" (`102f45f2`, Feed,
+pendente) estava com `produto_id` = E-Motion Wood (`55f2b5c0`). O provável é que um
+post de E-Motion Wood foi duplicado ou teve o título trocado no modal, e o campo
+**Produto** do `PostModal` continuou com "E-Motion Wood". O título e o campo
+Produto são independentes. **Feito**, por escolha da usuária ("Só desligar"):
+`produto_id = null` nesse post. Agora ele forma um grupo próprio pelo título,
+"Camarão C/V 40/80", separado de "OPK Perfect Camarão" e de "Camarão C/V 40"
+(06/09). Nenhuma mudança de código.
+
 **Para o futuro**: se um produto voltar a aparecer duplicado, procure o post sem
 `produto_id` com nome diferente e vincule pelo botão "Mover" da Biblioteca.
 
