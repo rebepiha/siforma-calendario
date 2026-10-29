@@ -536,8 +536,8 @@
 
 ## Pendências / próximos passos conhecidos
 
-- **Post de feed de 30/10 (`d038ffb3`) está com título provisório "Feed"**
-  (Sessão 47): falta a usuária dizer o produto pra trocar o título e vincular o `produto_id`.
+- **Stories "SI 80 AL-S" (02/09) sem `produto_id`** (Sessão 47): não foi vinculado
+  ao produto novo "SI 80". Pode ser uma variante diferente; não perguntei.
 - **Catálogo de produtos ainda não foi cadastrado** (Sessão 45): a ferramenta
   existe ("+ Produtos" na Biblioteca), falta a lista.
 - **Tudo que foi programado na Sessão 45 vai só até 31/dez/2026** (YouTube,
@@ -669,8 +669,10 @@ programado), e as datas especiais de fim de ano não mudam.
 - **Não mudaram**: "Feed: Retrospectiva" (23/12) e "Feed: Lançamentos 2026" (31/12).
   Stories e outros canais também não.
 - Novo post em **30/10** (`d038ffb3`): título provisório "Feed", instagram, produto,
-  pendente, etiqueta Feed, sem `produto_id`. **Falta a usuária informar o nome do
-  produto** para trocar o título e vincular o produto.
+  pendente, etiqueta Feed. Depois a usuária informou o produto: **"Si 80"**. Não havia
+  produto com esse nome, então criei o produto **"SI 80"** (`22d2c0bf`) em `produtos`.
+  O post virou "SI 80", vinculado a esse produto. Existe um Stories "SI 80 AL-S"
+  (02/09) sem vínculo, que **não** liguei ao produto novo.
 - Backup das datas antigas em `feed_antes.json`, e o mapeamento id → data antiga →
   data nova em `feed_deslocado.json` (os dois no scratchpad da sessão).
 
