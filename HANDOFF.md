@@ -536,9 +536,8 @@
 
 ## Pendências / próximos passos conhecidos
 
-- **Feed de novembro depois de 11/11 está vazio** (Sessão 45): a usuária pediu
-  pra desfazer a sugestão automática (9 produtos "postados há mais tempo").
-  Esperar ela dizer como quer preencher.
+- **Post de feed de 30/10 (`d038ffb3`) está com título provisório "Feed"**
+  (Sessão 47): falta a usuária dizer o produto pra trocar o título e vincular o `produto_id`.
 - **Catálogo de produtos ainda não foi cadastrado** (Sessão 45): a ferramenta
   existe ("+ Produtos" na Biblioteca), falta a lista.
 - **Tudo que foi programado na Sessão 45 vai só até 31/dez/2026** (YouTube,
