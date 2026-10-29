@@ -655,6 +655,29 @@
 
 ## Histórico de sessões
 
+### Sessão 47 — 2026-10-29
+
+**Pedido**: "preciso colocar um post de feed amanha e jogar todos os posts
+respectivamente para o proximo". Opção confirmada pela usuária: cada post de feed
+vai para a **data do próximo post de feed** (mantém o padrão de dias já
+programado), e as datas especiais de fim de ano não mudam.
+
+**Feito** via REST, sem mudança de código:
+- 27 posts de feed (etiqueta Feed `c4aa81a1`, canal instagram) de 30/10 a 14/12
+  andaram uma posição: Synchro 30/10 → 01/11, Telescópico Wood 01/11 → 02/11, …,
+  Perfect Pocket Slim 13/12 → 14/12. O último, **SI Engate Comfort, foi de 14/12 para
+  16/12 (qua)**, uma data nova escolhida seguindo o padrão.
+- **Não mudaram**: "Feed: Retrospectiva" (23/12) e "Feed: Lançamentos 2026" (31/12).
+  Stories e outros canais também não.
+- Novo post em **30/10** (`d038ffb3`): título provisório "Feed", instagram, produto,
+  pendente, etiqueta Feed, sem `produto_id`. **Falta a usuária informar o nome do
+  produto** para trocar o título e vincular o produto.
+- Backup das datas antigas em `feed_antes.json`, e o mapeamento id → data antiga →
+  data nova em `feed_deslocado.json` (os dois no scratchpad da sessão).
+
+Obs.: a pendência antiga "Feed de novembro depois de 11/11 está vazio" já não
+vale. Novembro e dezembro já tinham feed programado antes desta sessão.
+
 ### Sessão 46 — 2026-10-26
 
 **Resumo da sessão** (detalhes nos pedidos abaixo): Porta Invisível duplicada na
