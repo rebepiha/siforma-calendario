@@ -18,6 +18,7 @@
   fixos da semana. Não "corrigir" para um padrão.
 - **Email a cada 14 ou 16 dias, em dias da semana alternados** (Sessão 48): 02/11, 18/11,
   04/12, 18/12, mais Boas Festas em 23/12. São linhas comuns, sem recorrência automática.
+  Na Sessão 49 o Email 15 já estava em 03/11, alterado fora das sessões.
 - **Tag "Comentário" em Tarefas de Marketing** (Sessão 48, `TaskChip.tsx`): aparece
   quando a tarefa tem texto em Descrição.
 - **Calendário: Instagram sempre é o primeiro card do dia** (Sessão 46, `compararPostsDoDia` em `lib/postStyles.ts`).
@@ -544,9 +545,9 @@
 
 ## Pendências / próximos passos conhecidos
 
-- **Feed em janeiro de 2027** (Sessão 48): 3 posts em 02, 04 e 06/01, fora do horizonte
-  de 31/12 do resto da programação. Ritmo do feed é misto de propósito (1 ou 2 dias de
-  intervalo).
+- **Feed em janeiro de 2027** (Sessões 48 e 49): 2 posts em 02 e 04/01, fora do horizonte
+  de 31/12 do resto da programação. O bloco de 06/01 ficou vazio na Sessão 49. Ritmo do
+  feed é misto de propósito (1 ou 2 dias de intervalo).
 - **"Mover os seguintes"** (Sessão 48): gravação real e uso no celular seguem sem teste.
 - **Stories "SI 80 AL-S" (02/09) sem `produto_id`** (Sessão 47): não foi vinculado
   ao produto novo "SI 80". Pode ser uma variante diferente; não perguntei.
@@ -665,6 +666,34 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 49 — 2026-10-30
+
+**Pedido**: "o post de sab si 80 saiu, preciso colocar o proximo no lugar dele e alterar
+todos os subsequentes para entrarem no lugar do anterior sem mudar os dias de posts".
+
+**Situação encontrada**: o post SI 80 (`d038ffb3`, sáb 31/10) já não existia no banco.
+Não fui eu que apaguei; tratei como excluído pela usuária. O produto "SI 80" (`22d2c0bf`)
+continua em `produtos`, sem posts vinculados.
+
+**Feito** via REST, sem mudança de código: 29 posts de feed pendentes (campos `data` e
+`ordem`) andaram uma posição para a data do post anterior. OPK Perfect Synchro 02/11 →
+31/10, Telescópico Wood 05/11 → 02/11, …, SI Engate Comfort 06/01 → 04/01. O `ordem` fica
+com a data (Perfect Portas Indv e Folding Concepta tinham `ordem` 1 por estarem em 03/12 e
+15/12, e quem entrou nessas datas herdou o 1).
+
+- **Não mudaram**: "Feed: Retrospectiva" (26/12) e "Feed: Lançamentos 2026" (31/12),
+  seguindo a decisão da Sessão 47 sobre datas especiais. Os dias deles não contaram como
+  bloco: Perfect Pocket Slim foi de 28/12 para 23/12 e SI 160 HM-S de 02/01 para 28/12.
+- **O bloco de qua 06/01/2027 ficou vazio**, porque a sequência tem um post a menos. O
+  feed agora termina em SI Engate Comfort, 04/01/2027.
+- Conferido relendo o banco, sem divergências.
+- Datas antigas em `feed_antes.json` e mapeamento em `feed_mapa.json`, no scratchpad da
+  sessão.
+
+**Observação**: Email 15 está em 03/11 e a Retrospectiva em 26/12, não em 02/11 e 23/12
+como dizem a Sessão 48 e o resumo do Estado atual. São alterações feitas fora das sessões
+registradas aqui; não mexi nelas.
 
 ### Sessão 48 — 2026-10-30
 
