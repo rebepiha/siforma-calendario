@@ -12,6 +12,14 @@
 
 ## Estado atual (resumo rápido)
 
+- **Adiar post de feed oferece mover os seguintes** (Sessão 48, `lib/adiarFeed.ts`,
+  `AdiarSeguintesModal.tsx`): vale para arraste e troca de data no modal.
+- **Ritmo do feed é misto de propósito** (Sessão 48): 1 ou 2 dias de intervalo, sem dias
+  fixos da semana. Não "corrigir" para um padrão.
+- **Email a cada 14 ou 16 dias, em dias da semana alternados** (Sessão 48): 02/11, 18/11,
+  04/12, 18/12, mais Boas Festas em 23/12. São linhas comuns, sem recorrência automática.
+- **Tag "Comentário" em Tarefas de Marketing** (Sessão 48, `TaskChip.tsx`): aparece
+  quando a tarefa tem texto em Descrição.
 - **Calendário: Instagram sempre é o primeiro card do dia** (Sessão 46, `compararPostsDoDia` em `lib/postStyles.ts`).
 - **Mover o grupo inteiro na Biblioteca exclui o produto de origem** (Sessão 46).
   Os Stories e outros posts dele vão junto para o destino. Ctrl+Z desfaz.
@@ -659,6 +667,11 @@
 ## Histórico de sessões
 
 ### Sessão 48 — 2026-10-30
+
+**Resumo da sessão** (detalhes nos pedidos abaixo): feed reprogramado e depois ajustado
+à mão pela usuária, com ritmo misto. Emails a cada 14 ou 16 dias até dezembro. Opção de
+mover os posts seguintes ao adiar um feed. Tag "Comentário" em Tarefas. Commits de
+código: `eb74024`, `f43b2f7`, ambos no ar com deploy conferido.
 
 **Pedido**: "quero passar o post de hoje para amanha, e o proximo para terça, quinta
 e sabado, dps mantenha segunda, quarta, sabado, algo assim".
