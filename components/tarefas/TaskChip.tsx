@@ -110,6 +110,11 @@ export default function TaskChip({
           {tarefa.titulo}
         </p>
       </div>
+      {tarefa.descricao?.trim() && (
+        <span className="w-fit rounded border border-zinc-600 bg-zinc-900 px-1 py-px text-[9px] font-medium text-zinc-400">
+          Comentário
+        </span>
+      )}
       {mostrarResponsavel && tarefa.responsavel && (
         <span className="flex items-center gap-1 text-[10px] text-zinc-500">
           <span

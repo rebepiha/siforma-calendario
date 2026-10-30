@@ -539,7 +539,7 @@
 - **Feed em janeiro de 2027** (Sessão 48): 3 posts em 02, 04 e 06/01, fora do horizonte
   de 31/12 do resto da programação. Ritmo do feed é misto de propósito (1 ou 2 dias de
   intervalo).
-- **Mover os seguintes** (Sessão 48): código pronto, ainda não commitado nem no ar.
+- **"Mover os seguintes"** (Sessão 48): gravação real e uso no celular seguem sem teste.
 - **Stories "SI 80 AL-S" (02/09) sem `produto_id`** (Sessão 47): não foi vinculado
   ao produto novo "SI 80". Pode ser uma variante diferente; não perguntei.
 - **Catálogo de produtos ainda não foi cadastrado** (Sessão 45): a ferramenta
@@ -713,7 +713,14 @@ todos os seguintes para o proximo bloco de feed disponivel". **Feito** (código)
   arraste com Cancelar (0 escritas), Só este e Ctrl+Z, seguintes e 1 Ctrl+Z, troca de
   data no modal. Sem erros de console. `tsc`, `eslint` e `npm run build` ok.
 - **Não testado**: gravação real no banco, celular.
-- **Código ainda não commitado nem no ar** (aguardando o pedido da usuária).
+- Commit `eb74024`, no ar, deploy conferido.
+
+**Pedido 4**: "em tarefas marketing colocar uma tag nas tarefas q tem comentario
+dentro". O app não tem sistema de comentários, então tratei o campo **Descrição** como
+o comentário. `TaskChip.tsx` mostra a tag "Comentário" quando `descricao` tem texto.
+22 tarefas têm descrição hoje. Testado no navegador em leitura: tag em "Captar vídeo
+institucional", sem tag em "Subir stories". `tsc`, `eslint` e build ok. No ar, deploy
+conferido.
 
 ### Sessão 47 — 2026-10-29
 
