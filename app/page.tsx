@@ -25,6 +25,8 @@ import { useUndoStack } from "@/lib/useUndoStack";
 import { entraNaBiblioteca, grupoBiblioteca } from "@/lib/nomesProdutos";
 import { mesmosValores } from "@/lib/mesmosValores";
 import { compararPostsDoDia } from "@/lib/postStyles";
+import { MovimentoFeed, planejarAdiamento } from "@/lib/adiarFeed";
+import AdiarSeguintesModal from "@/components/calendario/AdiarSeguintesModal";
 import CalendarGrid from "@/components/calendario/CalendarGrid";
 import PostModal from "@/components/calendario/PostModal";
 import Filtros, { FiltrosState } from "@/components/calendario/Filtros";
@@ -34,6 +36,19 @@ const MESES_BUFFER_INICIAL = 2;
 
 function chaveMes(d: Date) {
   return format(d, "yyyy-MM");
+}
+
+type PosicaoPost = { id: string; data: string; ordem: number };
+
+interface Adiamento {
+  post: Post;
+  dataAnterior: string;
+  novaData: string;
+  movimentos: MovimentoFeed[];
+  // Arrastar só aplica depois da escolha, então dá pra cancelar. No modal de
+  // edição o post já foi salvo.
+  podeCancelar: boolean;
+  aoEscolher: (comSeguintes: boolean) => void;
 }
 
 export default function PaginaCalendario() {
@@ -66,6 +81,7 @@ export default function PaginaCalendario() {
   const [menuContexto, setMenuContexto] = useState<{ x: number; y: number; post: Post } | null>(
     null
   );
+  const [adiamento, setAdiamento] = useState<Adiamento | null>(null);
   const [dataParaNovoPost, setDataParaNovoPost] = useState(() =>
     format(new Date(), "yyyy-MM-dd")
   );
@@ -85,7 +101,7 @@ export default function PaginaCalendario() {
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
 
-  const { registrarAcao } = useUndoStack(!modalAberto);
+  const { registrarAcao } = useUndoStack(!modalAberto && !adiamento);
 
   async function carregarPosts() {
     setCarregando(true);
@@ -360,7 +376,7 @@ export default function PaginaCalendario() {
     setPosts((atual) => [...atual, post]);
   }
 
-  async function aplicarPosicoesPost(posicoes: { id: string; data: string; ordem: number }[]) {
+  async function aplicarPosicoesPost(posicoes: PosicaoPost[]) {
     setPosts((atual) => {
       const porId = new Map(posicoes.map((p) => [p.id, p]));
       return atual.map((p) => {
@@ -368,11 +384,36 @@ export default function PaginaCalendario() {
         return pos ? { ...p, data: pos.data, ordem: pos.ordem } : p;
       });
     });
-    await Promise.all(
+    const resultados = await Promise.all(
       posicoes.map((p) =>
         supabase.from("posts").update({ data: p.data, ordem: p.ordem }).eq("id", p.id)
       )
     );
+    if (resultados.some((r) => r.error)) carregarPosts();
+  }
+
+  // Une a mudança do post adiado (`depois`/`antes`) com a dos seguintes numa
+  // ação só, pra um Ctrl+Z desfazer tudo. Um seguinte que estava no dia de
+  // destino aparece nos dois lados, e o movimento dele é o que vale.
+  function aplicarAdiamento(
+    depois: PosicaoPost[],
+    antes: PosicaoPost[],
+    movimentos: MovimentoFeed[]
+  ) {
+    const posicoes = new Map(depois.map((p) => [p.id, p]));
+    const anteriores = new Map(antes.map((p) => [p.id, p]));
+    for (const { post, data, ordem } of movimentos) {
+      posicoes.set(post.id, { id: post.id, data, ordem });
+      if (!anteriores.has(post.id)) {
+        anteriores.set(post.id, { id: post.id, data: post.data, ordem: post.ordem });
+      }
+    }
+    aplicarPosicoesPost(Array.from(posicoes.values()));
+    registrarAcao(() => aplicarPosicoesPost(Array.from(anteriores.values())));
+  }
+
+  function idEtiquetaFeed() {
+    return etiquetas.find((e) => e.nome === "Feed")?.id;
   }
 
   async function salvarPost(id: string | null, valores: NovoPost, etiquetaIds: string[]) {
@@ -422,6 +463,27 @@ export default function PaginaCalendario() {
     } else {
       const idCriado = postSalvo.id;
       registrarAcao(() => aplicarExclusaoPost(idCriado));
+    }
+
+    if (postAnterior && postSalvo.data > postAnterior.data) {
+      const movimentos = planejarAdiamento(
+        { ...postSalvo, data: postAnterior.data },
+        postSalvo.data,
+        posts,
+        idEtiquetaFeed()
+      );
+      if (movimentos.length > 0) {
+        setAdiamento({
+          post: postSalvo,
+          dataAnterior: postAnterior.data,
+          novaData: postSalvo.data,
+          movimentos,
+          podeCancelar: false,
+          aoEscolher: (comSeguintes) => {
+            if (comSeguintes) aplicarAdiamento([], [], movimentos);
+          },
+        });
+      }
     }
   }
 
@@ -549,8 +611,20 @@ export default function PaginaCalendario() {
     const antes = novaOrdemDoDestino.map((p) => ({ id: p.id, data: p.data, ordem: p.ordem }));
     const depois = novaOrdemDoDestino.map((p, i) => ({ id: p.id, data: novaData, ordem: i }));
 
-    aplicarPosicoesPost(depois);
-    registrarAcao(() => aplicarPosicoesPost(antes));
+    const movimentos = planejarAdiamento(post, novaData, posts, idEtiquetaFeed());
+    if (movimentos.length === 0) {
+      aplicarAdiamento(depois, antes, []);
+      return;
+    }
+    setAdiamento({
+      post,
+      dataAnterior: post.data,
+      novaData,
+      movimentos,
+      podeCancelar: true,
+      aoEscolher: (comSeguintes) =>
+        aplicarAdiamento(depois, antes, comSeguintes ? movimentos : []),
+    });
   }
 
   return (
@@ -659,6 +733,21 @@ export default function PaginaCalendario() {
           onEditarEtiqueta={editarEtiqueta}
           onExcluirEtiqueta={excluirEtiqueta}
           onCriarProduto={criarProduto}
+        />
+      )}
+
+      {adiamento && (
+        <AdiarSeguintesModal
+          post={adiamento.post}
+          dataAnterior={adiamento.dataAnterior}
+          novaData={adiamento.novaData}
+          movimentos={adiamento.movimentos}
+          podeCancelar={adiamento.podeCancelar}
+          onFechar={() => setAdiamento(null)}
+          onEscolher={(comSeguintes) => {
+            adiamento.aoEscolher(comSeguintes);
+            setAdiamento(null);
+          }}
         />
       )}
 

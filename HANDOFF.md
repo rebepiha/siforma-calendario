@@ -536,6 +536,10 @@
 
 ## Pendências / próximos passos conhecidos
 
+- **Feed em janeiro de 2027** (Sessão 48): 3 posts em 02, 04 e 06/01, fora do horizonte
+  de 31/12 do resto da programação. Ritmo do feed é misto de propósito (1 ou 2 dias de
+  intervalo).
+- **Mover os seguintes** (Sessão 48): código pronto, ainda não commitado nem no ar.
 - **Stories "SI 80 AL-S" (02/09) sem `produto_id`** (Sessão 47): não foi vinculado
   ao produto novo "SI 80". Pode ser uma variante diferente; não perguntei.
 - **Catálogo de produtos ainda não foi cadastrado** (Sessão 45): a ferramenta
@@ -653,6 +657,63 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 48 — 2026-10-30
+
+**Pedido**: "quero passar o post de hoje para amanha, e o proximo para terça, quinta
+e sabado, dps mantenha segunda, quarta, sabado, algo assim".
+
+**Interpretação (minha, não confirmada antes de executar)**: o post de hoje vai para
+sáb 31/10. Os 3 seguintes vão para ter 03/11, qui 05/11 e sáb 07/11. Daí em diante o
+feed fica em **seg, qua e sáb**, mantendo a ordem dos posts.
+
+**Feito** via REST, sem mudança de código: 30 posts de feed (só o campo `data`) de SI
+80 (30/10 → 31/10) até E-Motion Slim (21/12 → 09/01/2027).
+- **Não mudaram**: "Feed: Retrospectiva" (23/12) e "Feed: Lançamentos 2026" (31/12),
+  seguindo a decisão da Sessão 47 sobre datas especiais. O slot de qua 23/12 foi
+  pulado por causa da Retrospectiva. Stories e outros canais também não mudaram.
+- **4 posts passaram para janeiro de 2027**, porque o ritmo caiu de 4 para 3 posts por
+  semana: Perfect Pocket Slim (02/01), SI Engate Comfort (04/01), Libra H11 (06/01) e
+  E-Motion Slim (09/01). Escolhi manter todos em vez de apertar dezembro.
+- Conferido relendo o banco: 33 posts de feed desde 28/10, nas datas certas.
+- Datas antigas em `feed_atual.json` e mapeamento id → de → para em
+  `feed_reprogramado.json` (scratchpad da sessão).
+- **Depois disso, a usuária alterou vários posts à mão** e avisou: o ritmo do feed é
+  **misto de propósito, com 1 ou 2 dias de intervalo**, sem dias fixos da semana. As
+  datas atuais são as dela e não devem ser "corrigidas" para seg/qua/sáb. O feed vai
+  até E-Motion Slim, em 06/01/2027.
+
+**Pedido 2**: "email quero semana sim semana nao". **Feito** via REST: criados "Email
+16" (16/11), "Email 17" (30/11) e "Email 18" (14/12), copiando os campos do Email 15
+(02/11), com status pendente. O ciclo segue o último enviado (Email 14, semana de
+19/10). "Email; Boas Festas" (23/12) não mudou e ocupa o lugar do envio de 28/12, que
+não foi criado para não ter dois emails em 5 dias. Escolhi segunda, como o Email 15.
+Nenhum email pendente foi apagado. IDs em `emails_criados.json` (scratchpad).
+**Ajuste a pedido** ("dias alternados, pode ser espaço de 14 e 16 dias"): Email 16 →
+qua 18/11, Email 17 → sex 04/12, Email 18 → sex 18/12 (intervalos de 16, 16 e 14 dias).
+Email 15 (seg 02/11) e Boas Festas (qua 23/12) não mudaram.
+
+**Pedido 3**: "qnd eu adie um post pra um outro bloco, suba uma opcao se quero mover
+todos os seguintes para o proximo bloco de feed disponivel". **Feito** (código):
+- `lib/adiarFeed.ts`, `planejarAdiamento()`: vale para post com etiqueta Feed, não
+  publicado, movido para data posterior. Os seguintes são os posts de feed não
+  publicados com data **igual ou posterior ao destino**. Cada um vai para a data do
+  próximo e herda o `ordem` dele. O último ganha uma data nova alternando o ritmo misto:
+  intervalo de 2 dias se o anterior foi de 1, senão de 1 dia. Posts entre a origem e o destino ficam onde estão.
+- Títulos "Retrospectiva"/"Lançamentos…" não andam e os dias deles não viram bloco
+  (regex `POST_DATA_ESPECIAL`), mantendo a decisão da Sessão 47.
+- `components/calendario/AdiarSeguintesModal.tsx`: lista os movimentos e oferece "Só
+  este post" / "Mover os N seguintes". No arraste há também "Cancelar" (a gravação só
+  acontece depois da escolha). Esc e clicar fora fecham sem mover mais nada.
+- `app/page.tsx`: ligado ao arraste e à troca de data no modal de edição. No arraste,
+  um Ctrl+Z desfaz tudo. No modal, o post já foi salvo, então são dois Ctrl+Z (seguintes,
+  depois o post). `aplicarPosicoesPost` agora recarrega os posts se alguma gravação
+  falhar. O Ctrl+Z fica desligado com o diálogo aberto.
+- Testado com Playwright e **gravações interceptadas** (nada escrito em produção):
+  arraste com Cancelar (0 escritas), Só este e Ctrl+Z, seguintes e 1 Ctrl+Z, troca de
+  data no modal. Sem erros de console. `tsc`, `eslint` e `npm run build` ok.
+- **Não testado**: gravação real no banco, celular.
+- **Código ainda não commitado nem no ar** (aguardando o pedido da usuária).
 
 ### Sessão 47 — 2026-10-29
 
