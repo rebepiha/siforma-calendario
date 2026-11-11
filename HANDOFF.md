@@ -547,27 +547,25 @@
 
 ## Pendências / próximos passos conhecidos
 
-- **O feed vai até 10/01/2027** (Sessão 50, remarcado pela usuária): fora do horizonte de 31/12 do resto da
-  programação. **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed,
-  alternando entre 1 e 2 dias vazios** (intervalos de 2 e 3 dias). As datas especiais
-  também entram no ritmo.
+- **O feed vai até 20/01/2027** (Sessão 50, posts de janeiro criados pela usuária).
+  **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed, alternando entre 1 e 2
+  dias vazios** (intervalos de 2 e 3 dias). As datas especiais também entram no ritmo.
 - **"Mover os seguintes"** (Sessão 48): gravação real e uso no celular seguem sem teste.
 - **Stories "SI 80 AL-S" (02/09) sem `produto_id`** (Sessão 47): não foi vinculado
   ao produto novo "SI 80". Pode ser uma variante diferente; não perguntei.
 - **Catálogo de produtos ainda não foi cadastrado** (Sessão 45): a ferramenta
   existe ("+ Produtos" na Biblioteca), falta a lista.
-- **Tudo que foi programado na Sessão 45 vai só até 31/dez/2026** (YouTube,
-  LinkedIn, Stories, tarefas de análise, fixas). A única exceção é a análise
-  de redes sociais de 04/01/2027. Em janeiro precisa estender tudo junto.
+- **Posts placeholder (Stories diário, YouTube, LinkedIn, Email) vão até 31/01/2027**
+  (Sessão 50). Fevereiro precisa ser criado do mesmo jeito. Próximos pela regra:
+  LinkedIn 01/02, YouTube com o shorts extra na terça da semana de 01/02, Email 20 em
+  05/02 (14 dias depois do Email 19).
+- **Tarefas (fixas seg–sex, análises) continuam só até 31/dez/2026** (Sessão 45). A
+  exceção é a análise de redes de 04/01/2027. A Sessão 50 estendeu só os posts, não as
+  tarefas. Regras: fixas seg–sex; concorrência numa sexta sim, noutra não desde 16/10;
+  site no último dia útil do mês; redes no 1º dia útil do mês seguinte.
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
-  carregamento. Se `posts` (286 hoje) passar de 1000, aplicar o mesmo fix.
-- **Placeholders YouTube/LinkedIn** (Sessão 45: YouTube longo qui + shorts dom +
-  shorts seg/ter alternando; LinkedIn a cada 5 dias) só até 31/dez/2026.
-- **Tarefas de análise** (Sessão 45: concorrência sexta sim/sexta não desde 16/10, site no último dia
-  útil do mês, redes no 1º dia útil do mês seguinte) também só até 31/dez/2026 — estender junto com as fixas.
-- **Dados com prazo de validade** (Sessão 43): posts placeholder "Stories"
-  até 31/dez/2026 (diário em out, dia sim dia não nov–dez, Sessão 45); tarefas fixas seg–sex só até 31/dez/2026. Depois
-  disso precisa inserir de novo (via REST, mesmo padrão — ver Sessão 43).
+  carregamento. Se `posts` passar de 1000, aplicar o mesmo fix. Em 11/11 eram uns 400
+  (contagem aproximada, não conferida).
   Feriados estaduais/municipais não considerados.
 - **Biblioteca/produtos** (Sessão 43): preenchimento automático do campo
   Produto ao escolher sugestão no Título não foi testado no navegador.
@@ -750,6 +748,28 @@ Magnético (26/10, não está em `produtos`), E-Motion Slim (28/10), OPK Perfect
 (07/11), Submarine (10/11). Depois vêm os que apareceram na Black November: Telescópico
 Slim (14/11), Camarão (20/11), SI20 FH-S (22/11), Rotary Easy (23/11) e Coplanar PL 80
 (27/11).
+
+**Pedido 5**: "faça o calendario de janeiro com os stories todo dia, os posts do youtube,
+linkedin e os emails seguindo a regra antiga, nao mexa nos posts de feed que ja bote".
+Antes disso a usuária tinha criado os posts de feed de janeiro, até E-Motion Slim em
+20/01 (Kiaro Italiana Ferramenta 08/01, SI Rotary 35 Alumínio 09/01, SI 80 - Fantin 11/01
+etc.). **Não mexi em nenhum deles.**
+**Feito** via REST: 52 posts placeholder em janeiro de 2027, só inserções. Os campos
+foram copiados de um post de dezembro do mesmo tipo (tipo produto, pendente). O `ordem`
+fica depois dos posts que já existiam no dia.
+- **Stories**: todo dia de 01 a 31/01, título "Stories", etiqueta Stories (31 posts).
+- **YouTube** (regra da Sessão 45, Pedido 10): longo nas quintas (07, 14, 21 e 28/01),
+  shorts nos domingos (03, 10, 17, 24 e 31/01) e mais um shorts alternando entre terça e
+  segunda, continuando de dezembro (a semana de 28/12 teve o de segunda): 05/01 ter,
+  11/01 seg, 19/01 ter, 25/01 seg. São 13 posts.
+- **LinkedIn**: a cada 5 dias a partir do último regular, 28/12. "Linkedin: FIM DE ANO"
+  (31/12) é extra e não conta. Datas: 02, 07, 12, 17, 22 e 27/01 (6 posts).
+- **Email**: **Email 18 em qua 06/01** e **Email 19 em sex 22/01** (16 dias depois, outro
+  dia da semana). Decisão minha: o último é "Email; Boas Festas" (ter 15/12), e o
+  próximo pela regra cairia em 29 ou 31/12, no meio das festas e fora de janeiro. Por
+  isso recomecei depois do feriado.
+- Conferido relendo o banco: 63 posts em janeiro (52 novos + 11 de feed). IDs em
+  `janeiro_criados.json`, no scratchpad.
 
 ### Sessão 49 — 2026-10-30
 
