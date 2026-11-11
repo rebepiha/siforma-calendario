@@ -547,7 +547,7 @@
 
 ## Pendências / próximos passos conhecidos
 
-- **O feed vai até 15/01/2027** (Sessão 50): fora do horizonte de 31/12 do resto da
+- **O feed vai até 10/01/2027** (Sessão 50, remarcado pela usuária): fora do horizonte de 31/12 do resto da
   programação. **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed,
   alternando entre 1 e 2 dias vazios** (intervalos de 2 e 3 dias). As datas especiais
   também entram no ritmo.
@@ -735,6 +735,21 @@ máximo 2 dias vazios).
   regra, então não mexi.
 - Todos os intervalos de 27/11 a 15/01 foram conferidos no banco (1 ou 2 dias vazios).
   Mapa em `feed_mapa3.json`, no scratchpad.
+
+**Depois do Pedido 3, a usuária remarcou o feed à mão** (visto ao reler o banco no
+Pedido 4): Black November de 12/11 a 29/11, os produtos de 01/12 a 10/01, quase todos
+com 1 dia vazio. Retrospectiva em 25/12 e o feed terminando em SI Engate Comfort,
+**10/01/2027**. Há dois pares de dias seguidos: 22–23/11 (SI20 / Rotary EASY) e 13–14/12
+(Hawa Concepta III / Libra H11). Não mexi, porque ela está editando ativamente.
+
+**Pedido 4**: "quais seriam os proximos produtos em ordem de nao postado ha mais tempo".
+Só consulta, nada foi gravado. Entre os produtos sem feed agendado, ordenados pelo
+último post de feed: SI 80 (nunca), Hawa Variotec (09/08), SI Rotary 35 (02/10), SI 100
+Magnético (26/10, não está em `produtos`), E-Motion Slim (28/10), OPK Perfect Synchro
+(31/10), OPK Perfect Telescópico Wood (02/11), SI Ocean (05/11), Perfect Brises 360
+(07/11), Submarine (10/11). Depois vêm os que apareceram na Black November: Telescópico
+Slim (14/11), Camarão (20/11), SI20 FH-S (22/11), Rotary Easy (23/11) e Coplanar PL 80
+(27/11).
 
 ### Sessão 49 — 2026-10-30
 
