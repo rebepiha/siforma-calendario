@@ -14,8 +14,10 @@
 
 - **Adiar post de feed oferece mover os seguintes** (Sessão 48, `lib/adiarFeed.ts`,
   `AdiarSeguintesModal.tsx`): vale para arraste e troca de data no modal.
-- **Ritmo do feed é misto de propósito** (Sessão 48): 1 ou 2 dias de intervalo, sem dias
-  fixos da semana. Não "corrigir" para um padrão.
+- **Ritmo do feed é misto de propósito** (Sessões 48 e 50): entre dois posts de feed
+  ficam 1 ou 2 dias **vazios**, alternando (datas com 2 ou 3 dias de diferença). Não há
+  dias fixos da semana; não "corrigir" para um padrão. `planejarAdiamento()` já segue
+  essa regra (2 ↔ 3).
 - **Email a cada 14 ou 16 dias, em dias da semana alternados** (Sessão 48): 02/11, 18/11,
   04/12, 18/12, mais Boas Festas em 23/12. São linhas comuns, sem recorrência automática.
   Na Sessão 49 o Email 15 já estava em 03/11, alterado fora das sessões.
@@ -545,10 +547,10 @@
 
 ## Pendências / próximos passos conhecidos
 
-- **Feed de produtos acaba em 25/12/2026** (Sessão 50): depois da Black November, os
-  posts foram reorganizados com 1 a 2 dias de intervalo. Janeiro de 2027 está sem feed.
-  Há posts de produto em 24/12 e 25/12. Ritmo do feed é misto de propósito (1 ou 2 dias
-  de intervalo).
+- **O feed vai até 17/01/2027** (Sessão 50): fora do horizonte de 31/12 do resto da
+  programação. **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed,
+  alternando entre 1 e 2 dias vazios** (intervalos de 2 e 3 dias). As datas especiais
+  também entram no ritmo.
 - **"Mover os seguintes"** (Sessão 48): gravação real e uso no celular seguem sem teste.
 - **Stories "SI 80 AL-S" (02/09) sem `produto_id`** (Sessão 47): não foi vinculado
   ao produto novo "SI 80". Pode ser uma variante diferente; não perguntei.
@@ -700,6 +702,26 @@ menos tempo".
 - Conferido relendo o banco. As datas antigas estão em `feed_antes.json`, o mapa id → de
   → para em `feed_mapa.json` e o script em `plano.py`, no scratchpad da sessão
   (`/private/tmp/claude-502/-Users-rebep1/01d70e77-.../scratchpad`).
+
+**Pedido 2 (substitui as datas acima)**: "os posts precisam de no min 1 dia de intervalo
+sem post, alterne entre 1-2 dias". Então os **intervalos entre posts de feed alternam
+entre 2 e 3 dias** (1 ou 2 dias vazios entre eles). A ordem dos produtos não mudou. Esta
+é a regra que vale agora; o "1 a 2 dias de intervalo" das Sessões 48 e 50 era sobre
+dias vazios, não sobre a diferença de datas.
+- A Retrospectiva (26/12) e os Lançamentos (31/12) contam como posts dentro do ritmo:
+  nenhum produto fica no dia anterior ou seguinte a eles. Por isso 22/12 → 26/12 tem 4
+  dias, e não ficou nenhum post em 24 e 25/12.
+- Datas novas: 30/11 Perfect Portas Indv, 02/12 SI 160 HM-S, 05/12 OPK Perfect Pivot,
+  07/12 Camarão C/V 40/80, 10/12 Perfect Pocket Slim, 12/12 Alinhador, 15/12 Hawa Concepta
+  III, 17/12 Libra H11, 20/12 Maçaneta, 22/12 E-Motion Wood, (26/12 Retrospectiva), 28/12
+  Perfect Pocket Wood, (31/12 Lançamentos), 02/01 Folding Concepta, 05/01 Coplanar 2
+  Portas, 07/01 Dobradiças 3D, 10/01 SI Oculto, 12/01 Pivot Bocreio, 15/01 SI Sailing 15,
+  17/01 SI Engate Comfort.
+- **O post "Si Rotary Easy" (`b1ea8bea`, que eu tinha colocado em 25/12) foi excluído
+  entre o Pedido 1 e o Pedido 2.** Não fui eu (meus scripts só fazem PATCH); deve ter
+  sido a usuária. Ele iria para 20/01. Não recriei. Agora o feed termina em 17/01/2027.
+- Os intervalos foram conferidos relendo o banco. O mapa está em `feed_mapa2.json`, no
+  scratchpad.
 
 ### Sessão 49 — 2026-10-30
 
