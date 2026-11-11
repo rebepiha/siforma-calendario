@@ -545,9 +545,10 @@
 
 ## Pendências / próximos passos conhecidos
 
-- **Feed em janeiro de 2027** (Sessões 48 e 49): 2 posts em 02 e 04/01, fora do horizonte
-  de 31/12 do resto da programação. O bloco de 06/01 ficou vazio na Sessão 49. Ritmo do
-  feed é misto de propósito (1 ou 2 dias de intervalo).
+- **Feed de produtos acaba em 25/12/2026** (Sessão 50): depois da Black November, os
+  posts foram reorganizados com 1 a 2 dias de intervalo. Janeiro de 2027 está sem feed.
+  Há posts de produto em 24/12 e 25/12. Ritmo do feed é misto de propósito (1 ou 2 dias
+  de intervalo).
 - **"Mover os seguintes"** (Sessão 48): gravação real e uso no celular seguem sem teste.
 - **Stories "SI 80 AL-S" (02/09) sem `produto_id`** (Sessão 47): não foi vinculado
   ao produto novo "SI 80". Pode ser uma variante diferente; não perguntei.
@@ -666,6 +667,39 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 50 — 2026-11-11
+
+**Contexto**: a equipe criou uma campanha **Black November** (posts de feed "BLACK N…" de
+11/11 a 27/11, mais Stories e o Email 16) e a usuária reorganizou o calendário à mão.
+
+**Pedido**: "a partir do ultimo BLACK N organize os posts de feed com 1-2 dias de
+intervalo, dos produtos que estao espalhados, por produto postado ha mais tempo para
+menos tempo".
+
+**Feito** via REST, sem mudança de código: os 19 posts de feed pendentes depois de
+"BLACK NOVEMBER ULTIMOS DIAS" (27/11) ganharam datas novas (campos `data` e `ordem`=0).
+- **Ordem**: pela data do último post de feed do mesmo produto até 27/11, contando os
+  posts publicados e os BLACK N vinculados. Produto pelo `produto_id`, ou pelo título
+  quando o post não tem vínculo. "BLACK N. Rotary EASY" está vinculado a SI Rotary 35,
+  mas contei como Si Rotary Easy por causa do título. Os dois jeitos dão o mesmo
+  resultado: Rotary Easy fica por último.
+- **Datas**: intervalos alternados de 1 e 2 dias a partir de 27/11, a mesma regra de
+  `planejarAdiamento()`. Ficou assim: 28/11 Perfect Portas Indv, 30/11 SI 160 HM-S,
+  01/12 OPK Perfect Pivot, 03/12 Camarão C/V 40/80, 04/12 Perfect Pocket Slim, 06/12
+  Alinhador, 07/12 Hawa Concepta III, 09/12 Libra H11, 10/12 Maçaneta, 12/12 E-Motion Wood,
+  13/12 Perfect Pocket Wood, 15/12 Folding Concepta, 16/12 Coplanar 2 Portas, 18/12
+  Dobradiças 3D, 19/12 SI Oculto, 21/12 Pivot Bocreio, 22/12 SI Sailing 15, 24/12 SI
+  Engate Comfort, 25/12 Si Rotary Easy.
+- **Não mudaram**: "Feed: Retrospectiva" (26/12) e "Feed: Lançamentos 2026" (31/12),
+  seguindo a decisão da Sessão 47. Os dias deles ficam fora da sequência.
+- **Consequência**: com intervalos de 1 a 2 dias, o feed de produtos agora **acaba em
+  25/12**. De 27/12 em diante só tem os Lançamentos de 31/12, e janeiro de 2027 ficou
+  sem feed (antes ia até 10/01). Ficaram posts de produto em 24/12 e 25/12 (Natal); não
+  perguntei antes.
+- Conferido relendo o banco. As datas antigas estão em `feed_antes.json`, o mapa id → de
+  → para em `feed_mapa.json` e o script em `plano.py`, no scratchpad da sessão
+  (`/private/tmp/claude-502/-Users-rebep1/01d70e77-.../scratchpad`).
 
 ### Sessão 49 — 2026-10-30
 
