@@ -15,7 +15,7 @@
 - **Adiar post de feed oferece mover os seguintes** (Sessão 48, `lib/adiarFeed.ts`,
   `AdiarSeguintesModal.tsx`): vale para arraste e troca de data no modal.
 - **Ritmo do feed é misto de propósito** (Sessões 48 e 50): entre dois posts de feed
-  ficam 1 ou 2 dias **vazios**, alternando (datas com 2 ou 3 dias de diferença). Não há
+  ficam 1 ou 2 dias **vazios**, nunca 0 nem 3 ou mais, alternando quando der (datas com 2 ou 3 dias de diferença). Não há
   dias fixos da semana; não "corrigir" para um padrão. `planejarAdiamento()` já segue
   essa regra (2 ↔ 3).
 - **Email a cada 14 ou 16 dias, em dias da semana alternados** (Sessão 48): 02/11, 18/11,
@@ -547,7 +547,7 @@
 
 ## Pendências / próximos passos conhecidos
 
-- **O feed vai até 17/01/2027** (Sessão 50): fora do horizonte de 31/12 do resto da
+- **O feed vai até 15/01/2027** (Sessão 50): fora do horizonte de 31/12 do resto da
   programação. **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed,
   alternando entre 1 e 2 dias vazios** (intervalos de 2 e 3 dias). As datas especiais
   também entram no ritmo.
@@ -722,6 +722,19 @@ dias vazios, não sobre a diferença de datas.
   sido a usuária. Ele iria para 20/01. Não recriei. Agora o feed termina em 17/01/2027.
 - Os intervalos foram conferidos relendo o banco. O mapa está em `feed_mapa2.json`, no
   scratchpad.
+
+**Pedido 3**: "3 dias sem post n da, max de 2 dias". O único buraco era 22/12 → 26/12,
+com 3 dias vazios. O único dia que resolve sem ficar colado na Retrospectiva é 24/12.
+Por isso **Perfect Pocket Wood foi para 24/12** e os seguintes subiram uma posição:
+Folding Concepta 28/12, Coplanar 02/01, Dobradiças 05/01, SI Oculto 07/01, Pivot Bocreio
+10/01, SI Sailing 12/01, SI Engate Comfort 15/01. O feed agora termina em **15/01/2027**.
+Perto do Natal a alternância 1/2 virou 1/1/1, o que está dentro da regra (mínimo 1,
+máximo 2 dias vazios).
+- Na releitura, Perfect Portas Indv estava em **29/11**, não em 30/11 como eu tinha
+  gravado. Foi alterado fora da sessão (pela usuária, provavelmente). Está dentro da
+  regra, então não mexi.
+- Todos os intervalos de 27/11 a 15/01 foram conferidos no banco (1 ou 2 dias vazios).
+  Mapa em `feed_mapa3.json`, no scratchpad.
 
 ### Sessão 49 — 2026-10-30
 
