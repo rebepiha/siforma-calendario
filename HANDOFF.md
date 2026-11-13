@@ -559,7 +559,9 @@
   corrige vínculos antigos.
 - **Hawa Variotec fora da fila por falta de conteúdo** (Sessão 51). Quando houver
   conteúdo, é o primeiro.
-- **O feed vai até 27/01/2027** (Sessão 51, fila reorganizada). Há 3 pares de dias
+- **Slim e Wood do mesmo produto = 1 produto na fila, alternando versões** (Sessão 51):
+  Perfect Pocket, E-Motion, OPK Perfect Telescópico.
+- **O feed vai até 22/01/2027** (Sessão 51, fila reorganizada). Há 3 pares de dias
   seguidos (13–14/12, 08–09/01, 15–16/01) vindos das datas da usuária, ainda não corrigidos.
   **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed, alternando entre 1 e 2
   dias vazios** (intervalos de 2 e 3 dias). As datas especiais também entram no ritmo.
@@ -796,6 +798,31 @@ scratchpad):
   C/V, 27/01 SI Rotary 35. Conferido relendo o banco.
 - **Hawa Variotec**: sem post programado de propósito (sem conteúdo). Quando houver conteúdo,
   ele é o primeiro da fila (último post em 09/08).
+
+**Pedido 7**: "quando tem versao slim e wood do mesmo produto, precisa distanciar mais,
+considere como o mesmo produto na fila mas alternando entre as versoes". **Regra nova da fila**:
+as versões Slim e Wood de um produto contam como **um produto só**. A data dele na fila é a
+do post mais recente de qualquer uma das versões, e a vez é da versão postada há mais tempo.
+Famílias hoje: **Perfect Pocket** (Slim/Wood; "Perfect Pocket", "Pocket 160" etc. caem nos
+produtos certos), **E-Motion** (Slim/Wood) e **OPK Perfect Telescópico** (Slim/Wood).
+**Feito** via REST (script `fila3.py`, backup completo dos posts com etiquetas em
+`fila3_antes.json`, no mesmo scratchpad):
+- A usuária tinha trocado Libra e Pocket Wood de lugar (16 ↔ 18/12) antes. Parti do estado atual.
+- Pocket: último Slim em 18/09 e último Wood em 04/10 ("Pocket 160"). A vez é do **Slim**, na
+  posição de 04/10 (entre Libra e OPK Perfect Camarão), em **16/12**. O post "Perfect Pocket Wood" programado foi
+  **excluído** (estava vazio).
+- E-Motion: último Slim em 28/10 e último Wood em 09/11. A vez é do **Slim**, na posição de 09/11 (depois
+  do Synchro), em **18/01**. O post "E-Motion Wood" de 22/01 foi **excluído** (estava vazio).
+- Telescópico: fora da fila. A última versão foi o Slim (BLACK N. 16/11), então o próximo é o **Wood**.
+- Ficaram 23 posts nas mesmas datas, sem 25 e 27/01. O feed agora termina em **22/01/2027**.
+  Ordem: 01/12 Swing, 03/12 Portas Indv, 05/12 SI 160, 07/12 Coplanar PL 80, 09/12 OPK Pivot, 11/12
+  Alinhador, 13/12 Concepta III, 14/12 Libra, 16/12 Pocket Slim, 18/12 OPK Perfect Camarão, 20/12
+  Folding, 22/12 Coplanar 2 Portas, 28/12 Dobradiças, 02/01 SI Oculto, 04/01 Pivot Bocreio, 06/01 SI
+  Sailing, (08/01 Kiaro), 09/01 SI Engate, (11/01 SI 80), 13/01 Rotary Easy, 15/01 SI 100, 16/01
+  Synchro, 18/01 E-Motion Slim, 20/01 Camarão C/V, 22/01 SI Rotary 35 Alumínio. Conferido relendo o banco.
+- **Inconsistência apontada e não corrigida**: Camarão C/V (último em 20/11) e SI Rotary 35 (23/11) estão
+  na fila, mas SI Ocean (05/11), Brises 360 (07/11), Submarine (10/11), Maçaneta (14/11) e
+  Telescópico (16/11) não estão, e pela regra viriam antes. Ofereci trocar.
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).
