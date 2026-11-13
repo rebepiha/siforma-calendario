@@ -562,8 +562,8 @@
   fila (20 e 22/01).
 - **Slim e Wood do mesmo produto = 1 produto na fila, alternando versões** (Sessão 51):
   Perfect Pocket, E-Motion, OPK Perfect Telescópico.
-- **O feed vai até 22/01/2027** (Sessão 51, fila reorganizada). Há 3 pares de dias
-  seguidos (13–14/12, 08–09/01, 15–16/01) vindos das datas da usuária, ainda não corrigidos.
+- **O feed vai até 06/02/2027** (Sessão 51, fila reorganizada com todos os produtos). Há 3 pares de dias
+  seguidos (13–14/12, 08–09/01, 17–18/01) vindos das datas da usuária, ainda não corrigidos.
   **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed, alternando entre 1 e 2
   dias vazios** (intervalos de 2 e 3 dias). As datas especiais também entram no ritmo.
 - **"Mover os seguintes"** (Sessão 48): gravação real e uso no celular seguem sem teste.
@@ -834,6 +834,23 @@ Portas, 20/12 Dobradiças, 22/12 SI Oculto, 28/12 Pivot Bocreio, 02/01 SI Sailin
 06/01 Rotary Easy, (08/01 Kiaro), 09/01 SI 100, (11/01 SI 80), 13/01 Synchro, 15/01 E-Motion Slim,
 16/01 Camarão C/V, 18/01 SI Rotary 35, 20/01 Alinhador, 22/01 Libra. Conferido relendo o banco.
 **Sem mídia ainda: Alinhador e Libra** (como o Hawa Variotec, que está fora da fila).
+
+**Pedido 9**: "porque tem produto fora da ordem/lista? o perfect brises, submarine etc".
+**Explicação**: a fila tinha sido montada só com os produtos que já tinham post programado.
+Os produtos postados em novembro e sem post programado ficaram de fora, mesmo os mais antigos que Camarão
+C/V e SI Rotary 35. **Feito** (script `fila5.py`, backup `fila5_antes.json`): entraram 6 posts
+novos (feed, pendente, vinculados ao produto, título = nome do produto): SI Ocean (último 05/11),
+Perfect Brises 360 (07/11), Submarine (10/11), Maçaneta fecho magnético (14/11, o BLACK N.
+Maçaneta Preta), OPK perfect telescopico wood (Telescópico: a última versão foi o Slim, 16/11) e SI20
+FH-S (22/11). Alinhador e Libra continuam no fim (sem mídia).
+- Datas novas seguindo o ritmo: 25, 27 e 30/01 e 01, 04 e 06/02. O feed agora vai até **06/02/2027**.
+- Ordem de janeiro em diante: 02/01 SI Sailing, 04/01 SI Engate, 06/01 Rotary Easy, (08/01 Kiaro),
+  09/01 SI 100, (11/01 SI 80), 13/01 Synchro, 15/01 SI Ocean, 17/01 Brises 360, 18/01 E-Motion Slim,
+  20/01 Submarine, 22/01 Maçaneta, 25/01 Telescópico Wood, 27/01 Camarão C/V, 30/01 SI20, 01/02 SI Rotary
+  35, 04/02 Alinhador, 06/02 Libra. Dezembro não mudou.
+- O par de dias seguidos 15–16/01 virou **17–18/01**: a usuária tinha movido um post de 16 para 17/01
+  antes do script, e reaproveitei as datas como estavam. Seguem também 13–14/12 e 08–09/01.
+- Stories, YouTube, LinkedIn e Email de fevereiro continuam sem placeholders.
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).
