@@ -576,6 +576,8 @@
   (Sessão 50). Fevereiro precisa ser criado do mesmo jeito. Próximos pela regra:
   LinkedIn 01/02, YouTube com o shorts extra na terça da semana de 01/02, Email 20 em
   05/02 (14 dias depois do Email 19).
+- **Férias de 19/12 a 03/01: sem tarefas de marketing** (Sessão 51). Posts do Calendário
+  nesse período não foram mexidos.
 - **Tarefas de marketing vão até 29/01/2027, mais a análise de redes de 01/02** (Sessão 51).
   Em janeiro há só 3 fixas (sem "Subir stories"). Fevereiro ainda precisa ser criado. Regras:
   fixas seg–sex; concorrência numa sexta sim, noutra não (desde 18/12: 15/01, 29/01 →
@@ -902,6 +904,12 @@ scratchpad):
 - Concorrência: **15/01 e 29/01**. Site: **"Análise do site (janeiro)" em 29/01**, o último dia útil, seguindo o
   título novo que a usuária usou em dezembro. Redes de janeiro: **01/02**, o primeiro dia útil de fevereiro.
 - 64 tarefas criadas. Conferido relendo o banco.
+
+**Pedido 13**: "dia 19 ate 3/1 tire tudo, ferias". **Feito**: apagadas as 14 tarefas de marketing de 19/12/2026 a
+03/01/2027 (Atendimento e Leads de 21–23/12 e 28–30/12, "Feriado – Natal" e "Feriado – Confraternização
+Universal"). Backup em `tarefas_ferias_backup.json`, no scratchpad. Agora as tarefas param em 18/12 e voltam em
+04/01. **Só mexi nas tarefas.** Os posts do Calendário Editorial nesse período (feed, Stories, YouTube,
+LinkedIn) não mudaram. Perguntei se a usuária também quer mexer neles.
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).
