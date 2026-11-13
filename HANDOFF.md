@@ -557,7 +557,8 @@
   Rotary 35 (seria o Easy?). HAWA, DOBRADIÇAS (JNF) e SI LINE não têm produto. O modal
   agora troca o Produto quando o título cita outro produto pelo nome inteiro, mas isso não
   corrige vínculos antigos.
-- **O feed vai até 20/01/2027** (Sessão 50, posts de janeiro criados pela usuária).
+- **O feed vai até 27/01/2027** (Sessão 51, fila reorganizada). Há 3 pares de dias
+  seguidos (13–14/12, 08–09/01, 15–16/01) vindos das datas da usuária, ainda não corrigidos.
   **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed, alternando entre 1 e 2
   dias vazios** (intervalos de 2 e 3 dias). As datas especiais também entram no ritmo.
 - **"Mover os seguintes"** (Sessão 48): gravação real e uso no celular seguem sem teste.
@@ -738,8 +739,43 @@ nome do produto precisa aparecer **inteiro** dentro do título. Regras, a cada m
 - Testado com `tsx` contra os produtos reais (6 casos, incluindo os da Black November).
   `tsc`, `eslint` e `npm run build` ok. **Não testado clicando no navegador.**
 
+**Pedido 4**: "tem produtos que foram muito mais postados que outros e ainda estao com post
+programado, como a maçaneta que acabei de excluir do dia 16/12. tem mais casos assim?" e
+depois "mas tem post entrando na frente na ordem?". Só consultas. Contei os posts de feed
+desde junho (o máximo é 3 publicados por produto) e comparei a fila de 01/12 a 20/01 com a
+regra "não postado há mais tempo primeiro". Fora de ordem estavam: E-Motion Wood em 18/12
+(último post 09/11), SI Rotary 35 em 09/01 (último o BLACK N. de 23/11) e três pares
+invertidos com poucos dias de diferença. Sem post na fila: Hawa Variotec (09/08), Coplanar PL
+80 (25/08) e Si Rotary Easy (25/10).
+
+**Pedido 5**: "organize. encaixe o perfect swing tbem (novo)". **Feito** via REST, sem
+mudança de código (script `fila.py`, backup `fila_antes.json`, mapa `fila_mapa.json`, no
+scratchpad `/private/tmp/claude-502/-Users-rebep1/f43160b5-2a19-47c0-820b-66752bcc92e0/scratchpad`):
+- **Mantive as datas** que a usuária tinha posto (01/12 a 20/01) e só troquei quais produtos
+  ficam em cada uma. Para caberem 3 produtos a mais, abri **22, 25 e 27/01** seguindo o
+  ritmo. Kiaro Italiana Ferramenta (08/01) e SI 80 - Fantin (11/01) **não mudaram** (nunca
+  postados, posição escolhida pela usuária). A Retrospectiva (25/12) e os Lançamentos 2026
+  (31/12) também não mudaram.
+- Durante a sessão a usuária excluiu a maçaneta de 16/12 e criou um SI Oculto em 16/12, e
+  o SI Oculto ficou duplicado (16/12 e 04/01, os dois vazios). Mantive um. O de 04/01 (`eec25d8c`)
+  foi **reaproveitado** como "Coplanar PL 80" (título e `produto_id` trocados).
+- **Criados**: "Perfect Swing" (produto novo em `produtos`, post tipo **lançamento** com
+  `novo_produto` = true, badge NOVO), "Hawa Variotec" e "Si Rotary Easy". Os campos foram
+  copiados de um post da fila e cada um recebeu a etiqueta Feed.
+- **Decisão minha**: o Perfect Swing ficou em **01/12**, em primeiro, porque nunca foi postado
+  (= há mais tempo). Não perguntei.
+- Ordem final: 01/12 Perfect Swing, 03/12 Hawa Variotec, 05/12 Perfect Portas Indv, 07/12 SI 160
+  HM-S, 09/12 Coplanar PL 80, 11/12 OPK Perfect Pivot, 13/12 Camarão C/V 40/80, 14/12 Perfect
+  Pocket Slim, 16/12 Alinhador, 18/12 Hawa Concepta III, 20/12 Libra H11, 22/12 Perfect Pocket
+  Wood, 28/12 Folding Concepta, 02/01 Coplanar 2 Portas, 04/01 Dobradiças 3D, 06/01 SI Oculto,
+  (08/01 Kiaro), 09/01 Pivot Bocreio, (11/01 SI 80), 13/01 SI Sailing 15, 15/01 SI Engate
+  Comfort, 16/01 Si Rotary Easy, 18/01 SI 100 Magnético, 20/01 E-Motion Slim, 22/01 OPK Perfect
+  Synchro, 25/01 E-Motion Wood, 27/01 SI Rotary 35 Alumínio. O feed agora termina em **27/01/2027**.
+- **Dias seguidos que já existiam nas datas da usuária e que não mexi**: 13–14/12, 08–09/01 e
+  15–16/01. Furam a regra de pelo menos 1 dia vazio. Ofereci corrigir. Conferido relendo o banco.
+
 **Observado e não mexido**:
-- Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08).
+- Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).
 - "BLACK N. Rotary" (23/11) está vinculado a SI Rotary 35. Na Sessão 50 o título era
   "Rotary EASY". Não perguntei qual Rotary é.
 - "BLACK N. - HAWA" (18/11), "BLACK N. DOBRADIÇAS (JNF)" (25/11) e "BLACK N. - SI LINE"
