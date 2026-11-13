@@ -576,10 +576,11 @@
   (Sessão 50). Fevereiro precisa ser criado do mesmo jeito. Próximos pela regra:
   LinkedIn 01/02, YouTube com o shorts extra na terça da semana de 01/02, Email 20 em
   05/02 (14 dias depois do Email 19).
-- **Tarefas (fixas seg–sex, análises) continuam só até 31/dez/2026** (Sessão 45). A
-  exceção é a análise de redes de 04/01/2027. A Sessão 50 estendeu só os posts, não as
-  tarefas. Regras: fixas seg–sex; concorrência numa sexta sim, noutra não desde 16/10;
-  site no último dia útil do mês; redes no 1º dia útil do mês seguinte.
+- **Tarefas de marketing vão até 29/01/2027, mais a análise de redes de 01/02** (Sessão 51).
+  Em janeiro há só 3 fixas (sem "Subir stories"). Fevereiro ainda precisa ser criado. Regras:
+  fixas seg–sex; concorrência numa sexta sim, noutra não (desde 18/12: 15/01, 29/01 →
+  próxima 12/02); site no último dia útil do mês ("Análise do site (<mês>)"); redes no 1º dia
+  útil do mês seguinte. Perguntar se "Subir stories" volta em fevereiro.
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` passar de 1000, aplicar o mesmo fix. Em 11/11 eram uns 400
   (contagem aproximada, não conferida).
@@ -882,6 +883,25 @@ dentro da familia qnd foi postado cada tipo".
 **Pedido 11**: "dia 24/1 deveria ter post". O intervalo entre 22/01 e 25/01 tinha 2 dias vazios,
 o que estava dentro da regra, mas a usuária quis um post em 24/01. **Camarão C/V 40/80 foi de 25 para
 24/01** e agora fica 22 → 24 (1 vazio) → 27 (2 vazios). Mais nada mudou.
+
+**Pedido 12**: "faça o calendario de janeiro de tarefas marketing seguindo as regras que criamos
+de analises etc". Antes conferi dezembro, que tinha sido mudado à mão. Desde 21/12 só ficaram
+Atendimento e Leads (sem Mensagem e Stories, provavelmente por causa de férias). 24 e 31/12 ficaram sem
+tarefas. A análise do site de dezembro foi para 04/01, com o título "Análise do site (dezembro)". A
+concorrência estava em 27/11, 11/12 e 18/12. Respostas da usuária: em janeiro **só as 3 primeiras fixas** (Atendimento
+nas redes sociais + painel admin, Mandar mensagem novos seguidores, Atualizar tabela de leads), **sem
+"Subir stories"**. Concorrência contando 2 semanas a partir de 18/12, e **"tire de dezembro e deixe só
+dia 18"**.
+**Feito** (script `tarefas_jan.py`, backup `tarefas_antes.json`, IDs em `tarefas_jan_criadas.json`, no
+scratchpad):
+- Apagada a "Análise da concorrência" de 11/12. Em dezembro ficou só a de 18/12.
+- 01/01: "Feriado – Confraternização Universal" (sem responsável, baixa).
+- De 04/01 a 29/01, de segunda a sexta: as 3 fixas (Victoria, média, A Fazer, ordem 0–2). Em 04/01 já existia uma
+  "Mandar mensagem novos seguidores", que foi reaproveitada. As análises de dezembro desse dia foram para
+  depois das fixas (ordem 3 e 4).
+- Concorrência: **15/01 e 29/01**. Site: **"Análise do site (janeiro)" em 29/01**, o último dia útil, seguindo o
+  título novo que a usuária usou em dezembro. Redes de janeiro: **01/02**, o primeiro dia útil de fevereiro.
+- 64 tarefas criadas. Conferido relendo o banco.
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).
