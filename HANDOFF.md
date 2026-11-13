@@ -879,6 +879,10 @@ dentro da familia qnd foi postado cada tipo".
   alguém atualizar a lista. Não criei tabela para isso, porque precisaria de migration.
 - `tsc`, `eslint` e `npm run build` ok. **Não testado no navegador.**
 
+**Pedido 11**: "dia 24/1 deveria ter post". O intervalo entre 22/01 e 25/01 tinha 2 dias vazios,
+o que estava dentro da regra, mas a usuária quis um post em 24/01. **Camarão C/V 40/80 foi de 25 para
+24/01** e agora fica 22 → 24 (1 vazio) → 27 (2 vazios). Mais nada mudou.
+
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).
 - "BLACK N. Rotary" (23/11) está vinculado a SI Rotary 35. Na Sessão 50 o título era
