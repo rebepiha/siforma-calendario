@@ -557,6 +557,8 @@
   Rotary 35 (seria o Easy?). HAWA, DOBRADIÇAS (JNF) e SI LINE não têm produto. O modal
   agora troca o Produto quando o título cita outro produto pelo nome inteiro, mas isso não
   corrige vínculos antigos.
+- **Hawa Variotec fora da fila por falta de conteúdo** (Sessão 51). Quando houver
+  conteúdo, é o primeiro.
 - **O feed vai até 27/01/2027** (Sessão 51, fila reorganizada). Há 3 pares de dias
   seguidos (13–14/12, 08–09/01, 15–16/01) vindos das datas da usuária, ainda não corrigidos.
   **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed, alternando entre 1 e 2
@@ -773,6 +775,27 @@ scratchpad `/private/tmp/claude-502/-Users-rebep1/f43160b5-2a19-47c0-820b-66752b
   Synchro, 25/01 E-Motion Wood, 27/01 SI Rotary 35 Alumínio. O feed agora termina em **27/01/2027**.
 - **Dias seguidos que já existiam nas datas da usuária e que não mexi**: 13–14/12, 08–09/01 e
   15–16/01. Furam a regra de pelo menos 1 dia vazio. Ofereci corrigir. Conferido relendo o banco.
+
+**Pedido 6**: "tire o variotec, nao temos conteudo agora, o camarao da black é o camarao c/v
+e nao perfect". **Feito** via REST (script `fila2.py`, backup `fila2_antes.json`, no mesmo
+scratchpad):
+- "BLACK N. CAMARÃO" (20/11) estava ligado a **OPK Perfect Camarão** e passou para
+  **Camarão C/V 40/80**.
+- Com isso o último post do Camarão C/V passou a ser 20/11 e ele foi para o fim da fila (25/01).
+  O OPK Perfect Camarão (último publicado em 05/10) ficou sem post programado e entrou na
+  fila em 20/12, entre Pocket Wood (04/10) e Folding (09/10). Fiz isso sem perguntar,
+  aplicando a regra da fila. Ele já foi postado 2 vezes, então deve ter conteúdo.
+- **Hawa Variotec saiu da fila** (sem conteúdo agora). O post dele (03/12) foi reaproveitado
+  como "OPK Perfect Camarão". As datas são as mesmas 25 de antes (01/12 a 27/01, sem
+  Kiaro 08/01 e SI 80 11/01) e os produtos subiram uma posição.
+- Ordem final: 01/12 Perfect Swing, 03/12 Portas Indv, 05/12 SI 160, 07/12 Coplanar PL 80, 09/12
+  OPK Pivot, 11/12 Pocket Slim, 13/12 Alinhador, 14/12 Concepta III, 16/12 Libra, 18/12 Pocket Wood,
+  20/12 OPK Perfect Camarão, 22/12 Folding, 28/12 Coplanar 2 Portas, 02/01 Dobradiças, 04/01 SI
+  Oculto, 06/01 Pivot Bocreio, (08/01 Kiaro), 09/01 SI Sailing, (11/01 SI 80), 13/01 SI Engate, 15/01
+  Rotary Easy, 16/01 SI 100, 18/01 E-Motion Slim, 20/01 Synchro, 22/01 E-Motion Wood, 25/01 Camarão
+  C/V, 27/01 SI Rotary 35. Conferido relendo o banco.
+- **Hawa Variotec**: sem post programado de propósito (sem conteúdo). Quando houver conteúdo,
+  ele é o primeiro da fila (último post em 09/08).
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).
