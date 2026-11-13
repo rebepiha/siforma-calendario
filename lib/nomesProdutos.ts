@@ -112,3 +112,20 @@ export function produtoAposMudarTitulo(
   if (produtoAtual.trim() && tituloContemProduto(tituloOriginal, produtoAtual)) return "";
   return produtoAtual;
 }
+
+// Famílias: versões do mesmo produto (Slim/Wood, Rotary 35/Easy) que contam como
+// um produto só na fila do feed, alternando a versão (Sessão 51). A Biblioteca
+// mostra as versões juntas, cada uma com as próprias datas. Nomes = `produtos.nome`
+// (comparados sem acento e sem diferenciar maiúsculas); renomear um produto da
+// família exige atualizar aqui.
+export const FAMILIAS_PRODUTO: { nome: string; versoes: string[] }[] = [
+  { nome: "Perfect Pocket", versoes: ["Perfect Pocket Slim", "Perfect Pocket Wood"] },
+  { nome: "E-Motion", versoes: ["E-Motion Slim", "E-Motion Wood"] },
+  { nome: "OPK Perfect Telescópico", versoes: ["OPK Perfect Telescópico Slim", "OPK perfect telescopico wood"] },
+  { nome: "SI Rotary", versoes: ["SI Rotary 35", "Si Rotary Easy"] },
+];
+
+export function familiaDoProduto(nomeProduto: string): string | undefined {
+  const n = normalizar(nomeProduto);
+  return FAMILIAS_PRODUTO.find((f) => f.versoes.some((v) => normalizar(v) === n))?.nome;
+}

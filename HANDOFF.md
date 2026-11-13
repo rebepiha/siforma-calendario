@@ -560,9 +560,10 @@
 - **Hawa Variotec fora da fila por falta de conteúdo** (Sessão 51). Quando houver
   conteúdo, é o primeiro. **Alinhador e Libra também sem mídia**: ficaram no fim da
   fila (20 e 22/01).
-- **Slim e Wood do mesmo produto = 1 produto na fila, alternando versões** (Sessão 51):
-  Perfect Pocket, E-Motion, OPK Perfect Telescópico.
-- **O feed vai até 06/02/2027** (Sessão 51, fila reorganizada com todos os produtos). Há 3 pares de dias
+- **Famílias de produto = 1 produto na fila, alternando versões** (Sessão 51):
+  Perfect Pocket, E-Motion, OPK Perfect Telescópico (Slim/Wood) e SI Rotary (35/Easy).
+  Na Biblioteca aparecem juntas (`FAMILIAS_PRODUTO`, lista fixa no código, ligada pelo nome).
+- **O feed vai até 04/02/2027** (Sessão 51, fila reorganizada com todos os produtos). Há 3 pares de dias
   seguidos (13–14/12, 08–09/01, 17–18/01) vindos das datas da usuária, ainda não corrigidos.
   **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed, alternando entre 1 e 2
   dias vazios** (intervalos de 2 e 3 dias). As datas especiais também entram no ritmo.
@@ -851,6 +852,32 @@ FH-S (22/11). Alinhador e Libra continuam no fim (sem mídia).
 - O par de dias seguidos 15–16/01 virou **17–18/01**: a usuária tinha movido um post de 16 para 17/01
   antes do script, e reaproveitei as datas como estavam. Seguem também 13–14/12 e 08–09/01.
 - Stories, YouTube, LinkedIn e Email de fevereiro continuam sem placeholders.
+
+**Pedido 10**: "rotary easy e rotary considere a mesma logica do slim e wood, sao a mesma
+familia, alterne entre versoes [...] na biblioteca, coloque eles juntos mas deixando separado
+dentro da familia qnd foi postado cada tipo".
+- **Fila** (script `fila6.py`, backup `fila6_antes.json`): a família **SI Rotary** (SI Rotary 35 +
+  Si Rotary Easy) tem como último post o BLACK N. Rotary de 23/11, vinculado a SI Rotary 35. Então
+  a vez é do **Easy** (último em 25/10), na posição de 23/11, logo depois do SI20. O post "SI
+  Rotary 35 Alumínio" (vazio) foi **excluído**.
+- **Problema**: antes do script, a usuária tinha movido o SI Rotary 35 Alumínio de 01/02 para 20/01,
+  o mesmo dia do Submarine. Como reaproveitei as datas existentes, dois posts ficaram juntos em 20/01 e
+  01/02 ficou vazia. Corrigi na hora, recolocando as datas no ritmo. Janeiro em diante: 02/01 SI Sailing,
+  04/01 SI Engate, 06/01 SI 100, (08/01 Kiaro), 09/01 Synchro, (11/01 SI 80), 13/01 SI Ocean, 15/01 Brises,
+  17/01 E-Motion Slim, 18/01 Submarine, 20/01 Maçaneta, 22/01 Telescópico Wood, 25/01 Camarão C/V,
+  27/01 SI20, 30/01 Si Rotary Easy, 01/02 Alinhador, 04/02 Libra. O feed agora termina em **04/02/2027**.
+  Os pares de dias seguidos agora são 13–14/12, 08–09/01 e 17–18/01.
+- No meio disso a usuária disse "dia 20/12 esta c 2 posts". Em 20/12 há só um post de feed
+  (Dobradiças) e o YouTube (shorts) de domingo. Respondi que o de 2 posts de feed era o 20/01, já corrigido.
+- **Biblioteca com famílias** (`FAMILIAS_PRODUTO` e `familiaDoProduto()` em
+  `lib/nomesProdutos.ts`, e `linhas`/`linhaGrupo()` em `app/biblioteca/page.tsx`): as versões de uma
+  família aparecem juntas, sob o nome da família (com o rótulo "família"). Cada versão tem a sua
+  linha, recuada e com as próprias datas, e mantém Renomear, Mover e Excluir. A família é ordenada pela
+  data mais recente de qualquer versão. As famílias são uma **lista fixa no código**, ligada pelo
+  nome em `produtos` (sem acento e sem diferenciar maiúsculas): Perfect Pocket, E-Motion, OPK Perfect
+  Telescópico e SI Rotary. **Renomear um produto de família pela Biblioteca tira ele da família** até
+  alguém atualizar a lista. Não criei tabela para isso, porque precisaria de migration.
+- `tsc`, `eslint` e `npm run build` ok. **Não testado no navegador.**
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { Post, Produto } from "@/lib/types";
-import { grupoBiblioteca, nomeCanonicoProduto, tituloRenomeado } from "@/lib/nomesProdutos";
+import { familiaDoProduto, grupoBiblioteca, nomeCanonicoProduto, tituloRenomeado } from "@/lib/nomesProdutos";
 import { useUndoStack } from "@/lib/useUndoStack";
 import MoverModal, { DestinoMover, GrupoBiblioteca as Grupo } from "@/components/biblioteca/MoverModal";
 
@@ -113,6 +113,79 @@ export default function PaginaBiblioteca() {
         g.posts.some((p) => p.titulo.toLowerCase().includes(b))
     );
   }, [grupos, busca]);
+
+  // Linhas da lista: produto sozinho ou família (versões juntas, cada uma com
+  // as próprias datas). A família ordena pela data mais recente de qualquer
+  // versão, a mesma regra da fila do feed.
+  const linhas = useMemo(() => {
+    const ultimaData = (gs: Grupo[]) =>
+      gs.flatMap((g) => g.posts).reduce((max, p) => (p.data > max ? p.data : max), "");
+    const mapa = new Map<string, { chave: string; familia?: string; grupos: Grupo[] }>();
+    for (const g of gruposVisiveis) {
+      const familia = familiaDoProduto(g.nome);
+      const chave = familia ? `familia:${familia}` : g.chave;
+      const linha = mapa.get(chave);
+      if (linha) linha.grupos.push(g);
+      else mapa.set(chave, { chave, familia, grupos: [g] });
+    }
+    const ord = (a: string, b: string) => (maisRecentesPrimeiro ? b.localeCompare(a) : a.localeCompare(b));
+    const resultado = Array.from(mapa.values());
+    resultado.forEach((l) => l.grupos.sort((a, b) => ord(ultimaData([a]), ultimaData([b]))));
+    return resultado.sort((a, b) => ord(ultimaData(a.grupos), ultimaData(b.grupos)));
+  }, [gruposVisiveis, maisRecentesPrimeiro]);
+
+  function linhaGrupo(grupo: Grupo, versao: boolean) {
+    return (
+      <div
+        key={grupo.chave}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setGrupoMovendo(grupo);
+        }}
+        className={`group flex items-start justify-between gap-6 ${versao ? "py-1.5 pl-4" : "py-3"}`}
+      >
+        <div className="flex items-center gap-2">
+          {renomeando === grupo.chave ? (
+            campoRenomear(grupo.chave, grupo.nome, grupo.posts)
+          ) : (
+            <p className={versao ? "text-sm text-zinc-300" : "text-sm font-medium text-zinc-100"}>
+              {grupo.nome}
+            </p>
+          )}
+          <button
+            onClick={() => comecarRenomear(grupo.chave, grupo.nome)}
+            className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+          >
+            Renomear
+          </button>
+          <button
+            onClick={() => setGrupoMovendo(grupo)}
+            className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+          >
+            Mover
+          </button>
+          <button
+            onClick={() => excluirGrupo(grupo)}
+            className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-red-300 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+          >
+            Excluir
+          </button>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          {grupo.posts.map((post) => (
+            <span
+              key={post.id}
+              title={post.status === "publicado" ? undefined : "Programado"}
+              className={`text-xs ${post.status === "publicado" ? "text-zinc-500" : "text-emerald-400"}`}
+            >
+              {format(parseISO(post.data), "dd/MM/yyyy")}
+              {post.categoria ? ` · ${post.categoria}` : ""}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Catálogo: produtos cadastrados que ainda não têm nenhum post no feed,
   // publicado ou programado (nenhum grupo da Biblioteca aponta pra eles).
@@ -540,60 +613,25 @@ export default function PaginaBiblioteca() {
         gruposVisiveis.length > 0 && (
           <section>
             <h2 className="mb-3 flex items-baseline gap-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Produtos · {gruposVisiveis.length}
+              Produtos · {linhas.length}
               <span className="font-normal normal-case tracking-normal text-emerald-400">
                 Data em verde = programado
               </span>
             </h2>
             <div className="flex flex-col divide-y divide-zinc-800/80">
-              {gruposVisiveis.map((grupo) => (
-                <div
-                  key={grupo.chave}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    setGrupoMovendo(grupo);
-                  }}
-                  className="group flex items-start justify-between gap-6 py-3"
-                >
-                  <div className="flex items-center gap-2">
-                    {renomeando === grupo.chave ? (
-                      campoRenomear(grupo.chave, grupo.nome, grupo.posts)
-                    ) : (
-                      <p className="text-sm font-medium text-zinc-100">{grupo.nome}</p>
-                    )}
-                    <button
-                      onClick={() => comecarRenomear(grupo.chave, grupo.nome)}
-                      className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
-                    >
-                      Renomear
-                    </button>
-                    <button
-                      onClick={() => setGrupoMovendo(grupo)}
-                      className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
-                    >
-                      Mover
-                    </button>
-                    <button
-                      onClick={() => excluirGrupo(grupo)}
-                      className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-red-300 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
-                    >
-                      Excluir
-                    </button>
+              {linhas.map((linha) =>
+                linha.familia ? (
+                  <div key={linha.chave} className="py-3">
+                    <p className="mb-1 text-sm font-medium text-zinc-100">
+                      {linha.familia}
+                      <span className="ml-2 text-xs font-normal text-zinc-500">família</span>
+                    </p>
+                    {linha.grupos.map((g) => linhaGrupo(g, true))}
                   </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    {grupo.posts.map((post) => (
-                      <span
-                        key={post.id}
-                        title={post.status === "publicado" ? undefined : "Programado"}
-                        className={`text-xs ${post.status === "publicado" ? "text-zinc-500" : "text-emerald-400"}`}
-                      >
-                        {format(parseISO(post.data), "dd/MM/yyyy")}
-                        {post.categoria ? ` · ${post.categoria}` : ""}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                ) : (
+                  linhaGrupo(linha.grupos[0], false)
+                )
+              )}
             </div>
           </section>
         )
