@@ -12,6 +12,9 @@
 
 ## Estado atual (resumo rápido)
 
+- **Biblioteca: "Excluir" em todo produto** (Sessão 51, `excluirGrupo()`): tira da
+  Biblioteca sem apagar posts. Os posts de feed viram tipo "Não produto" e o produto
+  cadastrado é excluído. Ctrl+Z desfaz.
 - **Adiar post de feed oferece mover os seguintes** (Sessão 48, `lib/adiarFeed.ts`,
   `AdiarSeguintesModal.tsx`): vale para arraste e troca de data no modal.
 - **Ritmo do feed é misto de propósito** (Sessões 48 e 50): entre dois posts de feed
@@ -693,6 +696,25 @@ Biblioteca (`grupoBiblioteca()`) está funcionando. Os problemas eram de dados:
 (`ba9c245d`), escolha da usuária (não criei um produto "Maçaneta Preta" separado). O grupo
 da maçaneta tem agora 16/07, 23/08, 28/09 (sem vínculo, entra pelo nome), 14/11 e 16/12.
 Conferido relendo o banco.
+
+**Pedido 2**: "quero a opcao de deletar produtos da biblioteca, por exemplo, o da jnf vai
+ser postado so uma vez, n precisa estar na biblioteca". Antes só dava para excluir produtos
+sem post no feed (seção "Sem posts no feed").
+**Feito** (`app/biblioteca/page.tsx`, `excluirGrupo()`): botão **Excluir** em todo produto da
+lista principal (aparece no hover, junto de Renomear e Mover), com confirmação do navegador.
+- Os posts **não** são apagados do Calendário. Os posts de feed do grupo passam a ter o tipo
+  **"Não produto"** (`nao_produto`) e `produto_id` nulo. `grupoBiblioteca()` já ignora
+  posts que não são produto ou lançamento, então o grupo some. Escolhi isso para não
+  precisar de migration (uma coluna "fora da Biblioteca" exigiria SQL rodado pela
+  usuária). O tipo só aparece no filtro de tipo do Calendário.
+- Se o grupo tem produto cadastrado, os outros posts ligados a ele (Stories etc.) perdem o
+  vínculo e a linha em `produtos` é excluída (precisa disso por causa da chave estrangeira).
+  O produto some também das sugestões do modal.
+- Ctrl+Z desfaz: recria o produto com o mesmo id e devolve tipo e `produto_id` de cada post.
+- `tsc`, `eslint` do arquivo e `npm run build` ok. **Não testei clicando no navegador** e
+  não excluí o JNF: a usuária vai fazer pelo botão.
+- Expliquei de novo a sugestão do Pedido 1 (trocar o Produto junto com o título), que ela
+  não tinha entendido. Ainda sem resposta, nada foi feito.
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08).

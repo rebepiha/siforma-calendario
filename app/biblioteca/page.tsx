@@ -318,6 +318,70 @@ export default function PaginaBiblioteca() {
     );
   }
 
+  // Excluir da Biblioteca um produto com posts (ex.: post único de campanha).
+  // Os posts continuam no Calendário: os de feed do grupo viram tipo "Não
+  // produto" (grupoBiblioteca() ignora esse tipo) e todo post que apontava pro
+  // produto perde o vínculo, pra o produto poder ser excluído. Ctrl+Z desfaz.
+  async function excluirGrupo(grupo: Grupo) {
+    if (
+      !window.confirm(
+        `Excluir "${grupo.nome}" da Biblioteca? Os posts continuam no Calendário, como "Não produto".`
+      )
+    )
+      return;
+    setErro(null);
+    try {
+      const produtoId = grupo.chave.startsWith("id:") ? grupo.chave.slice(3) : null;
+      const produto = produtoId ? produtos.find((p) => p.id === produtoId) : undefined;
+      const anteriores = grupo.posts.map((p) => ({ id: p.id, tipo: p.tipo, produto_id: p.produto_id }));
+      const idsGrupo = grupo.posts.map((p) => p.id);
+
+      const { error } = await supabase
+        .from("posts")
+        .update({ tipo: "nao_produto", produto_id: null })
+        .in("id", idsGrupo);
+      if (error) throw error;
+
+      let restantesIds: string[] = [];
+      if (produtoId) {
+        const { data: restantes, error: erroRestantes } = await supabase
+          .from("posts")
+          .select("id")
+          .eq("produto_id", produtoId);
+        if (erroRestantes) throw erroRestantes;
+        restantesIds = (restantes ?? []).map((r: { id: string }) => r.id);
+        if (restantesIds.length > 0) {
+          const { error: erroVinculo } = await supabase
+            .from("posts")
+            .update({ produto_id: null })
+            .in("id", restantesIds);
+          if (erroVinculo) throw erroVinculo;
+        }
+        const { error: erroExcluir } = await supabase.from("produtos").delete().eq("id", produtoId);
+        if (erroExcluir) throw erroExcluir;
+        setProdutos((atual) => atual.filter((p) => p.id !== produtoId));
+      }
+      setPosts((atual) => atual.filter((p) => !idsGrupo.includes(p.id)));
+
+      registrarAcao(async () => {
+        // O produto volta primeiro: os posts precisam dele pra apontar de novo.
+        if (produto) {
+          await supabase.from("produtos").insert(produto);
+          setProdutos((atual) => [...atual, produto]);
+          if (restantesIds.length > 0) {
+            await supabase.from("posts").update({ produto_id: produto.id }).in("id", restantesIds);
+          }
+        }
+        for (const a of anteriores) {
+          await supabase.from("posts").update({ tipo: a.tipo, produto_id: a.produto_id }).eq("id", a.id);
+        }
+        setPosts((atual) => [...atual, ...grupo.posts]);
+      });
+    } catch {
+      setErro(`Não foi possível excluir "${grupo.nome}". Tente de novo.`);
+    }
+  }
+
   // Mover = vincular os posts escolhidos ao produto de destino (produto_id).
   // Se o destino ainda é um grupo "só por texto" (posts sem produto_id), cria
   // (ou reaproveita, se já existir com o mesmo nome) o produto e vincula
@@ -508,6 +572,12 @@ export default function PaginaBiblioteca() {
                       className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
                     >
                       Mover
+                    </button>
+                    <button
+                      onClick={() => excluirGrupo(grupo)}
+                      className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-red-300 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                    >
+                      Excluir
                     </button>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
