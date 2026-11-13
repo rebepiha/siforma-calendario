@@ -547,6 +547,9 @@
 
 ## Pendências / próximos passos conhecidos
 
+- **Posts BLACK N. com vínculo a conferir** (Sessão 51): "BLACK N. Rotary" está em SI
+  Rotary 35 (seria o Easy?). HAWA, DOBRADIÇAS (JNF) e SI LINE não têm produto. Mudar o
+  título não muda o `produto_id`.
 - **O feed vai até 20/01/2027** (Sessão 50, posts de janeiro criados pela usuária).
   **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed, alternando entre 1 e 2
   dias vazios** (intervalos de 2 e 3 dias). As datas especiais também entram no ritmo.
@@ -667,6 +670,39 @@
   (o anon key não permite DDL via REST API, só CRUD nas tabelas governado por RLS).
 
 ## Histórico de sessões
+
+### Sessão 51 — 2026-11-13
+
+**Pedido**: "tem alguns erros na biblioteca, acho que alguns produtos nao estao entrando.
+por exemplo, black n. maçaneta preta e telescopico slim aparece só 2x mas foi postado em
+outras datas tambem".
+
+**Diagnóstico** (só leitura do banco via REST, sem mudança de código): o agrupamento da
+Biblioteca (`grupoBiblioteca()`) está funcionando. Os problemas eram de dados:
+- **"BLACK N. MAÇANETA PRETA"** (14/11, `a96ea12b`) estava vinculado ao produto
+  **Coplanar PL 80** (`f936a736`) e por isso aparecia no grupo do Coplanar. Provável causa:
+  a usuária remarcou e retitulou os posts BLACK N. à mão (na Sessão 50, Pedido 4, o
+  Coplanar PL 80 estava em 27/11 e o Telescópico Slim em 14/11). Ao mudar o título, o
+  `produto_id` antigo continuou no post.
+- **Telescópico Slim**: no calendário só existem 2 posts de feed, 23/09 (sem vínculo,
+  entra pelo nome) e "BLACK N. Perfect Telescópico Slim" (16/11). Os de 16/08 e 02/11 são
+  "OPK perfect telescopico wood". Perguntei, e a usuária confirmou que **está certo**: os
+  outros posts do Slim não foram registrados no calendário.
+
+**Feito**: `produto_id` de "BLACK N. MAÇANETA PRETA" → **Maçaneta fecho magnético**
+(`ba9c245d`), escolha da usuária (não criei um produto "Maçaneta Preta" separado). O grupo
+da maçaneta tem agora 16/07, 23/08, 28/09 (sem vínculo, entra pelo nome), 14/11 e 16/12.
+Conferido relendo o banco.
+
+**Observado e não mexido**:
+- Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08).
+- "BLACK N. Rotary" (23/11) está vinculado a SI Rotary 35. Na Sessão 50 o título era
+  "Rotary EASY". Não perguntei qual Rotary é.
+- "BLACK N. - HAWA" (18/11), "BLACK N. DOBRADIÇAS (JNF)" (25/11) e "BLACK N. - SI LINE"
+  (27/11) não têm vínculo. Cada um vira um grupo próprio na Biblioteca, com o título
+  como nome.
+- **Risco geral**: quem edita o título de um post de produto (ex.: troca o produto de um
+  BLACK N.) precisa trocar o campo Produto também, senão o post fica no grupo antigo.
 
 ### Sessão 50 — 2026-11-11
 
