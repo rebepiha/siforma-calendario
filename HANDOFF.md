@@ -580,8 +580,8 @@
   nesse período não foram mexidos.
 - **Tarefas de marketing vão até 29/01/2027, mais a análise de redes de 01/02** (Sessão 51).
   Em janeiro há só 3 fixas (sem "Subir stories"). Fevereiro ainda precisa ser criado. Regras:
-  fixas seg–sex; concorrência numa sexta sim, noutra não (desde 18/12: 15/01, 29/01 →
-  próxima 12/02); site no último dia útil do mês ("Análise do site (<mês>)"); redes no 1º dia
+  fixas seg–sex; concorrência **1x por mês, na 3ª sexta** (Sessão 51, Pedido 14: 18/12, 15/01 →
+  próxima 19/02); site no último dia útil do mês ("Análise do site (<mês>)"); redes no 1º dia
   útil do mês seguinte. Perguntar se "Subir stories" volta em fevereiro.
 - **Limite de 1000 linhas do Supabase** (Sessão 44): só `tarefas` pagina o
   carregamento. Se `posts` passar de 1000, aplicar o mesmo fix. Em 11/11 eram uns 400
@@ -910,6 +910,14 @@ scratchpad):
 Universal"). Backup em `tarefas_ferias_backup.json`, no scratchpad. Agora as tarefas param em 18/12 e voltam em
 04/01. **Só mexi nas tarefas.** Os posts do Calendário Editorial nesse período (feed, Stories, YouTube,
 LinkedIn) não mudaram. Perguntei se a usuária também quer mexer neles.
+
+**Pedido 14**: a usuária mandou as regras de análise: "analise da concorrência 1x no mês / analise do site no
+final de todo mês como fechamento / analise do desempenho nas redes sociais 1x por mês". **Feito**: a
+concorrência agora é **1 por mês**, e apaguei a de 29/01 (`6e2bf28d`). A data escolhida foi a **3ª sexta do mês**. Decisão
+minha: bate com as duas que já existiam (18/12 e 15/01) e deixa o fim do mês só com o site. Site no último
+dia útil e redes no 1º dia útil do mês seguinte não mudaram (dezembro é exceção: site e redes em 04/01, por
+causa das férias). Ficou: 18/12 concorrência; 04/01 redes e site de dezembro; 15/01 concorrência; 29/01 site
+(janeiro); 01/02 redes de janeiro.
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).
