@@ -12,6 +12,9 @@
 
 ## Estado atual (resumo rápido)
 
+- **Produto acompanha o título no modal de post** (Sessão 51, `produtoAposMudarTitulo()`):
+  se o título passa a citar outro produto cadastrado pelo nome inteiro, o campo Produto troca
+  para ele. Se o produto antigo sai do título e nenhum outro entra, o campo fica vazio.
 - **Biblioteca: "Excluir" em todo produto** (Sessão 51, `excluirGrupo()`): tira da
   Biblioteca sem apagar posts. Os posts de feed viram tipo "Não produto" e o produto
   cadastrado é excluído. Ctrl+Z desfaz.
@@ -551,8 +554,9 @@
 ## Pendências / próximos passos conhecidos
 
 - **Posts BLACK N. com vínculo a conferir** (Sessão 51): "BLACK N. Rotary" está em SI
-  Rotary 35 (seria o Easy?). HAWA, DOBRADIÇAS (JNF) e SI LINE não têm produto. Mudar o
-  título não muda o `produto_id`.
+  Rotary 35 (seria o Easy?). HAWA, DOBRADIÇAS (JNF) e SI LINE não têm produto. O modal
+  agora troca o Produto quando o título cita outro produto pelo nome inteiro, mas isso não
+  corrige vínculos antigos.
 - **O feed vai até 20/01/2027** (Sessão 50, posts de janeiro criados pela usuária).
   **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed, alternando entre 1 e 2
   dias vazios** (intervalos de 2 e 3 dias). As datas especiais também entram no ritmo.
@@ -714,7 +718,25 @@ lista principal (aparece no hover, junto de Renomear e Mover), com confirmação
 - `tsc`, `eslint` do arquivo e `npm run build` ok. **Não testei clicando no navegador** e
   não excluí o JNF: a usuária vai fazer pelo botão.
 - Expliquei de novo a sugestão do Pedido 1 (trocar o Produto junto com o título), que ela
-  não tinha entendido. Ainda sem resposta, nada foi feito.
+  não tinha entendido.
+
+**Pedido 3**: "isso, faça sim", sobre a sugestão. **Feito**: o campo Produto do modal de post
+acompanha o título (`produtoAposMudarTitulo()` em `lib/nomesProdutos.ts`, chamado no
+`onChange` do Título em `PostModal.tsx`). A comparação ignora acento e maiúsculas, e o
+nome do produto precisa aparecer **inteiro** dentro do título. Regras, a cada mudança do título:
+1. O produto atual aparece no título novo: não mexe.
+2. Outro produto cadastrado aparece no título: troca para ele (o nome mais longo ganha).
+3. Nenhum aparece, mas o produto atual estava no título original do post e saiu: **esvazia**
+   o campo. Ao salvar, o post fica sem `produto_id` e a Biblioteca agrupa pelo título.
+4. Senão não mexe. Ex.: "BLACK N. Rotary" continua em SI Rotary 35, porque o título nunca
+   teve o nome inteiro do produto.
+- A regra antiga continua: escolher uma sugestão exata no Título preenche o Produto se ele
+  estiver vazio.
+- Limite: só funciona quando o nome cadastrado aparece inteiro. "BLACK N. MAÇANETA PRETA"
+  não contém "Maçaneta fecho magnético", então cai na regra 3 (fica vazio) e não vai para
+  a maçaneta. Nesse caso a pessoa ainda escolhe o Produto à mão.
+- Testado com `tsx` contra os produtos reais (6 casos, incluindo os da Black November).
+  `tsc`, `eslint` e `npm run build` ok. **Não testado clicando no navegador.**
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08).

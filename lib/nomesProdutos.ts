@@ -72,3 +72,43 @@ export function tituloRenomeado(titulo: string, antigo: string, novo: string): s
   if (i === -1) return titulo;
   return titulo.slice(0, i) + novo + titulo.slice(i + antigo.length);
 }
+
+// Compara sem acento e sem diferenciar maiúsculas ("Telescópico" = "telescopico").
+function normalizar(texto: string): string {
+  return texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+export function tituloContemProduto(titulo: string, nomeProduto: string): boolean {
+  const nome = normalizar(nomeProduto);
+  return !!nome && normalizar(titulo).includes(nome);
+}
+
+// Produto cadastrado cujo nome aparece no título (o nome mais longo ganha:
+// "Perfect Pocket Wood" antes de "Perfect Pocket"). Undefined se nenhum aparece.
+export function produtoNoTitulo(titulo: string, produtos: Produto[]): Produto | undefined {
+  return produtos
+    .filter((p) => tituloContemProduto(titulo, p.nome))
+    .sort((a, b) => b.nome.length - a.nome.length)[0];
+}
+
+// Campo Produto depois de o título mudar (Sessão 51). Trocar o título não
+// mudava o produto_id, e o post ficava no grupo antigo da Biblioteca ("BLACK N.
+// MAÇANETA PRETA" no Coplanar PL 80). Regras:
+// - Algum produto cadastrado aparece no título novo e o produto atual não
+//   aparece (ou está vazio): troca para ele.
+// - Nenhum aparece, mas o produto atual estava no título original e saiu:
+//   esvazia, pra o post não ficar no produto errado.
+// - Senão, não mexe (ex.: "BLACK N. Rotary" ligado a "SI Rotary 35").
+export function produtoAposMudarTitulo(
+  tituloOriginal: string,
+  tituloNovo: string,
+  produtoAtual: string,
+  produtos: Produto[]
+): string {
+  const atualNoTitulo = !!produtoAtual.trim() && tituloContemProduto(tituloNovo, produtoAtual);
+  if (atualNoTitulo) return produtoAtual;
+  const encontrado = produtoNoTitulo(tituloNovo, produtos);
+  if (encontrado) return encontrado.nome;
+  if (produtoAtual.trim() && tituloContemProduto(tituloOriginal, produtoAtual)) return "";
+  return produtoAtual;
+}

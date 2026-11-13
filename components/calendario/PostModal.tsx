@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Canal, Etiqueta, NovoPost, Post, Produto, StatusPost, TipoPost } from "@/lib/types";
 import { LABEL_CANAL, LABEL_STATUS, LABEL_TIPO } from "@/lib/postStyles";
 import { corTextoContraste } from "@/lib/etiquetaCores";
+import { produtoAposMudarTitulo } from "@/lib/nomesProdutos";
 import EtiquetaPicker from "./EtiquetaPicker";
 
 function valoresIniciais(dataPadrao: string): NovoPost {
@@ -175,7 +176,18 @@ export default function PostModal({
                 const sugestao = sugestoesProdutos.find(
                   (nome) => nome.toLowerCase() === titulo.trim().toLowerCase()
                 );
-                if (sugestao && !nomeProduto.trim()) setNomeProduto(sugestao);
+                if (sugestao && !nomeProduto.trim()) {
+                  setNomeProduto(sugestao);
+                  return;
+                }
+                // Título passou a citar outro produto: o campo Produto acompanha.
+                const novoProduto = produtoAposMudarTitulo(
+                  post?.titulo ?? "",
+                  titulo,
+                  nomeProduto,
+                  produtos
+                );
+                if (novoProduto !== nomeProduto) setNomeProduto(novoProduto);
               }}
               placeholder="Nome do produto ou tema do post"
               list="produtos-cadastrados"
