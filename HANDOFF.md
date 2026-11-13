@@ -564,7 +564,7 @@
   Perfect Pocket, E-Motion, OPK Perfect Telescópico (Slim/Wood) e SI Rotary (35/Easy).
   Na Biblioteca aparecem juntas (`FAMILIAS_PRODUTO`, lista fixa no código, ligada pelo nome).
 - **O feed vai até 04/02/2027** (Sessão 51, fila reorganizada com todos os produtos). Há 3 pares de dias
-  seguidos (13–14/12, 08–09/01, 17–18/01) vindos das datas da usuária, ainda não corrigidos.
+  seguidos (13–14/12, 08–09/01, 17–18/01). **A usuária confirmou que estão certos**, não corrigir.
   **Regra do ritmo: pelo menos 1 dia vazio entre posts de feed, alternando entre 1 e 2
   dias vazios** (intervalos de 2 e 3 dias). As datas especiais também entram no ritmo.
 - **"Mover os seguintes"** (Sessão 48): gravação real e uso no celular seguem sem teste.
@@ -576,8 +576,8 @@
   (Sessão 50). Fevereiro precisa ser criado do mesmo jeito. Próximos pela regra:
   LinkedIn 01/02, YouTube com o shorts extra na terça da semana de 01/02, Email 20 em
   05/02 (14 dias depois do Email 19).
-- **Férias de 19/12 a 03/01: sem tarefas de marketing** (Sessão 51). Posts do Calendário
-  nesse período não foram mexidos.
+- **Férias de 19/12 a 03/01: sem tarefas de marketing** (Sessão 51). Os posts do Calendário
+  nesse período **continuam** (confirmado pela usuária).
 - **Tarefas de marketing vão até 29/01/2027, mais a análise de redes de 01/02** (Sessão 51).
   Em janeiro há só 3 fixas (sem "Subir stories"). Fevereiro ainda precisa ser criado. Regras:
   fixas seg–sex; concorrência **1x por mês, na 3ª sexta** (Sessão 51, Pedido 14: 18/12, 15/01 →
@@ -918,6 +918,10 @@ minha: bate com as duas que já existiam (18/12 e 15/01) e deixa o fim do mês s
 dia útil e redes no 1º dia útil do mês seguinte não mudaram (dezembro é exceção: site e redes em 04/01, por
 causa das férias). Ficou: 18/12 concorrência; 04/01 redes e site de dezembro; 15/01 concorrência; 29/01 site
 (janeiro); 01/02 redes de janeiro.
+
+**Pedido 15**: "deixe os dias seguidos no feed, ta certo. os posts nas ferias continuam." Decisões da
+usuária: os pares de dias seguidos (13–14/12, 08–09/01, 17–18/01) **ficam como estão**, e os posts do Calendário
+de 19/12 a 03/01 **continuam**. Nada foi alterado.
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).
