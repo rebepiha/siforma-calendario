@@ -558,7 +558,8 @@
   agora troca o Produto quando o título cita outro produto pelo nome inteiro, mas isso não
   corrige vínculos antigos.
 - **Hawa Variotec fora da fila por falta de conteúdo** (Sessão 51). Quando houver
-  conteúdo, é o primeiro.
+  conteúdo, é o primeiro. **Alinhador e Libra também sem mídia**: ficaram no fim da
+  fila (20 e 22/01).
 - **Slim e Wood do mesmo produto = 1 produto na fila, alternando versões** (Sessão 51):
   Perfect Pocket, E-Motion, OPK Perfect Telescópico.
 - **O feed vai até 22/01/2027** (Sessão 51, fila reorganizada). Há 3 pares de dias
@@ -823,6 +824,16 @@ produtos certos), **E-Motion** (Slim/Wood) e **OPK Perfect Telescópico** (Slim/
 - **Inconsistência apontada e não corrigida**: Camarão C/V (último em 20/11) e SI Rotary 35 (23/11) estão
   na fila, mas SI Ocean (05/11), Brises 360 (07/11), Submarine (10/11), Maçaneta (14/11) e
   Telescópico (16/11) não estão, e pela regra viriam antes. Ofereci trocar.
+
+**Pedido 8**: "tire alinhador e libra, coloque pro final, n temos midia ainda". **Feito**
+(script `fila4.py`, backup `fila4_antes.json`): as mesmas 23 datas; Alinhador de Porta e
+Libra H11 foram para as duas últimas (**20/01 e 22/01**), e os outros subiram duas posições.
+Ordem: 01/12 Swing, 03/12 Portas Indv, 05/12 SI 160, 07/12 Coplanar PL 80, 09/12 OPK Pivot,
+11/12 Concepta III, 13/12 Pocket Slim, 14/12 OPK Perfect Camarão, 16/12 Folding, 18/12 Coplanar 2
+Portas, 20/12 Dobradiças, 22/12 SI Oculto, 28/12 Pivot Bocreio, 02/01 SI Sailing, 04/01 SI Engate,
+06/01 Rotary Easy, (08/01 Kiaro), 09/01 SI 100, (11/01 SI 80), 13/01 Synchro, 15/01 E-Motion Slim,
+16/01 Camarão C/V, 18/01 SI Rotary 35, 20/01 Alinhador, 22/01 Libra. Conferido relendo o banco.
+**Sem mídia ainda: Alinhador e Libra** (como o Hawa Variotec, que está fora da fila).
 
 **Observado e não mexido**:
 - Coplanar PL 80 ficou só com "Hawa Coplanar" (25/08). Depois ganhou o post de 09/12 (Pedido 5).
